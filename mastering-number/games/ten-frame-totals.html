@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ten Frame Totals – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 560px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 8px; }
+
+        /* ── Ten-frame cells ── */
+        .ten-frame {
+            display: grid;
+            grid-template-columns: repeat(5, 46px);
+            grid-template-rows: repeat(2, 46px);
+            gap: 5px;
+        }
+        .tf-cell { width: 46px; height: 46px; border: 3px solid #ccc; border-radius: 7px; background: white; transition: background .25s, border-color .25s; }
+        .tf-cell.dot-blue   { background: #1798d3; border-color: #1280b3; }
+        .tf-cell.dot-orange { background: #ff9800; border-color: #e65100; }
+        /* Y2 bridging hint: empty cells in Frame A show a dashed blue border */
+        .tf-cell.hint-dashed { border: 3px dashed #1798d3; background: #f0f8ff; }
+
+        /* ── Frame layout ── */
+        .frames-area { display: flex; align-items: flex-end; justify-content: center; gap: 18px; flex-wrap: nowrap; margin: 12px 0 6px; }
+        .frame-wrapper { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .frame-count { font-size: 2em; font-weight: bold; color: #1798d3; line-height: 1; }
+        .frame-count.orange { color: #ff9800; }
+        .frame-plus { font-size: 2.8em; font-weight: bold; color: #aaa; padding-bottom: 28px; flex-shrink: 0; }
+
+        /* ── Equation / prompt ── */
+        .equation-row { text-align: center; font-size: 2.4em; font-weight: bold; color: #0a0101; margin: 4px 0 0; }
+        .single-prompt { text-align: center; font-size: 1.2em; font-weight: bold; color: #333; margin: 4px 0 0; }
+
+        /* Bridge result caption (shown after correct bridging answer) */
+        .bridge-caption {
+            text-align: center; font-size: 1.05em; color: #555; margin-top: 8px;
+            background: #f8f8f8; border-radius: 8px; padding: 8px 12px;
+            border-left: 4px solid #1798d3;
+        }
+        .bridge-caption .c-blue   { color: #1798d3; font-weight: bold; }
+        .bridge-caption .c-orange { color: #ff9800; font-weight: bold; }
+
+        /* ── Answer buttons (single-frame mode) ── */
+        .answer-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 340px; margin: 10px auto 0; }
+        .ans-btn {
+            width: 58px; height: 58px; font-size: 1.5em; font-weight: bold;
+            border: 3px solid #ddd; border-radius: 10px; background: #f8f8f8;
+            cursor: pointer; transition: all .15s; color: #333;
+            user-select: none; touch-action: manipulation; font-family: inherit;
+        }
+        .ans-btn:hover { background: #e8f4fa; border-color: #1798d3; }
+        .ans-btn:active { background: #1798d3; color: white; transform: scale(.95); }
+        .ans-btn:disabled { opacity: .4; cursor: default; }
+        .ans-btn.correct-ans { background: #e8f4fa; border-color: #1798d3; color: #1798d3; }
+        .ans-btn.wrong-ans   { background: #ffebee; border-color: #d32f2f; color: #d32f2f; }
+
+        /* ── Keypad (double-frame mode) ── */
+        .answer-input {
+            width: 110px; padding: 12px; font-size: 2em; text-align: center;
+            border: 3px solid #ddd; border-radius: 8px; outline: none;
+            display: block; margin: 10px auto 0; -moz-appearance: textfield;
+        }
+        .answer-input::-webkit-outer-spin-button,
+        .answer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .answer-input:focus   { border-color: #1798d3; }
+        .answer-input.correct { border-color: #1798d3; background: #e8f4fa; }
+        .answer-input.wrong   { border-color: #d32f2f; background: #ffebee; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 8px auto 0; }
+        .key-btn { padding: 14px; font-size: 1.3em; font-weight: bold; border: 2px solid #ddd; border-radius: 8px; background: #f8f8f8; cursor: pointer; transition: all .15s; color: #333; user-select: none; touch-action: manipulation; font-family: inherit; }
+        .key-btn:hover { background: #e8f4fa; border-color: #1798d3; }
+        .key-btn:active { background: #1798d3; color: white; transform: scale(.95); }
+        .key-btn.key-clear { background: #ffebee; border-color: #d32f2f; color: #d32f2f; font-size: 1em; }
+        .key-btn.key-clear:active { background: #d32f2f; color: white; }
+        .key-btn.key-go { background: #1798d3; color: white; border-color: #1798d3; }
+        .key-btn.key-go:hover { background: #1280b3; }
+
+        /* ── Feedback ── */
+        .feedback { text-align: center; font-size: 1.2em; font-weight: bold; min-height: 34px; margin: 8px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong   { color: #d32f2f; }
+
+        /* ── Results ── */
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji  { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score  { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct    { color: #666; font-size: 1em; }
+        .results-msg    { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list   { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item   { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong   { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong   .s-mark { color: #d32f2f; font-weight: bold; }
+
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .ten-frame { grid-template-columns: repeat(5, 36px); grid-template-rows: repeat(2, 36px); gap: 4px; }
+            .tf-cell { width: 36px; height: 36px; }
+            .frames-area { gap: 10px; }
+            .frame-plus { font-size: 2em; padding-bottom: 22px; }
+            .equation-row { font-size: 2em; }
+            .ans-btn { width: 50px; height: 50px; font-size: 1.3em; }
+            .answer-input { font-size: 16px; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>🔟 Ten Frame Totals</h1>
+        <p class="subtitle" id="subtitle-text"></p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <div class="settings-row" id="hint-row" style="display:none">
+            <label for="hint-mode">Show bridging hint?</label>
+            <select id="hint-mode">
+                <option value="yes" selected>Yes</option>
+                <option value="no">No</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+
+        <!-- Question label (changes per mode) -->
+        <div id="question-label"></div>
+
+        <!-- Frames render target -->
+        <div id="frames-div"></div>
+
+        <!-- Single-frame answer buttons -->
+        <div id="single-answer-area" style="display:none">
+            <div class="answer-btns" id="answer-btns"></div>
+        </div>
+
+        <!-- Double-frame keypad -->
+        <div id="double-answer-area" style="display:none">
+            <input type="number" class="answer-input" id="answer-input" inputmode="none" autocomplete="off" placeholder="?">
+            <div class="keypad">
+                <button class="key-btn" onclick="kp('1')">1</button>
+                <button class="key-btn" onclick="kp('2')">2</button>
+                <button class="key-btn" onclick="kp('3')">3</button>
+                <button class="key-btn" onclick="kp('4')">4</button>
+                <button class="key-btn" onclick="kp('5')">5</button>
+                <button class="key-btn" onclick="kp('6')">6</button>
+                <button class="key-btn" onclick="kp('7')">7</button>
+                <button class="key-btn" onclick="kp('8')">8</button>
+                <button class="key-btn" onclick="kp('9')">9</button>
+                <button class="key-btn key-clear" onclick="kpClear()">Clear</button>
+                <button class="key-btn" onclick="kp('0')">0</button>
+                <button class="key-btn key-go" onclick="submitDouble()">Go!</button>
+            </div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+
+</div>
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    // Show bridging hint setting only for Y1/Y2
+    if (YEAR !== 'reception') document.getElementById('hint-row').style.display = 'flex';
+
+    const subtitles = {
+        reception: 'How many more dots to fill the frame to 10?',
+        year1:     'Fill the frame to 10 — then try adding two frames together!',
+        year2:     'Make 10 first, then add the rest. Watch the orange dots bridge across!'
+    };
+    document.getElementById('subtitle-text').textContent = subtitles[YEAR];
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null, showHint = true;
+
+    // ── Rendering ──────────────────────────────────────────────────
+
+    // cells: array of 10 strings: 'blue' | 'orange' | 'hint' | ''
+    function cellClass(c) {
+        if (c === 'blue')  return ' dot-blue';
+        if (c === 'orange') return ' dot-orange';
+        if (c === 'hint')  return ' hint-dashed';
+        return '';
+    }
+
+    function renderFrame(cells) {
+        return '<div class="ten-frame">' +
+            cells.map(c => `<div class="tf-cell${cellClass(c)}"></div>`).join('') +
+            '</div>';
+    }
+
+    function makeFrameCells(n, dotColor, emptyStyle) {
+        return Array.from({ length: 10 }, (_, i) =>
+            i < n ? dotColor : (emptyStyle || '')
+        );
+    }
+
+    function renderSingleFrame(q) {
+        // Blue dots, plain empty cells
+        const cells = makeFrameCells(q.n, 'blue', '');
+        return `<div class="frames-area">
+            <div class="frame-wrapper">${renderFrame(cells)}</div>
+        </div>`;
+    }
+
+    function renderDoubleFrames(q) {
+        // Frame A: blue dots, optionally hint-dashed empty cells (only when bridging)
+        const bridging = q.answer > 10;
+        const emptyStyleA = (showHint && bridging) ? 'hint' : '';
+        const cellsA = makeFrameCells(q.a, 'blue', emptyStyleA);
+        const cellsB = makeFrameCells(q.b, 'blue', '');
+        return `<div class="frames-area">
+            <div class="frame-wrapper">
+                ${renderFrame(cellsA)}
+                <div class="frame-count">${q.a}</div>
+            </div>
+            <div class="frame-plus">+</div>
+            <div class="frame-wrapper">
+                ${renderFrame(cellsB)}
+                <div class="frame-count">${q.b}</div>
+            </div>
+        </div>`;
+    }
+
+    // Post-correct bridging visual: Frame A fills to 10 (blue + orange), Frame B shows remainder
+    function renderBridgeResult(q) {
+        const cellsA = Array.from({ length: 10 }, (_, i) =>
+            i < q.a ? 'blue' : 'orange'
+        );
+        const cellsB = makeFrameCells(q.remainder, 'orange', '');
+        return `<div class="frames-area">
+            <div class="frame-wrapper">
+                ${renderFrame(cellsA)}
+                <div class="frame-count">10</div>
+            </div>
+            <div class="frame-plus">+</div>
+            <div class="frame-wrapper">
+                ${renderFrame(cellsB)}
+                <div class="frame-count orange">${q.remainder}</div>
+            </div>
+        </div>
+        <div class="bridge-caption">
+            <span class="c-blue">${q.a}</span> + <span class="c-orange">${q.b}</span>
+            = <span class="c-blue">10</span> + <span class="c-orange">${q.remainder}</span>
+            = <strong>${q.answer}</strong>
+        </div>`;
+    }
+
+    // ── Question generation ─────────────────────────────────────────
+
+    function genQuestion() {
+        const r = Math.random();
+        const isDouble = (YEAR === 'reception') ? false
+                       : (YEAR === 'year1')     ? r < 0.6
+                       :                          r < 0.8;
+
+        if (!isDouble) {
+            const n = 1 + Math.floor(Math.random() * 9); // 1–9
+            return { mode: 'single', n, answer: 10 - n };
+        }
+
+        if (YEAR === 'year1') {
+            // Sum stays ≤ 10 (no bridging): a 1–8, b 1–(10-a)
+            const a = 1 + Math.floor(Math.random() * 8);
+            const maxB = Math.min(9, 10 - a);
+            if (maxB < 1) return genQuestion();
+            const b = 1 + Math.floor(Math.random() * maxB);
+            return { mode: 'double', a, b, answer: a + b,
+                     bridgeNeeded: 10 - a, remainder: b - (10 - a) };
+        }
+
+        // Year 2: sum 11–18 (always bridges through 10)
+        const a = 2 + Math.floor(Math.random() * 8); // 2–9
+        const minB = Math.max(1, 11 - a);
+        const maxB = Math.min(9, 18 - a);
+        if (minB > maxB) return genQuestion();
+        const b = minB + Math.floor(Math.random() * (maxB - minB + 1));
+        const bridgeNeeded = 10 - a;  // how many from B fill A to 10
+        const remainder = b - bridgeNeeded;
+        if (remainder <= 0) return genQuestion();
+        return { mode: 'double', a, b, answer: a + b, bridgeNeeded, remainder };
+    }
+
+    // ── Game flow ───────────────────────────────────────────────────
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        showHint = (YEAR !== 'reception') &&
+                   document.getElementById('hint-mode').value === 'yes';
+        questions = [];
+        for (let i = 0; i < count; i++) questions.push(genQuestion());
+        currentQ = 0; score = 0; allAnswers = [];
+        buildSingleButtons();
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function buildSingleButtons() {
+        const btns = document.getElementById('answer-btns');
+        btns.innerHTML = '';
+        for (let i = 1; i <= 9; i++) {
+            const b = document.createElement('button');
+            b.className = 'ans-btn';
+            b.textContent = i;
+            b.onclick = () => handleSingleAnswer(i);
+            btns.appendChild(b);
+        }
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        canAnswer = true;
+        updateProgress();
+
+        const q = questions[currentQ];
+        const fb = document.getElementById('feedback');
+        fb.textContent = '';
+        fb.className = 'feedback';
+
+        if (q.mode === 'single') {
+            document.getElementById('question-label').innerHTML =
+                `<p class="single-prompt">How many more to make <strong>10</strong>?</p>`;
+            document.getElementById('frames-div').innerHTML = renderSingleFrame(q);
+            document.getElementById('single-answer-area').style.display = 'block';
+            document.getElementById('double-answer-area').style.display = 'none';
+            document.querySelectorAll('.ans-btn').forEach(b => {
+                b.disabled = false;
+                b.className = 'ans-btn';
+            });
+        } else {
+            document.getElementById('question-label').innerHTML =
+                `<div class="equation-row">${q.a} + ${q.b} = ?</div>`;
+            document.getElementById('frames-div').innerHTML = renderDoubleFrames(q);
+            document.getElementById('single-answer-area').style.display = 'none';
+            document.getElementById('double-answer-area').style.display = 'block';
+            const inp = document.getElementById('answer-input');
+            inp.value = '';
+            inp.className = 'answer-input';
+        }
+    }
+
+    // Single-frame: tap a number button
+    function handleSingleAnswer(n) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        if (advanceTimer) clearTimeout(advanceTimer);
+
+        document.querySelectorAll('.ans-btn').forEach(b => {
+            b.disabled = true;
+            const v = parseInt(b.textContent);
+            const correct = questions[currentQ].answer;
+            if (v === correct) b.classList.add('correct-ans');
+            else if (v === n && n !== correct) b.classList.add('wrong-ans');
+        });
+
+        const q = questions[currentQ];
+        const isCorrect = n === q.answer;
+        const fb = document.getElementById('feedback');
+
+        if (isCorrect) {
+            score++;
+            fb.textContent = `✓ Correct! ${q.n} + ${q.answer} = 10`;
+            fb.className = 'feedback correct';
+        } else {
+            fb.textContent = `✗ It was ${q.answer} more`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ label: `${q.n} + ? = 10`, correct: q.answer, given: n, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 2000);
+    }
+
+    // Double-frame: keypad submit
+    function kp(digit) {
+        if (!canAnswer) return;
+        const inp = document.getElementById('answer-input');
+        if (inp.value.length < 2) inp.value += digit;
+    }
+
+    function kpClear() {
+        document.getElementById('answer-input').value = '';
+    }
+
+    function submitDouble() {
+        if (!canAnswer) return;
+        const inp = document.getElementById('answer-input');
+        const given = parseInt(inp.value);
+        if (isNaN(given)) return;
+        canAnswer = false;
+
+        const q = questions[currentQ];
+        const isCorrect = given === q.answer;
+        const fb = document.getElementById('feedback');
+
+        if (isCorrect) {
+            score++;
+            inp.className = 'answer-input correct';
+            fb.textContent = '✓ Correct!';
+            fb.className = 'feedback correct';
+            // Show bridging result visual for answers that cross 10
+            if (q.answer > 10) {
+                document.getElementById('frames-div').innerHTML = renderBridgeResult(q);
+                document.getElementById('question-label').innerHTML = '';
+            }
+        } else {
+            inp.className = 'answer-input wrong';
+            fb.textContent = `✗ The answer is ${q.answer}`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ label: `${q.a} + ${q.b}`, correct: q.answer, given, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, isCorrect && q.answer > 10 ? 2400 : 2000);
+    }
+
+    document.getElementById('answer-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitDouble();
+    });
+
+    // ── Results ─────────────────────────────────────────────────────
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect ten frames!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant! You\'re making 10 like a pro!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good work! Keep using that frame!'; }
+        else { emoji = '📚'; msg = 'Keep practising — fill the frame first!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. ${a.label} = </span>
+                <span class="s-mark">${a.isCorrect ? `${a.correct} ✓` : `${a.given} ✗ → ${a.correct}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

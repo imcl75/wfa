@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5 and a Bit – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 10px; }
+        /* Ten-frame with two colours */
+        .frame-label { text-align: center; color: #666; font-size: .9em; margin-bottom: 6px; }
+        .ten-frame-rows { margin: 10px auto; width: fit-content; }
+        .tf-row { display: flex; gap: 8px; margin-bottom: 8px; justify-content: center; }
+        .tf-cell { width: 50px; height: 50px; border: 3px solid #ccc; border-radius: 8px; }
+        .tf-cell.five { background: #1798d3; border-color: #1280b3; }   /* blue = the 5 */
+        .tf-cell.bit { background: #ff9800; border-color: #e65100; }    /* orange = the extra bit */
+        .tf-cell.empty { background: white; }
+        /* Question prompt */
+        .five-prompt { text-align: center; font-size: 1.6em; font-weight: bold; color: #0a0101; margin: 12px 0 8px; }
+        .five-prompt span.five-part { color: #1798d3; }
+        .five-prompt span.bit-part { color: #ff9800; }
+        /* Answer buttons */
+        .answer-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+        .ans-btn {
+            width: 65px; height: 65px; font-size: 1.7em; font-weight: bold;
+            border: 3px solid #ddd; border-radius: 10px; background: #f8f8f8;
+            cursor: pointer; transition: all .15s; color: #333;
+            user-select: none; touch-action: manipulation; font-family: inherit;
+        }
+        .ans-btn:hover { border-color: #ff9800; background: #fff3e0; }
+        .ans-btn:active { background: #ff9800; color: white; transform: scale(.95); }
+        .ans-btn:disabled { opacity: .4; cursor: default; }
+        .ans-btn.correct-ans { background: #e8f4fa; border-color: #1798d3; color: #1798d3; }
+        .ans-btn.wrong-ans { background: #ffebee; border-color: #d32f2f; color: #d32f2f; }
+        .feedback { text-align: center; font-size: 1.2em; font-weight: bold; min-height: 34px; margin: 8px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        /* Results */
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .tf-cell { width: 44px; height: 44px; }
+            .ans-btn { width: 56px; height: 56px; font-size: 1.5em; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>✋ 5 and a Bit</h1>
+        <p class="subtitle">The blue row is always 5. How many orange dots are the "bit" above 5?</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="ten-frame-rows" id="ten-frame"></div>
+        <div class="five-prompt" id="five-prompt"></div>
+        <div class="answer-btns" id="answer-btns"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    // Numbers 6–10 (5 and 1 through 5 and 5)
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        questions = [];
+        for (let i = 0; i < count; i++) {
+            // Weighted: 6,7,8,9,10 equally
+            questions.push(6 + Math.floor(Math.random() * 5));
+        }
+        currentQ = 0; score = 0; allAnswers = [];
+        buildAnswerButtons();
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function buildAnswerButtons() {
+        const btns = document.getElementById('answer-btns');
+        btns.innerHTML = '';
+        for (let i = 1; i <= 5; i++) {
+            const b = document.createElement('button');
+            b.className = 'ans-btn';
+            b.textContent = i;
+            b.onclick = () => handleAnswer(i);
+            btns.appendChild(b);
+        }
+    }
+
+    function renderFrame(n) {
+        const bit = n - 5; // how many in bottom row
+        let html = '';
+        // Top row: all 5 blue
+        html += '<div class="tf-row">';
+        for (let i = 0; i < 5; i++) html += '<div class="tf-cell five"></div>';
+        html += '</div>';
+        // Bottom row: bit orange, rest empty
+        html += '<div class="tf-row">';
+        for (let i = 0; i < 5; i++) {
+            html += `<div class="tf-cell ${i < bit ? 'bit' : 'empty'}"></div>`;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        canAnswer = true;
+        updateProgress();
+
+        const n = questions[currentQ];
+        document.getElementById('ten-frame').innerHTML = renderFrame(n);
+        document.getElementById('five-prompt').innerHTML =
+            `<span class="five-part">5</span> and <span class="bit-part">___</span> more`;
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+        document.querySelectorAll('.ans-btn').forEach(b => {
+            b.disabled = false;
+            b.className = 'ans-btn';
+        });
+    }
+
+    function handleAnswer(n) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        if (advanceTimer) clearTimeout(advanceTimer);
+
+        const target = questions[currentQ];
+        const correctBit = target - 5;
+        const isCorrect = n === correctBit;
+        const fb = document.getElementById('feedback');
+
+        document.querySelectorAll('.ans-btn').forEach(b => {
+            b.disabled = true;
+            if (parseInt(b.textContent) === correctBit) b.classList.add('correct-ans');
+            else if (parseInt(b.textContent) === n && !isCorrect) b.classList.add('wrong-ans');
+        });
+
+        document.getElementById('five-prompt').innerHTML =
+            `<span class="five-part">5</span> and <span class="bit-part">${correctBit}</span> more = ${target}`;
+
+        if (isCorrect) {
+            score++;
+            fb.textContent = '✓ Correct!';
+            fb.className = 'feedback correct';
+        } else {
+            fb.textContent = `✗ It was ${correctBit} more`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ total: target, bit: correctBit, given: n, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 2000);
+    }
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect! You know your 5 and a bits!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good work!'; }
+        else { emoji = '📚'; msg = 'Keep practising!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. ${a.total} = 5 and ___</span>
+                <span class="s-mark">${a.isCorrect ? `${a.bit} ✓` : `${a.given} ✗ → ${a.bit}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

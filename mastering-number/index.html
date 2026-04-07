@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering Number – Wallscourt Farm Academy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh; padding: 20px;
+        }
+        .header { text-align: center; padding: 30px 20px 20px; }
+        .school-logo { max-width: 100px; height: auto; display: block; margin: 0 auto 15px; }
+        h1 { color: white; font-size: 2em; margin-bottom: 6px; }
+        .tagline { color: #aaa; font-size: 1em; margin-bottom: 30px; }
+        .year-selector { display: flex; gap: 12px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+        .year-btn {
+            padding: 12px 28px; font-size: 1.1em; font-weight: bold;
+            border: 3px solid #444; border-radius: 30px; background: transparent;
+            color: #aaa; cursor: pointer; transition: all 0.2s; font-family: inherit;
+        }
+        .year-btn:hover { border-color: #1798d3; color: #1798d3; }
+        .year-btn.selected { background: #1798d3; border-color: #1798d3; color: white; }
+        .section-label {
+            color: #888; font-size: 0.85em; text-transform: uppercase;
+            letter-spacing: 1px; text-align: center; margin-bottom: 15px;
+        }
+        .games-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 14px; max-width: 860px; margin: 0 auto;
+        }
+        .game-card {
+            background: white; border-radius: 12px; padding: 20px; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s; border-top: 4px solid #1798d3;
+            text-decoration: none; display: flex; flex-direction: column; gap: 8px;
+        }
+        .game-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.5); }
+        .game-icon { font-size: 2.2em; }
+        .game-name { font-size: 1.15em; font-weight: bold; color: #0a0101; }
+        .game-desc { font-size: 0.88em; color: #666; line-height: 1.4; }
+        .prompt { text-align: center; color: #666; padding: 50px 20px; font-size: 1.1em; }
+        #games-section { display: none; }
+        @media (max-width: 480px) {
+            h1 { font-size: 1.6em; }
+            .year-btn { padding: 10px 20px; font-size: 1em; }
+            .games-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        <h1>Mastering Number</h1>
+        <p class="tagline">Select a year group to see the games</p>
+    </div>
+
+    <div class="year-selector">
+        <button class="year-btn" data-year="reception" onclick="selectYear('reception', this)">Reception</button>
+        <button class="year-btn" data-year="year1" onclick="selectYear('year1', this)">Year 1</button>
+        <button class="year-btn" data-year="year2" onclick="selectYear('year2', this)">Year 2</button>
+    </div>
+
+    <p id="prompt" class="prompt">Choose a year group above, then tap a game to play.</p>
+
+    <div id="games-section">
+        <p class="section-label" id="section-label"></p>
+        <div class="games-grid" id="games-grid"></div>
+    </div>
+
+    <script>
+        const GAMES = [
+            { id: 'subitise',          icon: '👁️',  name: 'Subitise It!',        desc: 'Dots flash briefly — how many can you see without counting?', years: ['reception','year1','year2'] },
+            { id: 'make-the-number',   icon: '🔲',  name: 'Make the Number',      desc: 'Fill the frame to show the number.',                          years: ['reception','year1','year2'] },
+            { id: 'more-or-fewer',     icon: '⚖️',  name: 'More or Fewer?',       desc: 'Which group has more? Which has fewer? Or are they equal?',   years: ['reception','year1','year2'] },
+            { id: 'missing-part',      icon: '❓',  name: 'Missing Part',          desc: 'One part is hidden in the part-part-whole. Can you find it?', years: ['reception','year1','year2'] },
+            { id: 'five-and-a-bit',    icon: '✋',  name: '5 and a Bit',           desc: '5 and how many more? Count the extra dots on the frame.',     years: ['year1','year2'] },
+            { id: 'odd-or-even',       icon: '🔢',  name: 'Odd or Even?',          desc: 'Does the number pair up neatly, or is one left over?',        years: ['reception','year1','year2'] },
+            { id: 'bonds',             icon: '🔗',  name: 'Bonds Practice',        desc: 'Find the missing part to make the whole!',                    years: ['reception','year1','year2'] },
+            { id: 'bridge-through-10', icon: '🌉',  name: 'Bridge Through 10',     desc: 'Jump to 10 first, then keep going. Add and subtract by bridging!', years: ['year2'] },
+            { id: 'near-doubles',      icon: '🪞',  name: 'Near Doubles',          desc: 'Double it, then adjust by 1. Master adjacent number sums!',   years: ['year1','year2'] },
+            { id: 'ten-frame-totals',  icon: '🔟',  name: 'Ten Frame Totals',      desc: 'How many more to make 10? Or add two frames — watch the dots bridge across!', years: ['reception','year1','year2'] },
+            { id: 'rekenrek-read',    icon: '🧮',  name: 'Read the Rekenrek',     desc: 'Look at the beads pushed across — how many are there?',                       years: ['reception','year1','year2'] },
+            { id: 'rekenrek-build',   icon: '🧮',  name: 'Build the Rekenrek',    desc: 'Tap the beads to push across the right number!',                              years: ['reception','year1','year2'] }
+        ];
+        const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+
+        function selectYear(year, btn) {
+            document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            document.getElementById('prompt').style.display = 'none';
+            document.getElementById('games-section').style.display = 'block';
+            document.getElementById('section-label').textContent = `Games for ${YEAR_LABELS[year]}`;
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = '';
+            GAMES.filter(g => g.years.includes(year)).forEach(game => {
+                const a = document.createElement('a');
+                a.href = `games/${game.id}.html?year=${year}`;
+                a.className = 'game-card';
+                a.innerHTML = `<div class="game-icon">${game.icon}</div><div class="game-name">${game.name}</div><div class="game-desc">${game.desc}</div>`;
+                grid.appendChild(a);
+            });
+        }
+
+        // Auto-select year from URL param (when navigating back from a game)
+        const initYear = new URLSearchParams(window.location.search).get('year');
+        if (initYear) {
+            const btn = document.querySelector(`[data-year="${initYear}"]`);
+            if (btn) selectYear(initYear, btn);
+        }
+    </script>
+</body>
+</html>

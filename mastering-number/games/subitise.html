@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subitise It! – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container {
+            background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3;
+        }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 10px; }
+        /* Dot display */
+        .dot-display-area { display: flex; align-items: center; justify-content: center; min-height: 190px; margin: 8px 0; }
+        .dot-grid { display: grid; grid-template-columns: repeat(3, 54px); grid-template-rows: repeat(3, 54px); gap: 8px; }
+        .dot-cell { display: flex; align-items: center; justify-content: center; }
+        .dot { width: 46px; height: 46px; border-radius: 50%; background: #1798d3; }
+        .ten-frame-disp { display: grid; grid-template-columns: repeat(5, 44px); grid-template-rows: repeat(2, 44px); gap: 6px; }
+        .tf-cell { width: 44px; height: 44px; border: 3px solid #ccc; border-radius: 6px; background: white; }
+        .tf-cell.filled { background: #1798d3; border-color: #1280b3; }
+        /* Answer buttons */
+        .how-many-label { text-align: center; font-size: 1.25em; color: #333; margin-bottom: 14px; font-weight: bold; }
+        .answer-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 340px; margin: 0 auto; }
+        .ans-btn {
+            width: 60px; height: 60px; font-size: 1.6em; font-weight: bold;
+            border: 3px solid #ddd; border-radius: 10px; background: #f8f8f8;
+            cursor: pointer; transition: all .15s; color: #333;
+            user-select: none; touch-action: manipulation; font-family: inherit;
+        }
+        .ans-btn:hover { background: #e8f4fa; border-color: #1798d3; }
+        .ans-btn:active { background: #1798d3; color: white; transform: scale(.95); }
+        .ans-btn:disabled { opacity: .4; cursor: default; }
+        .feedback { text-align: center; font-size: 1.3em; font-weight: bold; min-height: 36px; margin: 10px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        /* Results */
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .dot-grid { grid-template-columns: repeat(3, 46px); grid-template-rows: repeat(3, 46px); }
+            .dot { width: 38px; height: 38px; }
+            .ten-frame-disp { grid-template-columns: repeat(5, 38px); grid-template-rows: repeat(2, 38px); }
+            .tf-cell { width: 38px; height: 38px; }
+            .ans-btn { width: 52px; height: 52px; font-size: 1.4em; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>👁️ Subitise It!</h1>
+        <p class="subtitle">Dots will flash — how many can you see without counting?</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <label for="flash-time">Flash time:</label>
+            <select id="flash-time">
+                <option value="500">0.5 sec</option>
+                <option value="1000" selected>1 sec</option>
+                <option value="1500">1.5 sec</option>
+                <option value="2000">2 sec</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="dot-display-area" id="dot-display"></div>
+        <div id="answer-area" style="display:none">
+            <p class="how-many-label">How many dots did you see?</p>
+            <div class="answer-btns" id="answer-btns"></div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    const MAX_NUM = { reception: 5, year1: 9, year2: 10 }[YEAR];
+
+    // Flat 3x3 arrays: 1 = dot, 0 = empty (standard die patterns)
+    const DOT_PATTERNS = {
+        1: [0,0,0, 0,1,0, 0,0,0],
+        2: [0,0,1, 0,0,0, 1,0,0],
+        3: [0,0,1, 0,1,0, 1,0,0],
+        4: [1,0,1, 0,0,0, 1,0,1],
+        5: [1,0,1, 0,1,0, 1,0,1],
+        6: [1,0,1, 1,0,1, 1,0,1],
+        7: [1,0,1, 1,1,1, 1,0,1],
+        8: [1,1,1, 1,0,1, 1,1,1],
+        9: [1,1,1, 1,1,1, 1,1,1]
+    };
+
+    function renderDots(n) {
+        if (n <= 9) {
+            const p = DOT_PATTERNS[n];
+            let html = '<div class="dot-grid">';
+            for (let i = 0; i < 9; i++) {
+                html += `<div class="dot-cell">${p[i] ? '<div class="dot"></div>' : ''}</div>`;
+            }
+            return html + '</div>';
+        } else {
+            // Ten-frame for 10
+            let html = '<div class="ten-frame-disp">';
+            for (let i = 0; i < 10; i++) {
+                html += `<div class="tf-cell ${i < n ? 'filled' : ''}"></div>`;
+            }
+            return html + '</div>';
+        }
+    }
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let flashTimer = null, blankTimer = null, advanceTimer = null;
+    let canAnswer = false, flashTimeMs = 1000;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        flashTimeMs = parseInt(document.getElementById('flash-time').value);
+        questions = [];
+        for (let i = 0; i < count; i++) questions.push(1 + Math.floor(Math.random() * MAX_NUM));
+        currentQ = 0; score = 0; allAnswers = [];
+        buildAnswerButtons();
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function buildAnswerButtons() {
+        const btns = document.getElementById('answer-btns');
+        btns.innerHTML = '';
+        for (let i = 1; i <= MAX_NUM; i++) {
+            const b = document.createElement('button');
+            b.className = 'ans-btn';
+            b.textContent = i;
+            b.onclick = () => handleAnswer(i);
+            btns.appendChild(b);
+        }
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        clearTimers();
+        canAnswer = false;
+        updateProgress();
+
+        const n = questions[currentQ];
+        document.getElementById('dot-display').innerHTML = renderDots(n);
+        document.getElementById('dot-display').style.display = 'flex';
+        document.getElementById('answer-area').style.display = 'none';
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+        document.querySelectorAll('.ans-btn').forEach(b => b.disabled = false);
+
+        flashTimer = setTimeout(() => {
+            document.getElementById('dot-display').innerHTML = '';
+            blankTimer = setTimeout(() => {
+                document.getElementById('dot-display').style.display = 'none';
+                document.getElementById('answer-area').style.display = 'block';
+                canAnswer = true;
+            }, 400);
+        }, flashTimeMs);
+    }
+
+    function handleAnswer(n) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        clearTimers();
+        document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+
+        const correct = questions[currentQ];
+        const isCorrect = n === correct;
+        const fb = document.getElementById('feedback');
+
+        if (isCorrect) {
+            score++;
+            fb.textContent = '✓ Correct!';
+            fb.className = 'feedback correct';
+        } else {
+            fb.textContent = `✗ It was ${correct}`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ shown: correct, given: n, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 1800);
+    }
+
+    function clearTimers() {
+        [flashTimer, blankTimer, advanceTimer].forEach(t => { if (t) clearTimeout(t); });
+    }
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect subitising! You\'re a star!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant! Nearly perfect!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good work! Keep practising!'; }
+        else { emoji = '📚'; msg = 'Keep going — you\'ll get faster!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            const mark = a.isCorrect ? `Said ${a.given} ✓` : `Said ${a.given} ✗ → ${a.shown}`;
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. Showed ${a.shown} dot${a.shown !== 1 ? 's' : ''}</span>
+                <span class="s-mark">${mark}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

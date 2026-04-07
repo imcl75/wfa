@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Read the Rekenrek – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 10px; }
+        .feedback { text-align: center; font-size: 1.2em; font-weight: bold; min-height: 34px; margin: 8px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+
+        /* Rekenrek */
+        .rk-display { display: flex; justify-content: center; margin: 14px 0; }
+        .rk-display-wrap { position: relative; display: inline-block; }
+        .rk-frame {
+            background: #7B4F2E;
+            border: 5px solid #4A2E16;
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 7px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.08);
+        }
+        .rk-row { display: flex; align-items: center; gap: 4px; }
+        .rk-gap { width: 8px; flex-shrink: 0; }
+        .rk-bead {
+            width: 36px; height: 36px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .rk-bead.red   { background: radial-gradient(circle at 35% 35%, #ef5350, #b71c1c); box-shadow: 2px 2px 5px rgba(0,0,0,0.4); }
+        .rk-bead.cream { background: radial-gradient(circle at 35% 35%, #fffde7, #f9a825); box-shadow: 2px 2px 5px rgba(0,0,0,0.3); border: 1px solid #e6b800; }
+        .rk-bead.inactive { background: #c4a882; opacity: 0.42; box-shadow: none; }
+
+        /* Flash cover */
+        .flash-cover {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: white;
+            border-radius: 8px;
+            z-index: 10;
+        }
+        .flash-label { text-align: center; color: #999; font-size: .9em; min-height: 22px; margin-bottom: 4px; }
+
+        /* Choice buttons */
+        .choice-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 320px; margin: 10px auto 0; }
+        .choice-btn {
+            height: 64px; font-size: 2em; font-weight: bold;
+            border: 3px solid #ddd; border-radius: 10px;
+            background: #f8f8f8; color: #333;
+            cursor: pointer; transition: all .15s;
+            font-family: inherit; user-select: none; touch-action: manipulation;
+        }
+        .choice-btn:hover:not(:disabled) { background: #e8f4fa; border-color: #1798d3; }
+        .choice-btn:active:not(:disabled) { transform: scale(.95); }
+        .choice-btn:disabled { opacity: .45; cursor: default; }
+        .choice-btn.correct-choice { background: #e8f4fa; border-color: #1798d3; color: #1798d3; }
+        .choice-btn.wrong-choice   { background: #ffebee; border-color: #d32f2f; color: #d32f2f; }
+
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .rk-bead { width: 28px; height: 28px; }
+            .rk-row { gap: 3px; }
+            .rk-gap { width: 6px; }
+            .rk-frame { padding: 8px; gap: 5px; }
+            .choice-btn { height: 56px; font-size: 1.7em; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>🧮 Read the Rekenrek</h1>
+        <p class="subtitle">Look at the beads pushed across — how many are there?</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <label for="flash-mode">Show beads:</label>
+            <select id="flash-mode">
+                <option value="0">Always visible</option>
+                <option value="2000">Flash for 2 seconds</option>
+                <option value="3000">Flash for 3 seconds</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="flash-label" id="flash-label"></div>
+        <div class="rk-display">
+            <div class="rk-display-wrap">
+                <div id="rk-frame-inner"></div>
+                <div class="flash-cover" id="flash-cover"></div>
+            </div>
+        </div>
+        <div class="choice-btns" id="choice-btns"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    const NUM_ROWS = YEAR === 'reception' ? 1 : 2;
+    const MAX_NUM  = NUM_ROWS * 10;
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null, flashTimer = null;
+    let flashMs = 0;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function renderRekenrek(n) {
+        const row0 = Math.min(n, 10);
+        const row1 = NUM_ROWS === 2 ? Math.max(0, n - 10) : null;
+
+        function renderRow(active) {
+            let html = '<div class="rk-row">';
+            for (let i = 1; i <= 10; i++) {
+                const isActive = i <= active;
+                const colorCls = i <= 5 ? 'red' : 'cream';
+                html += `<div class="rk-bead ${isActive ? colorCls : 'inactive'}"></div>`;
+                if (i === 5) html += '<div class="rk-gap"></div>';
+            }
+            return html + '</div>';
+        }
+
+        let html = '<div class="rk-frame">' + renderRow(row0);
+        if (row1 !== null) html += renderRow(row1);
+        return html + '</div>';
+    }
+
+    function makeChoices(correct) {
+        const choices = new Set([correct]);
+        const pool = [];
+        for (let d = 1; d <= 5; d++) {
+            if (correct - d >= 1) pool.push(correct - d);
+            if (correct + d <= MAX_NUM) pool.push(correct + d);
+        }
+        // Shuffle pool
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        for (const c of pool) {
+            if (choices.size === 4) break;
+            choices.add(c);
+        }
+        // Fallback: fill from full range if needed
+        for (let v = 1; v <= MAX_NUM && choices.size < 4; v++) {
+            choices.add(v);
+        }
+        // Shuffle final set
+        const arr = [...choices];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    function startGame() {
+        flashMs = parseInt(document.getElementById('flash-mode').value);
+        const count = parseInt(document.getElementById('q-count').value);
+        // Generate `count` distinct questions from 1..MAX_NUM (with repeats if count > MAX_NUM)
+        const pool = [];
+        for (let v = 1; v <= MAX_NUM; v++) pool.push(v);
+        // Shuffle and take `count`, wrapping if needed
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        questions = [];
+        for (let i = 0; i < count; i++) questions.push(pool[i % pool.length]);
+        currentQ = 0; score = 0; allAnswers = [];
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        if (flashTimer)   clearTimeout(flashTimer);
+        canAnswer = false;
+        updateProgress();
+
+        const n = questions[currentQ];
+        const choices = makeChoices(n);
+
+        // Render rekenrek
+        document.getElementById('rk-frame-inner').innerHTML = renderRekenrek(n);
+        document.getElementById('flash-cover').style.display = 'none';
+
+        // Render choice buttons (disabled initially)
+        let btnHtml = '';
+        choices.forEach(c => {
+            btnHtml += `<button class="choice-btn" id="cb-${c}" onclick="handleAnswer(${c})" disabled>${c}</button>`;
+        });
+        document.getElementById('choice-btns').innerHTML = btnHtml;
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+
+        if (flashMs > 0) {
+            // Show rekenrek, then cover it after flashMs
+            document.getElementById('flash-label').textContent = 'Look carefully…';
+            flashTimer = setTimeout(() => {
+                document.getElementById('flash-cover').style.display = 'block';
+                document.getElementById('flash-label').textContent = 'How many were there?';
+                // Enable buttons after a short blank gap
+                setTimeout(() => {
+                    choices.forEach(c => document.getElementById(`cb-${c}`).disabled = false);
+                    canAnswer = true;
+                }, 300);
+            }, flashMs);
+        } else {
+            document.getElementById('flash-label').textContent = '';
+            choices.forEach(c => document.getElementById(`cb-${c}`).disabled = false);
+            canAnswer = true;
+        }
+    }
+
+    function handleAnswer(choice) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        if (flashTimer) clearTimeout(flashTimer);
+
+        // Reveal rekenrek if hidden
+        document.getElementById('flash-cover').style.display = 'none';
+        document.getElementById('flash-label').textContent = '';
+
+        const correct = questions[currentQ];
+        const isCorrect = choice === correct;
+        const fb = document.getElementById('feedback');
+
+        document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+        document.getElementById(`cb-${correct}`).classList.add('correct-choice');
+        if (!isCorrect) document.getElementById(`cb-${choice}`).classList.add('wrong-choice');
+
+        if (isCorrect) {
+            score++;
+            fb.textContent = '✓ Correct!';
+            fb.className = 'feedback correct';
+        } else {
+            fb.textContent = `✗ It was ${correct}`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ n: correct, choice, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 1800);
+    }
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect rekenrek reading!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant work!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good effort! Keep practising!'; }
+        else { emoji = '📚'; msg = 'Keep looking at the groups of 5!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. How many beads?</span>
+                <span class="s-mark">${a.isCorrect ? `${a.n} ✓` : `${a.choice} ✗ → ${a.n}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

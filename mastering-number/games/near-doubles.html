@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Near Doubles – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 8px; }
+        /* Equation */
+        .main-equation { text-align: center; font-size: 3em; font-weight: bold; color: #0a0101; margin: 12px 0 6px; }
+        /* Double hint */
+        .hint-box {
+            background: #fff8e1; border: 2px solid #ff9800; border-radius: 10px;
+            padding: 10px 16px; margin: 8px auto; max-width: 320px; text-align: center;
+        }
+        .hint-label { font-size: .85em; color: #e65100; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .hint-text { font-size: 1.2em; color: #333; font-weight: bold; }
+        /* Input + keypad */
+        .answer-input {
+            width: 110px; padding: 12px; font-size: 2em; text-align: center;
+            border: 3px solid #ddd; border-radius: 8px; outline: none;
+            display: block; margin: 10px auto 0; -moz-appearance: textfield;
+        }
+        .answer-input::-webkit-outer-spin-button, .answer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .answer-input:focus { border-color: #1798d3; }
+        .answer-input.correct { border-color: #1798d3; background: #e8f4fa; }
+        .answer-input.wrong { border-color: #d32f2f; background: #ffebee; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 8px auto 0; }
+        .key-btn { padding: 15px; font-size: 1.3em; font-weight: bold; border: 2px solid #ddd; border-radius: 8px; background: #f8f8f8; cursor: pointer; transition: all .15s; color: #333; user-select: none; touch-action: manipulation; font-family: inherit; }
+        .key-btn:hover { background: #e8f4fa; border-color: #1798d3; }
+        .key-btn:active { background: #1798d3; color: white; transform: scale(.95); }
+        .key-btn.key-clear { background: #ffebee; border-color: #d32f2f; color: #d32f2f; font-size: 1em; }
+        .key-btn.key-clear:active { background: #d32f2f; color: white; }
+        .key-btn.key-go { background: #1798d3; color: white; border-color: #1798d3; }
+        .key-btn.key-go:hover { background: #1280b3; }
+        .feedback { text-align: center; font-size: 1.2em; font-weight: bold; min-height: 34px; margin: 6px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        /* Results */
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .main-equation { font-size: 2.4em; }
+            .answer-input { font-size: 16px; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>🪞 Near Doubles</h1>
+        <p class="subtitle">The two numbers are next to each other. Double the smaller one, then add 1!</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <label for="hint-mode">Show hint?</label>
+            <select id="hint-mode">
+                <option value="yes" selected>Yes — show the double</option>
+                <option value="no">No hint</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="main-equation" id="main-eq"></div>
+        <div class="hint-box" id="hint-box">
+            <div class="hint-label">💡 Hint</div>
+            <div class="hint-text" id="hint-text"></div>
+        </div>
+        <input type="number" class="answer-input" id="answer-input" inputmode="none" autocomplete="off" placeholder="?">
+        <div class="keypad">
+            <button class="key-btn" onclick="kp('1')">1</button>
+            <button class="key-btn" onclick="kp('2')">2</button>
+            <button class="key-btn" onclick="kp('3')">3</button>
+            <button class="key-btn" onclick="kp('4')">4</button>
+            <button class="key-btn" onclick="kp('5')">5</button>
+            <button class="key-btn" onclick="kp('6')">6</button>
+            <button class="key-btn" onclick="kp('7')">7</button>
+            <button class="key-btn" onclick="kp('8')">8</button>
+            <button class="key-btn" onclick="kp('9')">9</button>
+            <button class="key-btn key-clear" onclick="kpClear()">Clear</button>
+            <button class="key-btn" onclick="kp('0')">0</button>
+            <button class="key-btn key-go" onclick="submitAnswer()">Go!</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    // Y1: pairs (2,3),(3,4),(4,5),(5,6)  Y2: extends to (6,7),(7,8),(8,9),(9,10)
+    const PAIRS_Y1 = [[2,3],[3,4],[4,5],[5,6]];
+    const PAIRS_Y2 = [[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10]];
+    const PAIRS = YEAR === 'year1' ? PAIRS_Y1 : PAIRS_Y2;
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null, showHint = true;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        showHint = document.getElementById('hint-mode').value === 'yes';
+        questions = [];
+        for (let i = 0; i < count; i++) {
+            const pair = PAIRS[Math.floor(Math.random() * PAIRS.length)];
+            // Randomly present as a+b or b+a
+            const [a, b] = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+            questions.push({ a, b, answer: a + b, smaller: Math.min(a, b) });
+        }
+        currentQ = 0; score = 0; allAnswers = [];
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        canAnswer = true;
+        updateProgress();
+
+        const q = questions[currentQ];
+        document.getElementById('main-eq').textContent = `${q.a} + ${q.b} = ?`;
+
+        const hintBox = document.getElementById('hint-box');
+        if (showHint) {
+            hintBox.style.display = 'block';
+            document.getElementById('hint-text').textContent = `Double ${q.smaller} = ${q.smaller * 2}`;
+        } else {
+            hintBox.style.display = 'none';
+        }
+
+        const inp = document.getElementById('answer-input');
+        inp.value = '';
+        inp.className = 'answer-input';
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+    }
+
+    function kp(digit) {
+        if (!canAnswer) return;
+        const inp = document.getElementById('answer-input');
+        if (inp.value.length < 2) inp.value += digit;
+    }
+
+    function kpClear() {
+        document.getElementById('answer-input').value = '';
+    }
+
+    function submitAnswer() {
+        if (!canAnswer) return;
+        const inp = document.getElementById('answer-input');
+        const given = parseInt(inp.value);
+        if (isNaN(given)) return;
+        canAnswer = false;
+
+        const q = questions[currentQ];
+        const correct = q.answer;
+        const isCorrect = given === correct;
+        const fb = document.getElementById('feedback');
+
+        if (isCorrect) {
+            score++;
+            inp.className = 'answer-input correct';
+            fb.textContent = `✓ Correct! Double ${q.smaller} = ${q.smaller * 2}, so ${q.a} + ${q.b} = ${correct}`;
+            fb.className = 'feedback correct';
+        } else {
+            inp.className = 'answer-input wrong';
+            fb.textContent = `✗ The answer is ${correct}`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ q: `${q.a} + ${q.b}`, correct, given, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 2400);
+    }
+
+    document.getElementById('answer-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitAnswer();
+    });
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect near doubles!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant doubling!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good work! Keep going!'; }
+        else { emoji = '📚'; msg = 'Remember: double the smaller, then add 1!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. ${a.q} = </span>
+                <span class="s-mark">${a.isCorrect ? `${a.correct} ✓` : `${a.given} ✗ → ${a.correct}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

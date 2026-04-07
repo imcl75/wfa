@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Times Tables Bingo — Wallscourt Farm Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1798d3;
+    --blue-dark: #1280b5;
+    --blue-light: #e4f3fb;
+    --dark: #0a0101;
+    --green: #27ae60;
+    --green-dark: #1e8449;
+    --grey: #f4f7f9;
+    --border: #d4e6f1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--grey);
+    color: var(--dark);
+    min-height: 100vh;
+  }
+
+  /* ─── Header ────────────────────────────────────────────────────── */
+  header {
+    background: var(--blue);
+    color: white;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header h1 { font-size: 1.5rem; font-weight: 900; line-height: 1.1; }
+  header .sub { font-size: 0.82rem; opacity: 0.82; margin-top: 2px; }
+
+  /* ─── Screens ───────────────────────────────────────────────────── */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ─── Shared components ─────────────────────────────────────────── */
+  .panel {
+    background: white;
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 2px 12px rgba(23,152,211,0.1);
+    margin-bottom: 18px;
+  }
+  .panel h2 {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--blue);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    text-align: center;
+  }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--blue);
+    color: white;
+    padding: 14px 28px;
+    font-size: 1.05rem;
+    width: 100%;
+    border-radius: 12px;
+  }
+  .btn-primary:hover { background: var(--blue-dark); box-shadow: 0 4px 14px rgba(23,152,211,0.35); }
+  .btn-primary:disabled { background: #a8d4ea; cursor: not-allowed; box-shadow: none; }
+
+  .btn-outline {
+    background: white;
+    color: var(--blue);
+    border: 2px solid var(--blue);
+    padding: 9px 18px;
+    font-size: 0.9rem;
+  }
+  .btn-outline:hover { background: var(--blue-light); }
+
+  .btn-ghost {
+    background: white;
+    color: #555;
+    border: 2px solid var(--border);
+    padding: 9px 18px;
+    font-size: 0.9rem;
+  }
+  .btn-ghost:hover { border-color: var(--blue); color: var(--blue); }
+
+  .btn-green {
+    background: var(--green);
+    color: white;
+    padding: 18px 24px;
+    font-size: 1.25rem;
+    width: 100%;
+    border-radius: 14px;
+  }
+  .btn-green:hover:not(:disabled) { background: var(--green-dark); box-shadow: 0 5px 16px rgba(39,174,96,0.35); }
+  .btn-green:disabled { background: #95a5a6; cursor: not-allowed; box-shadow: none; }
+
+  /* ─── Setup screen ──────────────────────────────────────────────── */
+  .setup-wrap {
+    max-width: 680px;
+    margin: 28px auto;
+    padding: 0 16px;
+  }
+
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .table-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 8px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    font-size: 1rem;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .table-label:hover { border-color: var(--blue); background: var(--blue-light); }
+  .table-label.on { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+  .table-label input { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+
+  .quick-btns { display: flex; gap: 8px; }
+
+  .warning {
+    background: #fff8e1;
+    border: 2px solid #f9a825;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-top: 12px;
+    display: none;
+  }
+
+  .players-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .players-row label { font-weight: 700; font-size: 1rem; }
+  .players-row input {
+    width: 80px;
+    padding: 10px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-align: center;
+    color: var(--dark);
+    font-size: 16px; /* prevent iOS zoom */
+  }
+  .players-row input:focus { outline: none; border-color: var(--blue); }
+
+  /* ─── Cards screen ──────────────────────────────────────────────── */
+  .toolbar {
+    background: white;
+    border-bottom: 2px solid var(--blue-light);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .toolbar-info {
+    flex: 1;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #777;
+    min-width: 120px;
+  }
+
+  .cards-wrap {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+    max-width: 940px;
+    margin: 0 auto;
+  }
+
+  .bingo-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .card-head {
+    background: var(--blue);
+    color: white;
+    text-align: center;
+    padding: 9px 12px;
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: 1px;
+  }
+  .card-sub {
+    text-align: center;
+    padding: 5px 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #888;
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .card-cell {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    padding: 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--dark);
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-cell:nth-child(4n) { border-right: none; }
+  .card-cell:nth-child(n+9) { border-bottom: none; }
+
+  /* ─── Game screen ───────────────────────────────────────────────── */
+  .game-wrap {
+    max-width: 680px;
+    margin: 28px auto;
+    padding: 0 16px;
+  }
+
+  .q-display {
+    background: var(--blue);
+    border-radius: 18px;
+    color: white;
+    text-align: center;
+    padding: 36px 24px 28px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .q-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.75;
+    margin-bottom: 6px;
+  }
+  .q-text {
+    font-size: 3.8rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    line-height: 1;
+    min-height: 1.2em;
+  }
+  .q-text.empty {
+    font-size: 1.4rem;
+    font-weight: 700;
+    opacity: 0.65;
+    letter-spacing: 0;
+  }
+  .q-answer {
+    font-size: 1rem;
+    font-weight: 800;
+    opacity: 0.75;
+    margin-top: 10px;
+    min-height: 1.4em;
+    letter-spacing: 0.5px;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .stat-num { font-size: 2.2rem; font-weight: 900; color: var(--blue); line-height: 1; }
+  .stat-lbl { font-size: 0.75rem; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+  .called-log {
+    background: white;
+    border-radius: 14px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 14px;
+  }
+  .called-log h3 {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+    margin-bottom: 10px;
+  }
+  .called-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+  .tag {
+    background: var(--blue-light);
+    color: var(--blue);
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 0.88rem;
+    font-weight: 700;
+  }
+  .tag.latest {
+    background: var(--blue);
+    color: white;
+    font-size: 1rem;
+    padding: 6px 14px;
+  }
+  .no-calls { color: #bbb; font-size: 0.9rem; font-weight: 600; }
+
+  .game-btn-row {
+    display: flex;
+    gap: 10px;
+  }
+  .game-btn-row .btn { flex: 1; font-size: 0.9rem; }
+
+  /* ─── Print ─────────────────────────────────────────────────────── */
+  /* print-page is invisible on screen — children slot into the outer grid as normal */
+  .print-page { display: contents; }
+
+  @media print {
+    @page { size: A4 portrait; margin: 10mm; }
+    header, .toolbar { display: none !important; }
+    #screen-setup, #screen-game { display: none !important; }
+    #screen-cards { display: block !important; }
+    body { background: white; }
+
+    /* Each .print-page is one A4 page: 2 columns × 4 rows */
+    .cards-wrap { display: block; padding: 0; }
+    .print-page {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 5mm;
+      height: 277mm; /* A4 297mm − 2×10mm margins */
+      break-after: page;
+    }
+    .print-page:last-child { break-after: auto; }
+
+    .bingo-card {
+      box-shadow: none;
+      border: 2px solid #aaa;
+      overflow: hidden;
+      break-inside: avoid;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-sub { display: none; }
+    .card-head { padding: 5px 8px; font-size: 0.85rem; }
+    .card-grid {
+      flex: 1;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+    }
+    .card-cell { font-size: 1.2rem; aspect-ratio: unset; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Times Tables Bingo</h1>
+    <div class="sub">Wallscourt Farm Academy</div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════ SETUP -->
+<div id="screen-setup" class="screen active">
+  <div class="setup-wrap">
+
+    <div class="panel">
+      <h2>Select Times Tables</h2>
+      <div class="tables-grid" id="tables-grid"></div>
+      <div class="quick-btns">
+        <button class="btn btn-outline" onclick="selectAll()">Select All</button>
+        <button class="btn btn-ghost"   onclick="clearAll()">Clear All</button>
+      </div>
+      <div class="warning" id="warning"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Number of Players</h2>
+      <div class="players-row">
+        <label for="num-players">Players:</label>
+        <input type="number" id="num-players" min="1" max="40" value="10" inputmode="numeric">
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="gen-btn" onclick="doGenerate()" disabled>
+      Generate Bingo Cards →
+    </button>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════ CARDS -->
+<div id="screen-cards" class="screen">
+  <div class="toolbar">
+    <button class="btn btn-ghost" onclick="goSetup()">← Back</button>
+    <div class="toolbar-info" id="cards-info"></div>
+    <button class="btn btn-outline" onclick="window.print()">🖨 Print Cards</button>
+    <button class="btn btn-primary" style="width:auto;padding:10px 22px;" onclick="goGame()">Start Game →</button>
+  </div>
+  <div class="cards-wrap" id="cards-wrap"></div>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════ GAME -->
+<div id="screen-game" class="screen">
+  <div class="game-wrap">
+
+    <div class="q-display">
+      <div class="q-label">Current Question</div>
+      <div class="q-text empty" id="q-text">Press Call to begin</div>
+      <div class="q-answer" id="q-answer"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-num" id="stat-called">0</div>
+        <div class="stat-lbl">Called</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num" id="stat-remaining">—</div>
+        <div class="stat-lbl">Remaining</div>
+      </div>
+    </div>
+
+    <button class="btn btn-green" id="call-btn" onclick="callNext()" style="margin-bottom:16px;">
+      Call Next Question
+    </button>
+
+    <div class="called-log">
+      <h3>Questions Called (most recent first)</h3>
+      <div class="called-tags" id="called-tags">
+        <span class="no-calls">None yet</span>
+      </div>
+    </div>
+
+    <div class="game-btn-row">
+      <button class="btn btn-ghost" onclick="showScreen('cards')">← View Cards</button>
+      <button class="btn btn-outline" onclick="playAgain()">Play Again</button>
+      <button class="btn btn-ghost" onclick="goSetup()">New Setup</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Constants ───────────────────────────────────────────────────────────────
+const COLS = 4, ROWS = 3, CARD_SIZE = COLS * ROWS; // 12
+
+// ── State ───────────────────────────────────────────────────────────────────
+let selectedTables   = new Set();
+let generatedCards   = [];   // array of number[] (12 products each)
+let allQuestions     = [];   // full shuffled question list for the round
+let remaining        = [];   // questions not yet called
+let called           = [];   // questions called so far
+
+// ── Screen helpers ──────────────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+}
+
+function goSetup() {
+  showScreen('setup');
+}
+
+function goGame() {
+  // Initialise / reset game questions
+  remaining = shuffle([...allQuestions]);
+  called = [];
+  renderCalledTags();
+  updateStats();
+  const qt = document.getElementById('q-text');
+  qt.textContent = 'Press Call to begin';
+  qt.className = 'q-text empty';
+  document.getElementById('q-answer').textContent = '';
+  const btn = document.getElementById('call-btn');
+  btn.disabled = false;
+  btn.textContent = 'Call Next Question';
+  showScreen('game');
+}
+
+// ── Maths helpers ───────────────────────────────────────────────────────────
+function uniqueProducts(tables) {
+  const s = new Set();
+  for (const t of tables)
+    for (let i = 1; i <= 12; i++) s.add(t * i);
+  return [...s].sort((a, b) => a - b);
+}
+
+function uniqueQuestions(tables) {
+  const seen = new Set();
+  const qs = [];
+  for (const t of tables) {
+    for (let i = 1; i <= 12; i++) {
+      const a = Math.max(t, i), b = Math.min(t, i);
+      const key = a + 'x' + b;
+      if (!seen.has(key)) {
+        seen.add(key);
+        qs.push({ key, a, b, product: a * b, display: a + ' × ' + b });
+      }
+    }
+  }
+  return qs;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ── Validation ──────────────────────────────────────────────────────────────
+function validate() {
+  const products = uniqueProducts([...selectedTables]);
+  const warn = document.getElementById('warning');
+  const btn  = document.getElementById('gen-btn');
+
+  if (selectedTables.size === 0) {
+    warn.style.display = 'block';
+    warn.textContent = 'Please select at least one times table.';
+    btn.disabled = true;
+  } else if (products.length < CARD_SIZE) {
+    warn.style.display = 'block';
+    warn.textContent =
+      'Only ' + products.length + ' unique answers available — need at least 12 ' +
+      'to fill a card. Please select more times tables.';
+    btn.disabled = true;
+  } else {
+    warn.style.display = 'none';
+    btn.disabled = false;
+  }
+}
+
+// ── Setup screen init ───────────────────────────────────────────────────────
+function buildTableCheckboxes() {
+  const grid = document.getElementById('tables-grid');
+  for (let t = 2; t <= 12; t++) {
+    const lbl = document.createElement('label');
+    lbl.className = 'table-label';
+    lbl.dataset.t = t;
+    lbl.innerHTML =
+      '<input type="checkbox" value="' + t + '"> ' + t + 's';
+    lbl.querySelector('input').addEventListener('change', function () {
+      if (this.checked) selectedTables.add(t);
+      else selectedTables.delete(t);
+      lbl.classList.toggle('on', this.checked);
+      validate();
+    });
+    grid.appendChild(lbl);
+  }
+}
+
+function selectAll() {
+  document.querySelectorAll('.table-label').forEach(lbl => {
+    const cb = lbl.querySelector('input');
+    cb.checked = true;
+    selectedTables.add(parseInt(cb.value));
+    lbl.classList.add('on');
+  });
+  validate();
+}
+
+function clearAll() {
+  document.querySelectorAll('.table-label').forEach(lbl => {
+    lbl.querySelector('input').checked = false;
+    lbl.classList.remove('on');
+  });
+  selectedTables.clear();
+  validate();
+}
+
+// ── Card generation ─────────────────────────────────────────────────────────
+function doGenerate() {
+  const tables   = [...selectedTables];
+  const players  = Math.max(1, parseInt(document.getElementById('num-players').value) || 1);
+  const products = uniqueProducts(tables);
+
+  allQuestions   = uniqueQuestions(tables);
+  generatedCards = [];
+
+  for (let i = 0; i < players; i++) {
+    generatedCards.push(shuffle(products).slice(0, CARD_SIZE));
+  }
+
+  renderCardsScreen(tables, players);
+  showScreen('cards');
+}
+
+function renderCardsScreen(tables, players) {
+  const sorted = [...selectedTables].sort((a, b) => a - b);
+  document.getElementById('cards-info').textContent =
+    players + ' card' + (players !== 1 ? 's' : '') +
+    ' — Tables: ' + sorted.join(', ');
+
+  const wrap = document.getElementById('cards-wrap');
+  wrap.innerHTML = '';
+
+  // Group cards into pages of 8 for print layout
+  const pageCount = Math.ceil(generatedCards.length / 8);
+  for (let p = 0; p < pageCount; p++) {
+    const pageDiv = document.createElement('div');
+    pageDiv.className = 'print-page';
+    const slice = generatedCards.slice(p * 8, (p + 1) * 8);
+    slice.forEach((card, i) => {
+      const idx = p * 8 + i;
+      const el = document.createElement('div');
+      el.className = 'bingo-card';
+      el.innerHTML =
+        '<div class="card-head">BINGO &mdash; Card ' + (idx + 1) + '</div>' +
+        '<div class="card-sub">Cross off each answer when its question is called &nbsp;|&nbsp; Line then Full House</div>' +
+        '<div class="card-grid">' +
+          card.map(n => '<div class="card-cell">' + n + '</div>').join('') +
+        '</div>';
+      pageDiv.appendChild(el);
+    });
+    wrap.appendChild(pageDiv);
+  }
+}
+
+// ── Game screen ─────────────────────────────────────────────────────────────
+function callNext() {
+  if (remaining.length === 0) return;
+
+  const q = remaining.pop();
+  called.push(q);
+
+  const qText = document.getElementById('q-text');
+  qText.textContent  = q.display;
+  qText.className    = 'q-text';
+  document.getElementById('q-answer').textContent = '= ' + q.product;
+
+  updateStats();
+  renderCalledTags();
+
+  if (remaining.length === 0) {
+    const btn = document.getElementById('call-btn');
+    btn.disabled = true;
+    btn.textContent = '✓ All Questions Called!';
+  }
+}
+
+function updateStats() {
+  document.getElementById('stat-called').textContent    = called.length;
+  document.getElementById('stat-remaining').textContent = remaining.length;
+}
+
+function renderCalledTags() {
+  const el = document.getElementById('called-tags');
+  if (called.length === 0) {
+    el.innerHTML = '<span class="no-calls">None yet</span>';
+    return;
+  }
+  const latest = called[called.length - 1];
+  el.innerHTML = [...called]
+    .sort((a, b) => a.product - b.product)
+    .map(q => '<span class="tag' + (q === latest ? ' latest' : '') + '">' + q.display + ' (' + q.product + ')</span>')
+    .join('');
+}
+
+function playAgain() {
+  // Same cards, reset questions
+  goGame();
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+buildTableCheckboxes();
+validate();
+</script>
+</body>
+</html>

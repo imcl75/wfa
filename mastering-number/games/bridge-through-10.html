@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge Through 10 – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 8px; }
+        /* Main equation */
+        .main-equation { text-align: center; font-size: 2.8em; font-weight: bold; color: #0a0101; margin: 8px 0; }
+        /* Bridge visual */
+        .bridge-visual {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin: 12px auto; flex-wrap: nowrap;
+        }
+        .bridge-node {
+            width: 64px; height: 64px; border-radius: 50%;
+            border: 4px solid #1798d3; display: flex; align-items: center; justify-content: center;
+            font-size: 1.4em; font-weight: bold; color: #0a0101; background: white; flex-shrink: 0;
+        }
+        .bridge-node.ten-node { border-color: #ff9800; color: #e65100; background: #fff8e1; }
+        .bridge-node.result-node { border-color: #aaa; background: #f8f8f8; color: #aaa; font-size: 1.2em; }
+        .bridge-arrow { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .bridge-arrow .arrow-line { width: 28px; height: 3px; background: #aaa; }
+        .bridge-arrow .arrow-tip { font-size: 1.2em; color: #aaa; margin-top: -6px; }
+        .bridge-arrow .step-label { font-size: .8em; color: #888; white-space: nowrap; margin-bottom: 2px; }
+        /* Input + keypad */
+        .answer-input {
+            width: 110px; padding: 12px; font-size: 2em; text-align: center;
+            border: 3px solid #ddd; border-radius: 8px; outline: none;
+            display: block; margin: 10px auto 0; -moz-appearance: textfield;
+        }
+        .answer-input::-webkit-outer-spin-button, .answer-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .answer-input:focus { border-color: #1798d3; }
+        .answer-input.correct { border-color: #1798d3; background: #e8f4fa; }
+        .answer-input.wrong { border-color: #d32f2f; background: #ffebee; }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin: 8px auto 0; }
+        .key-btn { padding: 15px; font-size: 1.3em; font-weight: bold; border: 2px solid #ddd; border-radius: 8px; background: #f8f8f8; cursor: pointer; transition: all .15s; color: #333; user-select: none; touch-action: manipulation; font-family: inherit; }
+        .key-btn:hover { background: #e8f4fa; border-color: #1798d3; }
+        .key-btn:active { background: #1798d3; color: white; transform: scale(.95); }
+        .key-btn.key-clear { background: #ffebee; border-color: #d32f2f; color: #d32f2f; font-size: 1em; }
+        .key-btn.key-clear:active { background: #d32f2f; color: white; }
+        .key-btn.key-go { background: #1798d3; color: white; border-color: #1798d3; }
+        .key-btn.key-go:hover { background: #1280b3; }
+        .feedback { text-align: center; font-size: 1.2em; font-weight: bold; min-height: 34px; margin: 6px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        /* Results */
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .main-equation { font-size: 2.2em; }
+            .bridge-node { width: 54px; height: 54px; font-size: 1.2em; }
+            .answer-input { font-size: 16px; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>🌉 Bridge Through 10</h1>
+        <p class="subtitle">Jump to 10 first, then keep going. The orange 10 is your stepping stone!</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <div class="settings-row">
+            <label for="op-type">Operations:</label>
+            <select id="op-type">
+                <option value="add">Addition only</option>
+                <option value="both" selected>Addition &amp; Subtraction</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="main-equation" id="main-eq"></div>
+        <div class="bridge-visual" id="bridge-visual"></div>
+        <input type="number" class="answer-input" id="answer-input" inputmode="none" autocomplete="off" placeholder="?">
+        <div class="keypad">
+            <button class="key-btn" onclick="kp('1')">1</button>
+            <button class="key-btn" onclick="kp('2')">2</button>
+            <button class="key-btn" onclick="kp('3')">3</button>
+            <button class="key-btn" onclick="kp('4')">4</button>
+            <button class="key-btn" onclick="kp('5')">5</button>
+            <button class="key-btn" onclick="kp('6')">6</button>
+            <button class="key-btn" onclick="kp('7')">7</button>
+            <button class="key-btn" onclick="kp('8')">8</button>
+            <button class="key-btn" onclick="kp('9')">9</button>
+            <button class="key-btn key-clear" onclick="kpClear()">Clear</button>
+            <button class="key-btn" onclick="kp('0')">0</button>
+            <button class="key-btn key-go" onclick="submitAnswer()">Go!</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year2';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null;
+    let opType = 'both';
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function generateAddition() {
+        // a + b = c, where a is 6-9 and c crosses 10
+        const a = 6 + Math.floor(Math.random() * 4); // 6,7,8,9
+        const minB = 10 - a + 1; // minimum to bridge (e.g. a=8, minB=3)
+        const maxB = Math.min(9, 19 - a);
+        if (minB > maxB) return generateAddition(); // retry
+        const b = minB + Math.floor(Math.random() * (maxB - minB + 1));
+        const c = a + b;
+        const step1 = 10 - a; // how much to reach 10
+        const step2 = b - step1; // the remainder
+        return { type: 'add', a, b, c, step1, step2 };
+    }
+
+    function generateSubtraction() {
+        // a - b = c, where a is 11-18 and c is 1-9 (bridges through 10)
+        const a = 11 + Math.floor(Math.random() * 8); // 11-18
+        const maxB = a - 1;
+        const minB = a - 9; // ensures c >= 1
+        const b = Math.max(2, minB) + Math.floor(Math.random() * (maxB - Math.max(2, minB) + 1));
+        const c = a - b;
+        if (c <= 0 || c >= 10) return generateSubtraction(); // retry
+        const step1 = a - 10; // how much to subtract to reach 10
+        const step2 = b - step1;
+        if (step2 <= 0) return generateSubtraction();
+        return { type: 'sub', a, b, c, step1, step2 };
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        opType = document.getElementById('op-type').value;
+        questions = [];
+        for (let i = 0; i < count; i++) {
+            if (opType === 'add') questions.push(generateAddition());
+            else questions.push(Math.random() < 0.5 ? generateAddition() : generateSubtraction());
+        }
+        currentQ = 0; score = 0; allAnswers = [];
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function renderBridge(q) {
+        const op = q.type === 'add' ? '+' : '−';
+        const stepLabel1 = q.type === 'add' ? `+${q.step1}` : `−${q.step1}`;
+        const stepLabel2 = q.type === 'add' ? `+${q.step2}` : `−${q.step2}`;
+
+        return `
+            <div class="bridge-node">${q.a}</div>
+            <div class="bridge-arrow">
+                <span class="step-label">${stepLabel1}</span>
+                <div class="arrow-line"></div>
+                <span class="arrow-tip">▶</span>
+            </div>
+            <div class="bridge-node ten-node">10</div>
+            <div class="bridge-arrow">
+                <span class="step-label">${stepLabel2}</span>
+                <div class="arrow-line"></div>
+                <span class="arrow-tip">▶</span>
+            </div>
+            <div class="bridge-node result-node">?</div>`;
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        canAnswer = true;
+        updateProgress();
+
+        const q = questions[currentQ];
+        const op = q.type === 'add' ? '+' : '−';
+        document.getElementById('main-eq').textContent = `${q.a} ${op} ${q.b} = ?`;
+        document.getElementById('bridge-visual').innerHTML = renderBridge(q);
+
+        const inp = document.getElementById('answer-input');
+        inp.value = '';
+        inp.className = 'answer-input';
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+    }
+
+    function kp(digit) {
+        if (!canAnswer) return;
+        const inp = document.getElementById('answer-input');
+        if (inp.value.length < 2) inp.value += digit;
+    }
+
+    function kpClear() {
+        document.getElementById('answer-input').value = '';
+    }
+
+    function submitAnswer() {
+        if (!canAnswer) return;
+        const inp = document.getElementById('answer-input');
+        const given = parseInt(inp.value);
+        if (isNaN(given)) return;
+        canAnswer = false;
+
+        const q = questions[currentQ];
+        const correct = q.c;
+        const isCorrect = given === correct;
+        const fb = document.getElementById('feedback');
+        const op = q.type === 'add' ? '+' : '−';
+
+        if (isCorrect) {
+            score++;
+            inp.className = 'answer-input correct';
+            fb.textContent = '✓ Correct!';
+            fb.className = 'feedback correct';
+            // Update bridge to show correct answer
+            const resultNode = document.querySelector('.result-node');
+            if (resultNode) { resultNode.textContent = correct; resultNode.style.color = '#1798d3'; resultNode.style.borderColor = '#1798d3'; resultNode.style.background = '#e8f4fa'; }
+        } else {
+            inp.className = 'answer-input wrong';
+            fb.textContent = `✗ The answer is ${correct}`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ q: `${q.a} ${op} ${q.b}`, correct, given, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 2200);
+    }
+
+    document.getElementById('answer-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitAnswer();
+    });
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect bridging! You\'ve mastered it!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant bridging!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good work! Keep practising!'; }
+        else { emoji = '📚'; msg = 'Keep using 10 as your stepping stone!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. ${a.q} = </span>
+                <span class="s-mark">${a.isCorrect ? `${a.correct} ✓` : `${a.given} ✗ → ${a.correct}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

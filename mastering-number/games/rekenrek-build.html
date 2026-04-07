@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Build the Rekenrek – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 10px; }
+        .feedback { text-align: center; font-size: 1.15em; font-weight: bold; min-height: 34px; margin: 8px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+
+        /* Target number */
+        .target-label { text-align: center; color: #666; font-size: .95em; margin-bottom: 4px; }
+        .target-number { text-align: center; font-size: 4.5em; font-weight: bold; color: #0a0101; line-height: 1; margin-bottom: 6px; }
+        .current-count { text-align: center; font-size: 1em; color: #888; min-height: 22px; margin-bottom: 4px; }
+
+        /* Rekenrek */
+        .rk-display { display: flex; justify-content: center; margin: 10px 0; }
+        .rk-frame {
+            background: #7B4F2E;
+            border: 5px solid #4A2E16;
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: inline-flex;
+            flex-direction: column;
+            gap: 7px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.08);
+        }
+        .rk-row { display: flex; align-items: center; gap: 4px; }
+        .rk-gap { width: 8px; flex-shrink: 0; }
+        .rk-bead {
+            width: 36px; height: 36px; border-radius: 50%;
+            flex-shrink: 0; transition: transform .1s;
+        }
+        .rk-bead.red   { background: radial-gradient(circle at 35% 35%, #ef5350, #b71c1c); box-shadow: 2px 2px 5px rgba(0,0,0,0.4); }
+        .rk-bead.cream { background: radial-gradient(circle at 35% 35%, #fffde7, #f9a825); box-shadow: 2px 2px 5px rgba(0,0,0,0.3); border: 1px solid #e6b800; }
+        .rk-bead.inactive { background: #c4a882; opacity: 0.42; box-shadow: none; }
+        .rk-bead.clickable { cursor: pointer; touch-action: manipulation; user-select: none; }
+        .rk-bead.clickable:hover { transform: scale(1.12); opacity: 1; }
+        .rk-bead.clickable:active { transform: scale(0.9); }
+        /* Correct animation */
+        .rk-bead.glow-correct { box-shadow: 0 0 10px 3px #1798d3; }
+
+        /* Action buttons */
+        .action-row { display: flex; gap: 10px; margin-top: 8px; }
+        .btn-check {
+            flex: 1; background: #1798d3; color: white; border: none; border-radius: 8px;
+            padding: 14px; font-size: 1.15em; font-weight: bold; cursor: pointer;
+            transition: all .2s; font-family: inherit;
+        }
+        .btn-check:hover { background: #1280b3; }
+        .btn-check:disabled { background: #ccc; cursor: default; }
+        .btn-clear {
+            background: #f5f5f5; color: #555; border: 2px solid #ddd; border-radius: 8px;
+            padding: 14px 18px; font-size: 1em; cursor: pointer; font-family: inherit;
+            transition: all .2s;
+        }
+        .btn-clear:hover { background: #ffebee; border-color: #d32f2f; color: #d32f2f; }
+        .btn-next {
+            display: none; width: 100%; background: #0a0101; color: white; border: none;
+            border-radius: 8px; padding: 13px; font-size: 1.1em; font-weight: bold;
+            cursor: pointer; margin-top: 8px; font-family: inherit; transition: all .2s;
+        }
+        .btn-next:hover { background: #292929; }
+
+        /* Row labels */
+        .rk-row-wrap { display: flex; align-items: center; gap: 6px; }
+        .row-label { font-size: .75em; color: #c4a882; font-weight: bold; min-width: 14px; }
+
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .target-number { font-size: 3.8em; }
+            .rk-bead { width: 28px; height: 28px; }
+            .rk-row { gap: 3px; }
+            .rk-gap { width: 6px; }
+            .rk-frame { padding: 8px; gap: 5px; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>🧮 Build the Rekenrek</h1>
+        <p class="subtitle">Tap the beads to push across the right number!</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="target-label">Push across this many beads:</div>
+        <div class="target-number" id="target-num"></div>
+        <div class="current-count" id="current-count">Tap a bead to start</div>
+        <div class="rk-display" id="rk-display"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="action-row">
+            <button class="btn-clear" onclick="clearBeads()">Clear</button>
+            <button class="btn-check" id="btn-check" onclick="checkAnswer()">Check!</button>
+        </div>
+        <button class="btn-next" id="btn-next" onclick="nextQ()">Next →</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    const NUM_ROWS = YEAR === 'reception' ? 1 : 2;
+    const MAX_NUM  = NUM_ROWS * 10;
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null;
+    // Single value: beads fill sequentially — positions 1-10 = row 1, 11-20 = row 2
+    let totalActive = 0;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function renderRekenrek(interactive) {
+        const target = questions[currentQ] || MAX_NUM;
+        const row0Active = Math.min(totalActive, 10);
+        const row1Active = Math.max(0, totalActive - 10);
+
+        function renderRow(rowIdx) {
+            const active = rowIdx === 0 ? row0Active : row1Active;
+            // Row 2 is only interactive when target > 10
+            const isRowInteractive = interactive && (rowIdx === 0 || (NUM_ROWS > 1 && target > 10));
+            let html = '<div class="rk-row">';
+            for (let pos = 1; pos <= 10; pos++) {
+                const absPos = rowIdx * 10 + pos; // 1-20
+                const isActive = pos <= active;
+                const colorCls = pos <= 5 ? 'red' : 'cream';
+                const inactiveCls = isActive ? '' : ' inactive';
+                const clickCls = isRowInteractive ? ' clickable' : '';
+                const onclick = isRowInteractive
+                    ? `onclick="beadClick(${absPos})"` : '';
+                html += `<div class="rk-bead${inactiveCls}${clickCls} ${colorCls}" ${onclick}></div>`;
+                if (pos === 5) html += '<div class="rk-gap"></div>';
+            }
+            return html + '</div>';
+        }
+
+        let html = '<div class="rk-frame">' + renderRow(0);
+        if (NUM_ROWS === 2) html += renderRow(1);
+        return html + '</div>';
+    }
+
+    function refreshRekenrek(interactive) {
+        document.getElementById('rk-display').innerHTML = renderRekenrek(interactive);
+    }
+
+    function updateLiveCount() {
+        document.getElementById('current-count').textContent =
+            totalActive === 0 ? 'Tap a bead to start' :
+            totalActive === 1 ? '1 bead pushed' : `${totalActive} beads pushed`;
+    }
+
+    function beadClick(absPos) {
+        if (!canAnswer) return;
+        // Clicking an active bead: push back to absPos-1; clicking inactive: push forward to absPos
+        totalActive = absPos <= totalActive ? absPos - 1 : absPos;
+        refreshRekenrek(true);
+        updateLiveCount();
+    }
+
+    function clearBeads() {
+        if (!canAnswer) return;
+        totalActive = 0;
+        refreshRekenrek(true);
+        updateLiveCount();
+    }
+
+    function checkAnswer() {
+        if (!canAnswer) return;
+        canAnswer = false;
+
+        const target = questions[currentQ];
+        const total = totalActive;
+        const isCorrect = total === target;
+        const fb = document.getElementById('feedback');
+
+        if (isCorrect) {
+            score++;
+            fb.textContent = '✓ Correct!';
+            fb.className = 'feedback correct';
+            allAnswers.push({ target, given: total, isCorrect: true });
+            currentQ++; updateProgress();
+            document.getElementById('btn-check').disabled = true;
+            advanceTimer = setTimeout(nextQ, 1600);
+        } else {
+            const diff = total - target;
+            fb.textContent = diff > 0
+                ? `✗ That's ${diff} too many — here's ${target}`
+                : `✗ Need ${-diff} more — here's ${target}`;
+            fb.className = 'feedback wrong';
+            allAnswers.push({ target, given: total, isCorrect: false });
+            currentQ++; updateProgress();
+            // Show correct arrangement
+            totalActive = target;
+            refreshRekenrek(false); // non-interactive while showing answer
+            document.getElementById('btn-check').disabled = true;
+            document.getElementById('btn-next').style.display = 'block';
+        }
+    }
+
+    function nextQ() {
+        if (advanceTimer) clearTimeout(advanceTimer);
+        document.getElementById('btn-next').style.display = 'none';
+        showQuestion();
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        const pool = [];
+        for (let v = 1; v <= MAX_NUM; v++) pool.push(v);
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        questions = [];
+        for (let i = 0; i < count; i++) questions.push(pool[i % pool.length]);
+        currentQ = 0; score = 0; allAnswers = [];
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        canAnswer = true;
+        totalActive = 0;
+        updateProgress();
+
+        document.getElementById('target-num').textContent = questions[currentQ];
+        refreshRekenrek(true);
+        updateLiveCount();
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+        document.getElementById('btn-check').disabled = false;
+        document.getElementById('btn-next').style.display = 'none';
+    }
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect rekenrek building!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant work!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good effort! Keep going!'; }
+        else { emoji = '📚'; msg = 'Keep practising — use the groups of 5!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. Build ${a.target}</span>
+                <span class="s-mark">${a.isCorrect ? '✓' : `${a.given} ✗ → ${a.target}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Odd or Even? – Mastering Number</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a; min-height: 100vh;
+            display: flex; justify-content: center; align-items: center; padding: 20px;
+        }
+        .container { background: white; border-radius: 12px; padding: 28px; max-width: 540px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.4); border-top: 5px solid #1798d3; }
+        .school-header { text-align: center; margin-bottom: 8px; }
+        .school-logo { max-width: 80px; height: auto; }
+        .year-badge { text-align: center; background: #e8f4fa; color: #1798d3; padding: 3px 14px; border-radius: 20px; font-size: .85em; font-weight: bold; display: block; margin: 6px auto 12px; }
+        h1 { text-align: center; color: #0a0101; font-size: 1.8em; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 18px; font-size: .95em; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-primary { background: #1798d3; color: white; border: none; border-radius: 8px; padding: 14px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all .2s; width: 100%; margin-top: 10px; font-family: inherit; }
+        .btn-primary:hover { background: #1280b3; }
+        .btn-secondary { display: block; text-align: center; background: #0a0101; color: white; border: none; border-radius: 8px; padding: 11px; font-size: 1em; cursor: pointer; transition: all .2s; width: 100%; margin-top: 8px; text-decoration: none; font-family: inherit; }
+        .btn-secondary:hover { background: #292929; }
+        .btn-back { display: block; text-align: center; color: #1798d3; font-size: .9em; margin-top: 12px; text-decoration: none; }
+        .settings-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 0; font-size: 1em; color: #333; }
+        .settings-row select { padding: 7px 12px; font-size: 1em; border-radius: 6px; border: 2px solid #ddd; background: white; font-family: inherit; }
+        .settings-row select:focus { border-color: #1798d3; outline: none; }
+        .progress-text { text-align: center; color: #666; margin-bottom: 5px; font-size: .9em; }
+        .progress-bar { background: #eee; border-radius: 8px; height: 12px; margin-bottom: 14px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #1798d3; border-radius: 8px; transition: width .3s ease; }
+        .score-display { text-align: center; color: #666; font-size: .95em; margin-bottom: 10px; }
+        /* Number display */
+        .big-number { text-align: center; font-size: 5em; font-weight: bold; color: #0a0101; margin: 8px 0 4px; line-height: 1; }
+        /* Dot pairs visual */
+        .pairs-visual { display: flex; flex-direction: column; align-items: center; gap: 6px; margin: 8px auto; width: fit-content; }
+        .pair-row { display: flex; gap: 8px; }
+        .lone-row { display: flex; justify-content: center; }
+        .pdot { width: 30px; height: 30px; border-radius: 50%; background: #1798d3; }
+        .pdot.lone { background: #ff9800; }  /* odd one out in orange */
+        /* Answer buttons */
+        .oe-btns { display: flex; gap: 12px; margin: 12px 0; }
+        .oe-btn {
+            flex: 1; padding: 18px; font-size: 1.4em; font-weight: bold;
+            border: 3px solid #ddd; border-radius: 10px; background: #f8f8f8;
+            cursor: pointer; transition: all .15s; font-family: inherit;
+            user-select: none; touch-action: manipulation;
+        }
+        .oe-btn:hover { border-color: #1798d3; background: #e8f4fa; }
+        .oe-btn:active { transform: scale(.97); }
+        .oe-btn:disabled { opacity: .4; cursor: default; }
+        .oe-btn.correct-btn { background: #e8f4fa; border-color: #1798d3; color: #1798d3; }
+        .oe-btn.wrong-btn { background: #ffebee; border-color: #d32f2f; color: #d32f2f; }
+        .feedback { text-align: center; font-size: 1.2em; font-weight: bold; min-height: 34px; margin: 6px 0; }
+        .feedback.correct { color: #1798d3; }
+        .feedback.wrong { color: #d32f2f; }
+        /* Results */
+        .results-header { text-align: center; margin-bottom: 18px; }
+        .results-emoji { font-size: 3.5em; display: block; margin-bottom: 8px; }
+        .results-score { font-size: 2.4em; font-weight: bold; color: #0a0101; display: block; }
+        .results-pct { color: #666; font-size: 1em; }
+        .results-msg { text-align: center; font-size: 1.15em; color: #555; margin: 12px 0 18px; }
+        .summary-list { margin: 0 0 12px; max-height: 280px; overflow-y: auto; }
+        .summary-item { padding: 7px 10px; border-radius: 6px; margin: 3px 0; display: flex; justify-content: space-between; font-size: .92em; }
+        .s-correct { background: #e8f4fa; border-left: 4px solid #1798d3; }
+        .s-wrong { background: #ffebee; border-left: 4px solid #d32f2f; }
+        .s-correct .s-mark { color: #1798d3; font-weight: bold; }
+        .s-wrong .s-mark { color: #d32f2f; font-weight: bold; }
+        @media (max-width: 768px) { body { padding: 10px; } .container { padding: 20px; } }
+        @media (max-width: 480px) {
+            body { padding: 5px; align-items: flex-start; }
+            .container { padding: 15px; border-radius: 8px; }
+            h1 { font-size: 1.4em; }
+            .big-number { font-size: 4em; }
+            .pdot { width: 26px; height: 26px; }
+            .settings-row select { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- SETUP -->
+    <div id="setup-screen" class="screen active">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="year-badge" id="year-badge"></div>
+        <h1>🔢 Odd or Even?</h1>
+        <p class="subtitle">Do the dots pair up neatly, or is one left over? Blue pairs = even, orange lone dot = odd.</p>
+        <div class="settings-row">
+            <label for="q-count">Questions:</label>
+            <select id="q-count">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+            </select>
+        </div>
+        <button class="btn-primary" onclick="startGame()">Start!</button>
+        <a class="btn-back" id="back-link" href="../index.html">← Back to games</a>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="progress-text" id="progress-text"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="score-display" id="score-display"></div>
+        <div class="big-number" id="big-num"></div>
+        <div class="pairs-visual" id="pairs-visual"></div>
+        <div class="oe-btns">
+            <button class="oe-btn" id="btn-even" onclick="handleAnswer('even')">Even</button>
+            <button class="oe-btn" id="btn-odd" onclick="handleAnswer('odd')">Odd</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="results-screen" class="screen">
+        <div class="school-header">
+            <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
+        </div>
+        <div class="results-header">
+            <span class="results-emoji" id="r-emoji"></span>
+            <span class="results-score" id="r-score"></span>
+            <div class="results-pct" id="r-pct"></div>
+        </div>
+        <div class="results-msg" id="r-msg"></div>
+        <div class="summary-list" id="r-summary"></div>
+        <button class="btn-primary" onclick="startGame()">Try Again</button>
+        <a class="btn-secondary" id="home-link" href="../index.html">← Back to games</a>
+    </div>
+</div>
+
+<script>
+    const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
+    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
+    document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
+    document.getElementById('home-link').href = `../index.html?year=${YEAR}`;
+
+    const MAX_NUM = { reception: 10, year1: 10, year2: 20 }[YEAR];
+
+    let questions = [], currentQ = 0, score = 0, allAnswers = [];
+    let canAnswer = false, advanceTimer = null;
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function updateProgress() {
+        const pct = (currentQ / questions.length) * 100;
+        document.getElementById('progress-text').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+        document.getElementById('progress-fill').style.width = pct + '%';
+        document.getElementById('score-display').textContent = `Score: ${score} / ${currentQ}`;
+    }
+
+    function startGame() {
+        const count = parseInt(document.getElementById('q-count').value);
+        questions = [];
+        for (let i = 0; i < count; i++) questions.push(1 + Math.floor(Math.random() * MAX_NUM));
+        currentQ = 0; score = 0; allAnswers = [];
+        showScreen('game-screen');
+        showQuestion();
+    }
+
+    function renderPairs(n) {
+        const pairs = Math.floor(n / 2);
+        const isOdd = n % 2 === 1;
+        let html = '';
+        for (let i = 0; i < pairs; i++) {
+            html += `<div class="pair-row"><div class="pdot"></div><div class="pdot"></div></div>`;
+        }
+        if (isOdd) {
+            html += `<div class="lone-row"><div class="pdot lone"></div></div>`;
+        }
+        return html;
+    }
+
+    function showQuestion() {
+        if (currentQ >= questions.length) { showResults(); return; }
+        if (advanceTimer) clearTimeout(advanceTimer);
+        canAnswer = true;
+        updateProgress();
+
+        const n = questions[currentQ];
+        document.getElementById('big-num').textContent = n;
+        // For large numbers (Y2 > 10), skip the dot pairs to avoid clutter
+        document.getElementById('pairs-visual').innerHTML = n <= 10 ? renderPairs(n) : '';
+        document.getElementById('feedback').textContent = '';
+        document.getElementById('feedback').className = 'feedback';
+        document.getElementById('btn-even').disabled = false;
+        document.getElementById('btn-odd').disabled = false;
+        document.getElementById('btn-even').className = 'oe-btn';
+        document.getElementById('btn-odd').className = 'oe-btn';
+    }
+
+    function handleAnswer(choice) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        if (advanceTimer) clearTimeout(advanceTimer);
+
+        const n = questions[currentQ];
+        const correct = n % 2 === 0 ? 'even' : 'odd';
+        const isCorrect = choice === correct;
+        const fb = document.getElementById('feedback');
+
+        document.getElementById('btn-even').disabled = true;
+        document.getElementById('btn-odd').disabled = true;
+        document.getElementById(`btn-${correct}`).classList.add('correct-btn');
+        if (!isCorrect) document.getElementById(`btn-${choice}`).classList.add('wrong-btn');
+
+        if (isCorrect) {
+            score++;
+            fb.textContent = `✓ Correct! ${n} is ${correct}`;
+            fb.className = 'feedback correct';
+        } else {
+            fb.textContent = `✗ ${n} is ${correct}`;
+            fb.className = 'feedback wrong';
+        }
+
+        allAnswers.push({ n, correct, choice, isCorrect });
+        currentQ++;
+        updateProgress();
+        advanceTimer = setTimeout(showQuestion, 2000);
+    }
+
+    function showResults() {
+        const total = questions.length;
+        const pct = Math.round((score / total) * 100);
+        let emoji, msg;
+        if (pct === 100) { emoji = '🌟'; msg = 'Perfect! You know odd and even!'; }
+        else if (pct >= 80) { emoji = '🎉'; msg = 'Brilliant!'; }
+        else if (pct >= 60) { emoji = '👍'; msg = 'Good work!'; }
+        else { emoji = '📚'; msg = 'Keep practising!'; }
+
+        document.getElementById('r-emoji').textContent = emoji;
+        document.getElementById('r-score').textContent = `${score} / ${total}`;
+        document.getElementById('r-pct').textContent = `${pct}% correct`;
+        document.getElementById('r-msg').textContent = msg;
+
+        let html = '';
+        allAnswers.forEach((a, i) => {
+            const cls = a.isCorrect ? 's-correct' : 's-wrong';
+            html += `<div class="summary-item ${cls}">
+                <span>${i + 1}. Is ${a.n} odd or even?</span>
+                <span class="s-mark">${a.isCorrect ? `${a.correct} ✓` : `${a.choice} ✗ → ${a.correct}`}</span>
+            </div>`;
+        });
+        document.getElementById('r-summary').innerHTML = html;
+        showScreen('results-screen');
+    }
+</script>
+</body>
+</html>
