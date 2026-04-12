@@ -69,6 +69,65 @@ gridConfig for number-line:
 Set showMethod:true when marks >= 2.
 Vary question types — never make all "write-answer". Generate exactly the count requested.`;
 
+    // ── Curriculum scope by year group (CLF / NC KS2 maths) ─────────────────
+
+    const CURRICULUM = {
+      Y3: {
+        label: "Year 3",
+        scope: `Year 3 maths curriculum scope (pitch questions here):
+- Number & Place Value: 3-digit numbers; round to nearest 10/100; locate on number line; compare and order
+- Addition & Subtraction: column methods with 3-digit numbers including regrouping; mental strategies (partitioning, bridging, adjusting)
+- Multiplication & Division: rapid recall of 2, 4, 8 times tables; 3 and 6 times tables introduced; multiply/divide 2-digit by 1-digit; distributive law informally
+- Fractions: unit and non-unit fractions; compare and order fractions with same denominator; add/subtract fractions with same denominator; fractions of amounts
+- Measurement: length (m/cm/mm); mass (kg/g); capacity (l/ml); convert between units; perimeter of simple shapes
+- Time: tell time to nearest minute; 24-hour clock; Roman numerals; calculate durations
+- Geometry: right angles; parallel and perpendicular lines; classify triangles and quadrilaterals; horizontal/vertical
+- Statistics: bar charts, pictograms, tables — interpret scales; create from data
+IMPORTANT: Use only 3-digit numbers for place value. No decimals. No coordinates. No negative numbers. Keep contexts simple and concrete.`
+      },
+      Y4: {
+        label: "Year 4",
+        scope: `Year 4 maths curriculum scope (pitch questions here):
+- Number & Place Value: 4-digit numbers; round to nearest 10/100/1000; negative numbers in context; number lines
+- Addition & Subtraction: column addition/subtraction with 4-digit numbers including multiple regroupings
+- Multiplication & Division: all times tables to 12×12 (rapid recall); factor pairs; multiply/divide by 10 and 100; short multiplication and division introduced; distributive law
+- Fractions: mixed numbers and improper fractions — convert between; add/subtract fractions crossing the whole; fractions of amounts
+- Coordinates: first quadrant only; plot, read and describe positions; translations
+- Geometry: classify triangles (scalene, isosceles, equilateral); lines of symmetry; reflections; properties of rectangles/squares
+- Measurement: convert between units (×1000); perimeter of regular and irregular polygons; area by counting squares; money (£/p)
+- Statistics: bar charts and line graphs — read and interpret scales; collect, present and discuss data
+IMPORTANT: Coordinates in first quadrant only (no negatives). Use 4-digit numbers. Fractions may include mixed numbers and improper fractions.`
+      },
+      Y5: {
+        label: "Year 5",
+        scope: `Year 5 maths curriculum scope (pitch questions here):
+- Number & Place Value: 5- and 6-digit numbers; powers of 10; decimals to hundredths; negative numbers on number lines
+- Addition & Subtraction: add/subtract decimals; mental strategies (compensation, adjusting, near-doubles)
+- Multiplication & Division: short multiplication and short division; factors, multiples, prime numbers, square numbers, cube numbers
+- Fractions: multiply a proper fraction by a whole number; fractions of quantities including non-unit fractions; equivalent fractions; convert between fractions and decimals
+- Area & Perimeter: area of rectangles (l×w); area of compound shapes; perimeter of all polygons
+- Volume: count cubes; volume of cuboids
+- Angles: acute, obtuse, reflex; measure and draw with protractor; angles on a straight line = 180°; angles around a point = 360°
+- Geometry: regular and irregular polygons; properties of 3D shapes; nets of 3D shapes
+- Statistics: line graphs; reading pie charts (begin); mean average
+IMPORTANT: Include decimals. Use larger numbers (5–6 digits). Introduce angles and volume. Fractions converted to/from decimals.`
+      },
+      Y6: {
+        label: "Year 6",
+        scope: `Year 6 maths curriculum scope (pitch questions here — this is SATs year):
+- Number & Place Value: numbers to 10 million; round to any power of 10; order/compare integers and decimals
+- Addition & Subtraction: equivalence and compensation strategies; multi-step calculations
+- Multiplication & Division: long multiplication (up to 4-digit × 2-digit); long division (up to 4-digit ÷ 2-digit); multiply/divide fractions
+- Fractions, Decimals & Percentages: add/subtract fractions with different denominators; multiply and divide fractions; convert fluently between fractions, decimals and percentages; find percentage of a value; find the whole
+- Ratio & Proportion: describe ratio relationships; scale; solve proportion problems
+- Algebra: balancing equations; two unknowns; substitution; order of operations (BODMAS)
+- Area: triangles (½bh); perimeter and area consolidation
+- Coordinates: all four quadrants — plot, read, translate, reflect
+- Statistics: construct and interpret pie charts; line graphs; mean, median, mode; two-way tables
+IMPORTANT: Use all four quadrants for coordinates. Include BODMAS, ratio, algebra, percentages. Multi-step problems. Full SATs style and difficulty.`
+      }
+    };
+
     // ── SVG: Coordinate Grid ─────────────────────────────────────────────────
 
     function CoordGrid({ cfg }) {
@@ -392,6 +451,7 @@ Vary question types — never make all "write-answer". Generate exactly the coun
 
     function App(){
       const [topic,     setTopic]   = useState("");
+      const [yearGroup, setYearGroup] = useState("Y4");
       const [count,     setCount]   = useState("4");
       const [diff,      setDiff]    = useState("mixed");
       const [questions, setQs]      = useState([]);
@@ -422,6 +482,8 @@ Vary question types — never make all "write-answer". Generate exactly the coun
           ? "Harder — 2 and 3-mark questions, multi-step, challenging."
           : "Mixed difficulty — some 1-mark and some 2-mark questions.";
 
+        const curriculumNote = CURRICULUM[yearGroup]?.scope || "";
+
         setLoading(true);
         setError("");
         setQs([]);
@@ -442,7 +504,7 @@ Vary question types — never make all "write-answer". Generate exactly the coun
               system: SYSTEM_PROMPT,
               messages: [{
                 role: "user",
-                content: `Generate ${count} KS2 SATs-style reasoning questions on the topic: "${t}". ${diffNote} Return ONLY the JSON array.`
+                content: `Generate ${count} KS2 SATs-style reasoning questions for ${CURRICULUM[yearGroup]?.label} on the topic: "${t}". ${diffNote}\n\n${curriculumNote}\n\nReturn ONLY the JSON array.`
               }]
             })
           });
@@ -490,6 +552,13 @@ Vary question types — never make all "write-answer". Generate exactly the coun
                   placeholder="e.g. coordinates, fractions, time, percentages…"
                   style={{padding:"8px 11px",fontSize:14,fontFamily:"Arial",border:"none",borderRadius:4,color:"#111",width:"100%"}}
                 />
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:5,minWidth:100}}>
+                <label style={{fontSize:12,opacity:0.85}}>Year group</label>
+                <select value={yearGroup} onChange={e=>setYearGroup(e.target.value)}
+                  style={{padding:"8px 10px",fontSize:14,fontFamily:"Arial",border:"none",borderRadius:4}}>
+                  {Object.entries(CURRICULUM).map(([k,v])=><option key={k} value={k}>{v.label}</option>)}
+                </select>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:5,minWidth:130}}>
                 <label style={{fontSize:12,opacity:0.85}}>Difficulty</label>
@@ -563,7 +632,7 @@ Vary question types — never make all "write-answer". Generate exactly the coun
 
               <div style={{background:"white",boxShadow:"0 2px 14px rgba(0,0,0,0.12)",padding:"40px 52px 52px 52px"}}>
                 <div style={{borderBottom:"2.5px solid #222",paddingBottom:12,marginBottom:4}}>
-                  <div style={{fontSize:13,color:"#444",marginBottom:3}}>Key Stage 2 Mathematics — Reasoning</div>
+                  <div style={{fontSize:13,color:"#444",marginBottom:3}}>Key Stage 2 Mathematics — Reasoning &nbsp;|&nbsp; {CURRICULUM[yearGroup]?.label}</div>
                   <div style={{fontSize:22,fontWeight:"bold",color:"#1a1a8c"}}>{topicDisplay} Practice Questions</div>
                 </div>
                 {questions.map((q,i)=><QuestionCard key={q.id||i} q={q} num={i+1}/>)}
