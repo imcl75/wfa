@@ -64,7 +64,8 @@
 //   Teacher Out First name of staff member who is out of class
 //   Class       e.g. Y4, Reception
 //   Cover Staff Who is covering
-//   Reason      Must be exactly:  PPA  Leadership  Phase Lead  Training  ECT  RA  Sports  Trip  Sick  Staff Meeting  FLC  PAC  Other
+//   Reason      Must be exactly:  PPA  Leadership  Phase Lead  Training  ECT  RA  Sports  Trip  Sick  Staff Meeting  FLC  PAC  CLF Conference  Other
+//               RA = Raising Attainment  |  FLC = Family Learning Conference  |  PAC = Primary Academy Collaboration
 //   Time        Optional — free text, e.g. 15:30–18:45. Shown on the card when present.
 //   Teacher Out Use "All Staff" for whole-school events (staff meetings, FLC, PAC).
 //               These render as a banner rather than individual cover slots.
