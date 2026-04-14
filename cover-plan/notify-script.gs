@@ -41,7 +41,7 @@
 //   Teacher Out First name of staff member who is out of class
 //   Class       e.g. Y4, Reception
 //   Cover Staff Who is covering
-//   Reason      Must be exactly:  PPA  Leadership  Training  Sick  Trip  Other
+//   Reason      Must be exactly:  PPA  Leadership  Phase Lead  Training  ECT  RA  Sports  Trip  Sick  Other
 //   Notes       Optional free text
 //
 // ── USAGE ─────────────────────────────────────────────────────────────────────
