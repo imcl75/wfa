@@ -346,8 +346,14 @@
       const dayIdx = dt.getDay() - 1;
       if (dayIdx < 0 || dayIdx > 4) return;
       const day = DAYS[dayIdx];
-      const session = SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
-      grid[day][session].push(e);
+      const session = e['Session'] && e['Session'].trim();
+      if (session && SESSIONS.includes(session)) {
+        grid[day][session].push(e);
+      } else {
+        // Blank session = all day: show in AM and PM
+        grid[day]['AM'].push(e);
+        grid[day]['PM'].push(e);
+      }
     });
 
     const dayDates = DAYS.map((_, i) => addDays(weekStart, i));
@@ -418,16 +424,18 @@
       </div>
     );
 
-    const bySession = {};
+    const bySession = { 'All Day': [] };
     SESSIONS.forEach(s => { bySession[s] = []; });
     todayRows.forEach(e => {
-      const s = SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
-      bySession[s].push(e);
+      const s = e['Session'] && e['Session'].trim();
+      bySession[s && SESSIONS.includes(s) ? s : 'All Day'].push(e);
     });
+
+    const todayDisplaySessions = ['All Day', ...SESSIONS];
 
     return (
       <div>
-        {SESSIONS.map(session => bySession[session].length === 0 ? null : (
+        {todayDisplaySessions.map(session => bySession[session].length === 0 ? null : (
           <div key={session} style={{ marginBottom:20 }}>
             <div style={{ fontSize:12, fontWeight:'bold', color:'#64748b', letterSpacing:'0.08em',
               textTransform:'uppercase', marginBottom:8 }}>{session}</div>
@@ -536,7 +544,7 @@
       const sessionBadge = (
         <span style={{ fontSize:11, fontWeight:'bold', background:'#f1f5f9',
           color:'#475569', padding:'1px 6px', borderRadius:3 }}>
-          {e['Session'] || 'AM'}
+          {e['Session'] && e['Session'].trim() || 'All Day'}
         </span>
       );
 

@@ -59,7 +59,8 @@
 //
 //   Date        DD/MM/YYYY  (column formatted as Date)
 //   Day         Auto-filled by formula (column formatted as Automatic)
-//   Session     Must be exactly:  Before School  AM  PM  Lunch  After School
+//   Session     Must be exactly:  Before School  AM  Lunch  PM  After School
+//               Leave blank to mark as All Day (appears in both AM and PM in the viewer)
 //   Teacher Out First name of staff member who is out of class
 //   Class       e.g. Y4, Reception
 //   Cover Staff Who is covering
