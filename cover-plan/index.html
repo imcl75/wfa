@@ -25,16 +25,19 @@
   const SESSION_ABR  = { 'Before School':'Before', AM:'AM', PM:'PM', Lunch:'Lunch', 'After School':'After' };
 
   const REASON_COLOURS = {
-    'PPA':        { bg:'#dbeafe', border:'#93c5fd', label:'#1e40af' },
-    'Leadership': { bg:'#fef3c7', border:'#fcd34d', label:'#92400e' },
-    'Phase Lead': { bg:'#fce7f3', border:'#f9a8d4', label:'#9d174d' },
-    'Training':   { bg:'#ede9fe', border:'#c4b5fd', label:'#5b21b6' },
-    'ECT':        { bg:'#fef9c3', border:'#fde047', label:'#713f12' },
-    'RA':         { bg:'#e0e7ff', border:'#a5b4fc', label:'#3730a3' },
-    'Sports':     { bg:'#ccfbf1', border:'#5eead4', label:'#0f766e' },
-    'Trip':       { bg:'#d1fae5', border:'#6ee7b7', label:'#065f46' },
-    'Sick':       { bg:'#fee2e2', border:'#fca5a5', label:'#991b1b' },
-    'Other':      { bg:'#f3f4f6', border:'#d1d5db', label:'#374151' },
+    'PPA':           { bg:'#dbeafe', border:'#93c5fd', label:'#1e40af' },
+    'Leadership':    { bg:'#fef3c7', border:'#fcd34d', label:'#92400e' },
+    'Phase Lead':    { bg:'#fce7f3', border:'#f9a8d4', label:'#9d174d' },
+    'Training':      { bg:'#ede9fe', border:'#c4b5fd', label:'#5b21b6' },
+    'ECT':           { bg:'#fef9c3', border:'#fde047', label:'#713f12' },
+    'RA':            { bg:'#e0e7ff', border:'#a5b4fc', label:'#3730a3' },
+    'Sports':        { bg:'#ccfbf1', border:'#5eead4', label:'#0f766e' },
+    'Trip':          { bg:'#d1fae5', border:'#6ee7b7', label:'#065f46' },
+    'Sick':          { bg:'#fee2e2', border:'#fca5a5', label:'#991b1b' },
+    'Staff Meeting': { bg:'#f0f9ff', border:'#7dd3fc', label:'#0c4a6e' },
+    'FLC':           { bg:'#fff1f2', border:'#fda4af', label:'#9f1239' },
+    'PAC':           { bg:'#f7fee7', border:'#a3e635', label:'#3f6212' },
+    'Other':         { bg:'#f3f4f6', border:'#d1d5db', label:'#374151' },
   };
   const DEFAULT_COLOUR = REASON_COLOURS['Other'];
 
@@ -147,8 +150,34 @@
     );
   }
 
-  function SlotCard({ entry }) {
+  function isAllStaff(entry) {
+    return (entry['Teacher Out'] || '').trim().toLowerCase() === 'all staff';
+  }
+
+  function AllStaffCard({ entry }) {
     const c = REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
+    const time  = entry['Time']  && entry['Time'].trim();
+    const notes = entry['Notes'] && entry['Notes'].trim();
+    return (
+      <div style={{ background:c.bg, border:`1.5px solid ${c.border}`, borderRadius:4,
+        padding:'7px 10px', marginBottom:5, fontSize:12.5, lineHeight:1.4 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+          <span style={{ fontWeight:'bold', color:'#111' }}>All Staff</span>
+          <ReasonBadge reason={entry['Reason']}/>
+          {time && <span style={{ fontSize:12, fontWeight:'bold', color:c.label,
+            background:'white', border:`1px solid ${c.border}`, padding:'0 5px', borderRadius:3 }}>
+            {time}
+          </span>}
+        </div>
+        {notes && <div style={{ color:'#555', fontSize:11.5, marginTop:3 }}>{notes}</div>}
+      </div>
+    );
+  }
+
+  function SlotCard({ entry }) {
+    if (isAllStaff(entry)) return <AllStaffCard entry={entry}/>;
+    const c = REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
+    const time     = entry['Time']  && entry['Time'].trim();
     const hasNotes = entry['Notes'] && entry['Notes'].trim();
     return (
       <div style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:4,
@@ -156,6 +185,9 @@
         <div style={{ fontWeight:'bold', color:'#111' }}>
           {entry['Teacher Out'] || '?'}
           {entry['Class'] && <span style={{ fontWeight:'normal', color:'#555', marginLeft:4 }}>({entry['Class']})</span>}
+          {time && <span style={{ fontWeight:'normal', color:c.label, marginLeft:6,
+            fontSize:11, background:'white', border:`1px solid ${c.border}`,
+            padding:'0 4px', borderRadius:3 }}>{time}</span>}
         </div>
         <div style={{ color:'#1a1a8c', marginTop:1 }}>
           → {entry['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic' }}>Cover TBC</span>}
@@ -365,7 +397,22 @@
             <div style={{ fontSize:12, fontWeight:'bold', color:'#64748b', letterSpacing:'0.08em',
               textTransform:'uppercase', marginBottom:8 }}>{session}</div>
             {bySession[session].map((e, i) => {
-              const c = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
+              const c    = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
+              const time = e['Time'] && e['Time'].trim();
+              if (isAllStaff(e)) return (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px',
+                  background:c.bg, border:`1px solid ${c.border}`, borderLeft:`4px solid ${c.border}`,
+                  borderRadius:4, marginBottom:6, flexWrap:'wrap' }}>
+                  <span style={{ fontWeight:'bold', fontSize:14 }}>All Staff</span>
+                  <ReasonBadge reason={e['Reason']}/>
+                  {time && <span style={{ fontSize:13, fontWeight:'bold', color:c.label,
+                    background:'white', border:`1px solid ${c.border}`, padding:'1px 7px', borderRadius:3 }}>
+                    {time}
+                  </span>}
+                  {e['Notes'] && e['Notes'].trim() &&
+                    <div style={{ width:'100%', fontSize:12, color:'#64748b', paddingTop:2 }}>{e['Notes']}</div>}
+                </div>
+              );
               return (
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px',
                   background:'white', border:`1px solid ${c.border}`, borderLeft:`4px solid ${c.border}`,
@@ -373,6 +420,10 @@
                   <div style={{ flex:1, minWidth:160 }}>
                     <span style={{ fontWeight:'bold', fontSize:14 }}>{e['Teacher Out'] || '?'}</span>
                     {e['Class'] && <span style={{ color:'#666', fontSize:13 }}> · {e['Class']}</span>}
+                    {time && <span style={{ fontSize:12, color:c.label, marginLeft:8,
+                      background:c.bg, border:`1px solid ${c.border}`, padding:'0 5px', borderRadius:3 }}>
+                      {time}
+                    </span>}
                   </div>
                   <div style={{ color:'#1a1a8c', fontWeight:'bold', fontSize:14, flexShrink:0 }}>
                     → {e['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic', fontWeight:'normal' }}>TBC</span>}
