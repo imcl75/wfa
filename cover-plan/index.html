@@ -477,7 +477,7 @@
 
   // ── My view ───────────────────────────────────────────────────────────────────
 
-  function MyView({ entries, myName, onNameChange, allNames }) {
+  function MyView({ entries, myName, onNameChange, allNames, termWeeks }) {
     const today = new Date(); today.setHours(0,0,0,0);
 
     // Entries involving this person
@@ -500,15 +500,15 @@
       weekMap.get(key).entries.push(e);
     });
 
-    const weeks = [...weekMap.values()].sort((a, b) => a.start - b.start);
-    const upcoming = weeks.filter(w => addDays(w.start, 5) >= today);
-    const past     = weeks.filter(w => addDays(w.start, 5) < today);
+    const weekGroups = [...weekMap.values()].sort((a, b) => a.start - b.start);
+    const upcoming = weekGroups.filter(w => addDays(w.start, 5) >= today);
+    const past     = weekGroups.filter(w => addDays(w.start, 5) < today);
 
     const [showPast, setShowPast] = useState(false);
 
     function renderWeek(week) {
       const isCurrent = sameDay(week.start, weekMonday(today));
-      const lbl = getWeekLabel(week.start, weeks);
+      const lbl = getWeekLabel(week.start, termWeeks || []);
       return (
         <div key={week.start.toISOString()} style={{ marginBottom:20 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
@@ -807,7 +807,7 @@
             <>
               <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 16px' }}>My schedule</h2>
               <IllnessBanner staff={staff.filter(s => s['Name']===myName && (s['Status']||'').toLowerCase()==='illness')}/>
-              <MyView entries={entries} myName={myName} onNameChange={handleNameChange} allNames={allNames}/>
+              <MyView entries={entries} myName={myName} onNameChange={handleNameChange} allNames={allNames} termWeeks={weeks}/>
             </>
           ) : (
             <>
