@@ -212,7 +212,7 @@
     const hasNotes = entry['Notes'] && entry['Notes'].trim();
     return (
       <div style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:4,
-        padding:'6px 9px', marginBottom:5, fontSize:12.5, fontFamily:'Arial', lineHeight:1.35 }}>
+        padding:'6px 9px', marginBottom:5, fontSize:12.5, fontFamily:'Arial', lineHeight:1.35, wordBreak:'break-word' }}>
         <div style={{ fontWeight:'bold', color:'#111' }}>
           {entry['Teacher Out'] || '?'}
           {entry['Class'] && <span style={{ fontWeight:'normal', color:'#555', marginLeft:4 }}>({entry['Class']})</span>}
@@ -386,7 +386,7 @@
 
     return (
       <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
-        <table style={{ width:'100%', borderCollapse:'collapse', minWidth:620 }}>
+        <table style={{ width:'100%', borderCollapse:'collapse', minWidth:620, tableLayout:'fixed' }}>
           <thead>
             <tr>
               <th style={{ width:60, border:'1px solid #e2e8f0', padding:'8px 6px',
@@ -395,7 +395,7 @@
                 const d = dayDates[i];
                 const isToday = sameDay(d, today);
                 return (
-                  <th key={day} style={{ border:'1px solid #e2e8f0', padding:'10px 8px',
+                  <th key={day} style={{ width:'calc((100% - 60px) / 5)', border:'1px solid #e2e8f0', padding:'10px 8px',
                     background: isToday ? '#1a1a8c' : '#f0f4ff',
                     color: isToday ? 'white' : '#1e3a8a', textAlign:'center', fontSize:13, fontWeight:'bold' }}>
                     <div>{DAY_ABR[day]}</div>
