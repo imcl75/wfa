@@ -788,43 +788,50 @@
       <div style={{ fontFamily:'Arial', background:'#f0f4f8', minHeight:'100vh', padding:'16px' }}>
 
         {/* Header */}
-        <div style={{ maxWidth:1040, margin:'0 auto 14px', background:'#1798d3',
-          borderRadius:8, padding:'18px 22px', color:'white' }}>
+        <div style={{ maxWidth:1040, margin:'0 auto 14px', borderRadius:8,
+          overflow:'hidden', boxShadow:'0 1px 6px rgba(0,0,0,0.1)' }}>
 
-          <SettingsPanel sheetId={sheetId} onSave={id => { setSheetId(id); load(id); }}/>
+          {/* Blue top strip */}
+          <div style={{ background:'#1798d3', height:8 }}/>
 
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
-            flexWrap:'wrap', gap:12 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:14 }}>
-              <img src="logo.png" alt="Wallscourt Farm Academy" style={{ height:60, display:'block' }}/>
-              <div>
-                <div style={{ fontSize:16, fontWeight:800, fontFamily:'Nunito, Arial, sans-serif', color:'white', letterSpacing:'0.01em' }}>Release Schedule</div>
-                <div style={{ fontSize:12, opacity:0.8, marginTop:3 }}>
-                  {lastFetched
-                    ? <>Last refreshed {fmtTime(lastFetched)} · <button onClick={()=>load(sheetId)}
-                        style={{ background:'none', border:'none', color:'rgba(255,255,255,0.75)',
-                          cursor:'pointer', fontSize:12, padding:0, fontFamily:'Arial' }}>
-                        refresh now
-                      </button></>
-                    : 'Not yet loaded'}
+          {/* White header body */}
+          <div style={{ background:'white', padding:'14px 22px' }}>
+            <SettingsPanel sheetId={sheetId} onSave={id => { setSheetId(id); load(id); }}/>
+
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between',
+              flexWrap:'wrap', gap:12 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:16 }}>
+                <img src="logo.png" alt="Wallscourt Farm Academy" style={{ height:64, display:'block' }}/>
+                <div style={{ borderLeft:'2px solid #e2e8f0', paddingLeft:16 }}>
+                  <div style={{ fontSize:17, fontWeight:900, fontFamily:'Nunito, Arial, sans-serif',
+                    color:'#1798d3', letterSpacing:'0.01em' }}>Release Schedule</div>
+                  <div style={{ fontSize:12, color:'#94a3b8', marginTop:3 }}>
+                    {lastFetched
+                      ? <>Last refreshed {fmtTime(lastFetched)} · <button onClick={()=>load(sheetId)}
+                          style={{ background:'none', border:'none', color:'#1798d3',
+                            cursor:'pointer', fontSize:12, padding:0, fontFamily:'Arial' }}>
+                          refresh now
+                        </button></>
+                      : 'Not yet loaded'}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Tabs */}
-            <div style={{ display:'flex', background:'rgba(0,0,0,0.15)', borderRadius:6, padding:3, gap:3 }}>
-              {TABS.map(tab => (
-                <button key={tab.id} onClick={() => {
-                  setView(tab.id);
-                  if (tab.id === 'today') setWeekStart(weekMonday(today));
-                }}
-                  style={{ padding:'6px 14px', fontSize:13, borderRadius:4, border:'none',
-                    cursor:'pointer', fontFamily:'Arial', fontWeight: view===tab.id ? 'bold' : 'normal',
-                    background: view===tab.id ? 'white' : 'transparent',
-                    color: view===tab.id ? '#1798d3' : 'rgba(255,255,255,0.85)' }}>
-                  {tab.label}
-                </button>
-              ))}
+              {/* Tabs */}
+              <div style={{ display:'flex', gap:2 }}>
+                {TABS.map(tab => (
+                  <button key={tab.id} onClick={() => {
+                    setView(tab.id);
+                    if (tab.id === 'today') setWeekStart(weekMonday(today));
+                  }}
+                    style={{ padding:'7px 16px', fontSize:13, border:'none', borderRadius:5,
+                      cursor:'pointer', fontFamily:'Arial', fontWeight: view===tab.id ? 'bold' : 'normal',
+                      background: view===tab.id ? '#1798d3' : '#f0f8fd',
+                      color: view===tab.id ? 'white' : '#475569' }}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
