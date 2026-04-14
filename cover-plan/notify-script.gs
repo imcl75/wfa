@@ -22,7 +22,7 @@
 //       =IF(A2="","",CHOOSE(WEEKDAY(A2,2),"Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
 //
 //   STEP 5 — Add column headers in Row 1 of the Plan tab:
-//     A: Date  B: Day  C: Term/Week  D: Session  E: Teacher Out  F: Class  G: Cover Staff  H: Reason  I: Notes  J: Time
+//     A: Date  B: Day  C: Term/Week  D: Session  E: Teacher Out  F: Class  G: Cover Staff  H: Reason  I: Notes  J: Time  K: Time From  L: Time To
 //
 //   And in Row 1 of the Events tab:
 //     A: Start Date  B: End Date  C: Event  D: Notes
@@ -64,9 +64,11 @@
 //   Teacher Out First name of staff member who is out of class
 //   Class       e.g. Y4, Reception
 //   Cover Staff Who is covering
-//   Reason      Must be exactly:  PPA  Leadership  Phase Lead  Training  ECT1  ECT2  RA  Sports  Trip  Illness  Staff Meeting  FLC  PAC  CLF Conference  Other
+//   Reason      Must be exactly:  PPA  Leadership  Phase Lead  Training  ECT1  ECT2  RA  Sports  Trip  Illness  Staff Meeting  FLC  PAC  CLF Conference  Supervision  Other
 //               RA = Raising Attainment  |  FLC = Family Learning Conference  |  PAC = Primary Academy Collaboration
-//   Time        Optional — free text, e.g. 15:30–18:45. Shown on the card when present.
+//   Time        Optional — legacy free text field, e.g. 15:30–18:45. Use Time From / Time To instead where possible.
+//   Time From   Optional — start time, e.g. 09:15
+//   Time To     Optional — end time, e.g. 11:00. Shown as a range on the card when both are present.
 //   Teacher Out Use "All Staff" for whole-school events (staff meetings, FLC, PAC).
 //               These render as a banner rather than individual cover slots.
 //   Notes       Optional free text

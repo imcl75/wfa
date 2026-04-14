@@ -39,6 +39,7 @@
     'FLC':           { bg:'#fff1f2', border:'#fda4af', label:'#9f1239' },
     'PAC':           { bg:'#f7fee7', border:'#a3e635', label:'#3f6212' },
     'CLF Conference':{ bg:'#fff7ed', border:'#fdba74', label:'#9a3412' },
+    'Supervision':   { bg:'#f0fdf4', border:'#86efac', label:'#166534' },
     'Other':         { bg:'#f3f4f6', border:'#d1d5db', label:'#374151' },
   };
   const DEFAULT_COLOUR = REASON_COLOURS['Other'];
@@ -58,6 +59,14 @@
   function fmtShort(d)  { return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); }
   function fmtLong(d)   { return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
   function fmtTime(d)   { return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }); }
+  function getTimeRange(e) {
+    const from = (e['Time From'] || '').trim();
+    const to   = (e['Time To']   || '').trim();
+    if (from && to) return `${from} – ${to}`;
+    if (from)       return `from ${from}`;
+    const legacy = (e['Time'] || '').trim();
+    return legacy || null;
+  }
   function fmtWeekday(d){ return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' }); }
 
   function parseDate(str) {
@@ -163,7 +172,7 @@
 
   function AllStaffCard({ entry }) {
     const c = REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
-    const time  = entry['Time']  && entry['Time'].trim();
+    const time  = getTimeRange(entry);
     const notes = entry['Notes'] && entry['Notes'].trim();
     return (
       <div style={{ background:c.bg, border:`1.5px solid ${c.border}`, borderRadius:4,
@@ -184,7 +193,7 @@
   function SlotCard({ entry }) {
     if (isAllStaff(entry)) return <AllStaffCard entry={entry}/>;
     const c = REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
-    const time     = entry['Time']  && entry['Time'].trim();
+    const time     = getTimeRange(entry);
     const hasNotes = entry['Notes'] && entry['Notes'].trim();
     return (
       <div style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:4,
@@ -443,7 +452,7 @@
               textTransform:'uppercase', marginBottom:8 }}>{session}</div>
             {bySession[session].map((e, i) => {
               const c    = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
-              const time = e['Time'] && e['Time'].trim();
+              const time = getTimeRange(e);
               if (isAllStaff(e)) return (
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px',
                   background:c.bg, border:`1px solid ${c.border}`, borderLeft:`4px solid ${c.border}`,
