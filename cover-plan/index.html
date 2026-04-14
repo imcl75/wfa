@@ -158,6 +158,7 @@
   async function fetchStaff(sheetId) {
     const rows = await fetchSheet(sheetId, 'Staff');
     console.log('[WFA] fetchStaff raw rows:', rows);
+    if (rows && rows[0]) console.log('[WFA] fetchStaff first row keys:', Object.keys(rows[0]));
     return (rows || []).filter(r => r['Name']);
   }
 
