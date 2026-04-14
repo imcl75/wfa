@@ -121,6 +121,11 @@
     return (rows || []).filter(r => r['Start Date']);
   }
 
+  async function fetchStaff(sheetId) {
+    const rows = await fetchSheet(sheetId, 'Staff');
+    return (rows || []).filter(r => r['Name']);
+  }
+
   async function fetchWeeks(sheetId) {
     const rows = await fetchSheet(sheetId, 'Weeks');
     return (rows || [])
@@ -246,6 +251,36 @@
             border:'1px solid rgba(255,255,255,0.3)', borderRadius:4, cursor:'pointer' }}>
             Cancel
           </button>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Illness banner ────────────────────────────────────────────────────────────
+
+  function IllnessBanner({ staff }) {
+    const ill = staff.filter(s => (s['Status'] || '').trim().toLowerCase() === 'illness');
+    if (ill.length === 0) return null;
+    return (
+      <div style={{ marginBottom:12, background:'#fff7ed', border:'1px solid #fb923c',
+        borderLeft:'4px solid #ea580c', borderRadius:4, padding:'10px 14px' }}>
+        <div style={{ fontSize:12, fontWeight:'bold', color:'#9a3412', letterSpacing:'0.04em',
+          textTransform:'uppercase', marginBottom:6 }}>Currently absent — Illness</div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+          {ill.map((s, i) => (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:6, background:'white',
+              border:'1px solid #fed7aa', borderRadius:4, padding:'4px 10px', fontSize:13 }}>
+              <span style={{ fontWeight:'bold', color:'#111' }}>{s['Name']}</span>
+              {(s['Role'] || s['Year Group']) && (
+                <span style={{ color:'#64748b', fontSize:12 }}>
+                  {[s['Role'], s['Year Group']].filter(Boolean).join(' · ')}
+                </span>
+              )}
+              {s['Notes'] && s['Notes'].trim() && (
+                <span style={{ color:'#9a3412', fontSize:12 }}>— {s['Notes']}</span>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -637,6 +672,7 @@
     const [entries,     setEntries]     = useState([]);
     const [events,      setEvents]      = useState([]);
     const [weeks,       setWeeks]       = useState([]);
+    const [staff,       setStaff]       = useState([]);
     const [loading,     setLoading]     = useState(false);
     const [error,       setError]       = useState('');
     const [lastFetched, setLastFetched] = useState(null);
@@ -650,10 +686,11 @@
       if (!id) return;
       setLoading(true); setError('');
       try {
-        const [rows, evts, wks] = await Promise.all([fetchPlan(id), fetchEvents(id), fetchWeeks(id)]);
+        const [rows, evts, wks, stf] = await Promise.all([fetchPlan(id), fetchEvents(id), fetchWeeks(id), fetchStaff(id)]);
         setEntries(rows);
         setEvents(evts);
         setWeeks(wks);
+        setStaff(stf);
         setLastFetched(new Date());
       } catch(e) { setError(e.message); }
       setLoading(false);
@@ -762,12 +799,14 @@
                 <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 2px' }}>Today's cover</h2>
                 <div style={{ fontSize:13, color:'#64748b' }}>{fmtLong(today)}</div>
               </div>
+              <IllnessBanner staff={staff}/>
               <EventBanners events={events} weekStart={today} />
               <TodayPanel entries={entries}/>
             </>
           ) : view === 'mine' ? (
             <>
               <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 16px' }}>My schedule</h2>
+              <IllnessBanner staff={staff.filter(s => s['Name']===myName && (s['Status']||'').toLowerCase()==='illness')}/>
               <MyView entries={entries} myName={myName} onNameChange={handleNameChange} allNames={allNames}/>
             </>
           ) : (
@@ -814,6 +853,7 @@
                   </button>
                 )}
               </div>
+              <IllnessBanner staff={staff}/>
               <EventBanners events={events} weekStart={weekStart} />
               {weekEntries.length === 0
                 ? <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>No cover recorded for this week.</div>

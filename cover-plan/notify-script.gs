@@ -6,10 +6,11 @@
 //     File → Settings → Locale → United Kingdom → Save settings
 //     Reload the sheet after saving.
 //
-//   STEP 2 — Create three tabs
+//   STEP 2 — Create four tabs
 //     Rename the first tab: right-click → Rename → type: Plan
 //     Add a second tab: click the + button → Rename → type: Events
 //     Add a third tab: click the + button → Rename → type: Weeks
+//     Add a fourth tab: click the + button → Rename → type: Staff
 //
 //   STEP 3 — Set up Column A (Date)
 //     Select column A → Format → Number → Date
@@ -27,6 +28,12 @@
 //     A: Start Date  B: End Date  C: Event  D: Notes
 //     (End Date can be left blank for single-day events)
 //     Example events: Y6 SATs, INSET Day, Bank Holiday, Parents Evening, School Trip (whole school)
+//
+//   And in Row 1 of the Staff tab:
+//     A: Name  B: Role  C: Year Group  D: Status  E: Notes
+//     Status is normally blank. Set to "Illness" for long-term absence.
+//     Notes: optional free text shown alongside the name in the illness banner (e.g. "Expected return w/c 12 May")
+//     Use data validation on Status column: dropdown with values: (blank) | Illness
 //
 //   And in Row 1 of the Weeks tab:
 //     A: Week Start  B: Term  C: Week
