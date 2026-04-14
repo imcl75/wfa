@@ -451,7 +451,7 @@
         const out   = (e['Teacher Out'] || '').trim().toLowerCase();
         const cover = (e['Cover Staff'] || '').trim().toLowerCase();
         const me    = myName.trim().toLowerCase();
-        return out === me || cover === me;
+        return out === 'all staff' || out === me || cover === me;
       })
       .map(e => ({ ...e, _date: parseDate(e['Date']) }))
       .filter(e => e._date)
@@ -683,8 +683,9 @@
     const todayCount   = entries.filter(e => { const d = parseDate(e['Date']); return d && sameDay(d, today); }).length;
     const myCount      = myName ? entries.filter(e => {
       const d = parseDate(e['Date']); if (!d || d < today) return false;
-      const me = myName.toLowerCase();
-      return (e['Teacher Out']||'').toLowerCase()===me || (e['Cover Staff']||'').toLowerCase()===me;
+      const me  = myName.toLowerCase();
+      const out = (e['Teacher Out']||'').toLowerCase();
+      return out === 'all staff' || out === me || (e['Cover Staff']||'').toLowerCase() === me;
     }).length : 0;
 
     const TABS = [
