@@ -551,11 +551,19 @@
       const isOut  = (e['Teacher Out'] || '').trim().toLowerCase() === me;
       const isToday = sameDay(e._date, today);
       const c      = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
+      const time   = getTimeRange(e);
 
+      const sessionLabel = e['Session'] && e['Session'].trim() || 'All Day';
       const sessionBadge = (
         <span style={{ fontSize:11, fontWeight:'bold', background:'#f1f5f9',
           color:'#475569', padding:'1px 6px', borderRadius:3 }}>
-          {e['Session'] && e['Session'].trim() || 'All Day'}
+          {sessionLabel}
+        </span>
+      );
+      const timeBadge = time && (
+        <span style={{ fontSize:11, fontWeight:'bold', background:'#e0e7ff',
+          color:'#3730a3', padding:'1px 6px', borderRadius:3 }}>
+          {time}
         </span>
       );
 
@@ -573,9 +581,9 @@
               </span>
             </div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:13.5, color:'#111', marginBottom:3 }}>
-                {fmtWeekday(e._date)} · {sessionBadge}
-                {isToday && <span style={{ marginLeft:6, fontSize:11, color:'#c2410c', fontWeight:'bold' }}>TODAY</span>}
+              <div style={{ fontSize:13.5, color:'#111', marginBottom:3, display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+                {fmtWeekday(e._date)} · {sessionBadge} {timeBadge}
+                {isToday && <span style={{ fontSize:11, color:'#c2410c', fontWeight:'bold' }}>TODAY</span>}
               </div>
               <div style={{ fontSize:13, color:'#555' }}>
                 {e['Class'] && <span style={{ marginRight:6 }}>{e['Class']} · </span>}
@@ -602,9 +610,9 @@
               </span>
             </div>
             <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:13.5, color:'#111', marginBottom:3 }}>
-                {fmtWeekday(e._date)} · {sessionBadge}
-                {isToday && <span style={{ marginLeft:6, fontSize:11, color:'#1d4ed8', fontWeight:'bold' }}>TODAY</span>}
+              <div style={{ fontSize:13.5, color:'#111', marginBottom:3, display:'flex', gap:6, flexWrap:'wrap', alignItems:'center' }}>
+                {fmtWeekday(e._date)} · {sessionBadge} {timeBadge}
+                {isToday && <span style={{ fontSize:11, color:'#1d4ed8', fontWeight:'bold' }}>TODAY</span>}
               </div>
               <div style={{ fontSize:13, color:'#555' }}>
                 Covering: <strong>{e['Teacher Out'] || '?'}</strong>
