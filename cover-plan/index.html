@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WFA Cover Plan</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #f0f4f8; font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+  const { useState, useEffect, useCallback, useRef } = React;
+
+  // ── Constants ────────────────────────────────────────────────────────────────
+
+  const DAYS     = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const DAY_ABR  = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri' };
+  const SESSIONS = ['AM','PM','Lunch'];
+
+  const REASON_COLOURS = {
+    'PPA':        { bg:'#dbeafe', border:'#93c5fd', label:'#1e40af' },
+    'Leadership': { bg:'#fef3c7', border:'#fcd34d', label:'#92400e' },
+    'Training':   { bg:'#ede9fe', border:'#c4b5fd', label:'#5b21b6' },
+    'Sick':       { bg:'#fee2e2', border:'#fca5a5', label:'#991b1b' },
+    'Trip':       { bg:'#d1fae5', border:'#6ee7b7', label:'#065f46' },
+    'Other':      { bg:'#f3f4f6', border:'#d1d5db', label:'#374151' },
+  };
+  const DEFAULT_COLOUR = REASON_COLOURS['Other'];
+
+  // ── Date helpers ──────────────────────────────────────────────────────────────
+
+  function weekMonday(date) {
+    const d = new Date(date); d.setHours(0,0,0,0);
+    const dow = d.getDay();
+    d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+    return d;
+  }
+  function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+  function sameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+  function fmtShort(d)   { return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); }
+  function fmtLong(d)    { return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+  function fmtTime(d)    { return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }); }
+
+  function parseDate(str) {
+    if (!str) return null;
+    str = String(str).trim();
+    // DD/MM/YYYY
+    let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+    // YYYY-MM-DD
+    m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+    return null;
+  }
+
+  // ── CSV parser (handles quoted fields) ────────────────────────────────────────
+
+  function parseCSV(text) {
+    const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
+    if (lines.length < 2) return [];
+
+    function splitLine(line) {
+      const fields = []; let cur = '', inQ = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (ch === '"') {
+          if (inQ && line[i+1] === '"') { cur += '"'; i++; }
+          else { inQ = !inQ; }
+        } else if (ch === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+      }
+      fields.push(cur.trim());
+      return fields;
+    }
+
+    const headers = splitLine(lines[0]).map(h => h.replace(/^"|"$/g,''));
+    return lines.slice(1)
+      .map(line => {
+        const vals = splitLine(line);
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^"|"$/g,''); });
+        return obj;
+      })
+      .filter(row => Object.values(row).some(v => v));
+  }
+
+  // ── Fetch plan data from Google Sheet ─────────────────────────────────────────
+
+  async function fetchPlan(sheetId) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Plan`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`Could not read sheet (HTTP ${resp.status}). Check the Sheet ID and that sharing is set to "Anyone with the link can view".`);
+    const text = await resp.text();
+    if (text.includes('Sign in') || text.includes('<html')) throw new Error('Sheet is not publicly accessible. Set sharing to "Anyone with the link can view".');
+    return parseCSV(text).filter(r => r['Date']);
+  }
+
+  // ── Components ────────────────────────────────────────────────────────────────
+
+  function SettingsPanel({ sheetId, onSave }) {
+    const [draft, setDraft] = useState('');
+    const [open, setOpen]   = useState(!sheetId);
+
+    function extractId(input) {
+      // Accept full URL or bare ID
+      const m = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : input.trim();
+    }
+
+    function save() {
+      const id = extractId(draft);
+      if (!id) return;
+      localStorage.setItem('wfa_cover_sheet_id', id);
+      onSave(id);
+      setOpen(false);
+    }
+
+    if (!open) return (
+      <div style={{ textAlign:'right', marginBottom:6 }}>
+        <button onClick={()=>setOpen(true)} style={{ fontSize:12, color:'rgba(255,255,255,0.55)',
+          background:'transparent', border:'none', cursor:'pointer', fontFamily:'Arial' }}>
+          ⚙ {sheetId ? 'Sheet connected ✓ — change' : 'Connect Google Sheet'}
+        </button>
+      </div>
+    );
+
+    return (
+      <div style={{ background:'rgba(0,0,0,0.22)', borderRadius:4, padding:'14px 16px', marginBottom:12 }}>
+        <p style={{ margin:'0 0 8px', fontSize:13, color:'rgba(255,255,255,0.9)', fontFamily:'Arial' }}>
+          Paste your Google Sheet URL or ID. The sheet must be shared as "Anyone with the link can view".
+        </p>
+        <div style={{ display:'flex', gap:8 }}>
+          <input value={draft} onChange={e=>setDraft(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&save()}
+            placeholder="Paste Google Sheet URL or ID…"
+            style={{ flex:1, padding:'7px 10px', fontSize:13, fontFamily:'Arial', border:'none', borderRadius:4 }}
+          />
+          <button onClick={save} style={{ padding:'7px 16px', fontSize:13, fontWeight:'bold',
+            background:'#e8a000', color:'white', border:'none', borderRadius:4, cursor:'pointer' }}>
+            Save
+          </button>
+          {sheetId && <button onClick={()=>setOpen(false)} style={{ padding:'7px 12px', fontSize:13,
+            background:'transparent', color:'rgba(255,255,255,0.7)',
+            border:'1px solid rgba(255,255,255,0.3)', borderRadius:4, cursor:'pointer' }}>
+            Cancel
+          </button>}
+        </div>
+      </div>
+    );
+  }
+
+  function SlotCard({ entry }) {
+    const c = REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
+    const hasNotes = entry['Notes'] && entry['Notes'].trim();
+    return (
+      <div style={{ background:c.bg, border:`1px solid ${c.border}`, borderRadius:4,
+        padding:'6px 9px', marginBottom:5, fontSize:12.5, fontFamily:'Arial', lineHeight:1.35 }}>
+        <div style={{ fontWeight:'bold', color:'#111' }}>
+          {entry['Teacher Out'] || '?'}
+          {entry['Class'] && <span style={{ fontWeight:'normal', color:'#555', marginLeft:4 }}>({entry['Class']})</span>}
+        </div>
+        <div style={{ color:'#1a1a8c', marginTop:1 }}>
+          → {entry['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic' }}>Cover TBC</span>}
+        </div>
+        <div style={{ marginTop:2 }}>
+          <span style={{ background:c.border, color:c.label, fontSize:10.5, fontWeight:'bold',
+            padding:'1px 5px', borderRadius:3, letterSpacing:'0.02em' }}>
+            {entry['Reason'] || 'Other'}
+          </span>
+          {hasNotes && <span style={{ color:'#666', fontSize:11, marginLeft:5 }}>{entry['Notes']}</span>}
+        </div>
+      </div>
+    );
+  }
+
+  function WeekGrid({ entries, weekStart }) {
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    // Build Day × Session lookup
+    const grid = {};
+    DAYS.forEach(d => { grid[d] = {}; SESSIONS.forEach(s => { grid[d][s] = []; }); });
+
+    entries.forEach(e => {
+      const dt = parseDate(e['Date']);
+      if (!dt) return;
+      const dayIdx = dt.getDay() - 1; // 0=Mon
+      if (dayIdx < 0 || dayIdx > 4) return;
+      const day = DAYS[dayIdx];
+      const session = e['Session'] && SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
+      grid[day][session].push(e);
+    });
+
+    const dayDates = DAYS.map((_, i) => addDays(weekStart, i));
+
+    return (
+      <div style={{ overflowX:'auto', WebkitOverflowScrolling:'touch' }}>
+        <table style={{ width:'100%', borderCollapse:'collapse', minWidth:620 }}>
+          <thead>
+            <tr>
+              <th style={{ width:60, border:'1px solid #e2e8f0', padding:'8px 6px',
+                background:'#f8fafc', fontSize:12, color:'#94a3b8' }}></th>
+              {DAYS.map((day, i) => {
+                const d = dayDates[i];
+                const isToday = sameDay(d, today);
+                return (
+                  <th key={day} style={{ border:'1px solid #e2e8f0', padding:'10px 8px',
+                    background: isToday ? '#1a1a8c' : '#f0f4ff',
+                    color: isToday ? 'white' : '#1e3a8a', textAlign:'center',
+                    fontSize:13, fontWeight:'bold' }}>
+                    <div>{DAY_ABR[day]}</div>
+                    <div style={{ fontSize:11, fontWeight:'normal', opacity:0.8 }}>{fmtShort(d)}</div>
+                    {isToday && <div style={{ fontSize:10, fontWeight:'normal', opacity:0.7, marginTop:1 }}>TODAY</div>}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {SESSIONS.map(session => (
+              <tr key={session}>
+                <td style={{ border:'1px solid #e2e8f0', padding:'8px 6px', background:'#f8fafc',
+                  fontWeight:'bold', fontSize:12, color:'#64748b', textAlign:'center', verticalAlign:'top' }}>
+                  {session}
+                </td>
+                {DAYS.map((day, i) => {
+                  const d = dayDates[i];
+                  const isToday = sameDay(d, today);
+                  const slots = grid[day][session];
+                  return (
+                    <td key={day} style={{ border:'1px solid #e2e8f0', padding:'8px 7px',
+                      background: isToday ? '#f0f4ff' : 'white', verticalAlign:'top', minWidth:130 }}>
+                      {slots.length === 0
+                        ? <span style={{ color:'#d1d5db', fontSize:12 }}>—</span>
+                        : slots.map((e, idx) => <SlotCard key={idx} entry={e} />)
+                      }
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
+  function TodayPanel({ entries }) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const todayRows = entries.filter(e => {
+      const d = parseDate(e['Date']);
+      return d && sameDay(d, today);
+    });
+
+    if (todayRows.length === 0) return (
+      <div style={{ padding:'30px 0', textAlign:'center', color:'#94a3b8', fontSize:14 }}>
+        No cover arrangements recorded for today.
+      </div>
+    );
+
+    const bySession = {};
+    SESSIONS.forEach(s => { bySession[s] = []; });
+    todayRows.forEach(e => {
+      const s = e['Session'] && SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
+      bySession[s].push(e);
+    });
+
+    return (
+      <div>
+        {SESSIONS.map(session => bySession[session].length === 0 ? null : (
+          <div key={session} style={{ marginBottom:20 }}>
+            <div style={{ fontSize:12, fontWeight:'bold', color:'#64748b', letterSpacing:'0.08em',
+              textTransform:'uppercase', marginBottom:8 }}>{session}</div>
+            {bySession[session].map((e, i) => {
+              const c = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
+              return (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px',
+                  background:'white', border:`1px solid ${c.border}`, borderLeft:`4px solid ${c.border}`,
+                  borderRadius:4, marginBottom:6, fontFamily:'Arial', flexWrap:'wrap' }}>
+                  <div style={{ flex:1, minWidth:160 }}>
+                    <span style={{ fontWeight:'bold', fontSize:14 }}>{e['Teacher Out'] || '?'}</span>
+                    {e['Class'] && <span style={{ color:'#666', fontSize:13 }}> · {e['Class']}</span>}
+                  </div>
+                  <div style={{ color:'#1a1a8c', fontWeight:'bold', fontSize:14, flexShrink:0 }}>
+                    → {e['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic', fontWeight:'normal' }}>TBC</span>}
+                  </div>
+                  <div style={{ flexShrink:0 }}>
+                    <span style={{ background:c.bg, color:c.label, fontSize:11, fontWeight:'bold',
+                      padding:'2px 7px', borderRadius:3 }}>{e['Reason'] || 'Other'}</span>
+                  </div>
+                  {e['Notes'] && e['Notes'].trim() &&
+                    <div style={{ width:'100%', fontSize:12, color:'#64748b', paddingTop:4 }}>{e['Notes']}</div>}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  function Legend() {
+    return (
+      <div style={{ display:'flex', gap:10, flexWrap:'wrap', padding:'12px 0 4px' }}>
+        {Object.entries(REASON_COLOURS).map(([label, c]) => (
+          <div key={label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, fontFamily:'Arial' }}>
+            <div style={{ width:13, height:13, background:c.bg, border:`1px solid ${c.border}`, borderRadius:2 }}/>
+            <span style={{ color:'#64748b' }}>{label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  // ── Main App ──────────────────────────────────────────────────────────────────
+
+  function App() {
+    const [sheetId,    setSheetId]    = useState(() => localStorage.getItem('wfa_cover_sheet_id') || '');
+    const [entries,    setEntries]    = useState([]);
+    const [loading,    setLoading]    = useState(false);
+    const [error,      setError]      = useState('');
+    const [lastFetched,setLastFetched]= useState(null);
+    const [weekStart,  setWeekStart]  = useState(() => weekMonday(new Date()));
+    const [view,       setView]       = useState('week'); // 'week' | 'today'
+
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    const load = useCallback(async (id) => {
+      if (!id) return;
+      setLoading(true); setError('');
+      try {
+        const rows = await fetchPlan(id);
+        setEntries(rows);
+        setLastFetched(new Date());
+      } catch(e) {
+        setError(e.message);
+      }
+      setLoading(false);
+    }, []);
+
+    // Initial load + auto-refresh every 3 minutes
+    useEffect(() => {
+      if (sheetId) load(sheetId);
+      const t = setInterval(() => { if (sheetId) load(sheetId); }, 3 * 60 * 1000);
+      return () => clearInterval(t);
+    }, [sheetId, load]);
+
+    const weekEnd = addDays(weekStart, 5);
+    const weekEntries = entries.filter(e => {
+      const d = parseDate(e['Date']);
+      return d && d >= weekStart && d < weekEnd;
+    });
+
+    const isThisWeek = sameDay(weekStart, weekMonday(today));
+
+    // Count today's cover for the tab badge
+    const todayCount = entries.filter(e => {
+      const d = parseDate(e['Date']);
+      return d && sameDay(d, today);
+    }).length;
+
+    return (
+      <div style={{ fontFamily:'Arial', background:'#f0f4f8', minHeight:'100vh', padding:'16px' }}>
+
+        {/* Header */}
+        <div style={{ maxWidth:1040, margin:'0 auto 14px', background:'#1a1a8c',
+          borderRadius:8, padding:'18px 22px', color:'white' }}>
+
+          <SettingsPanel sheetId={sheetId} onSave={id => { setSheetId(id); load(id); }} />
+
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between',
+            flexWrap:'wrap', gap:12 }}>
+            <div>
+              <h1 style={{ fontSize:18, fontWeight:'bold', margin:'0 0 3px' }}>
+                Wallscourt Farm Academy
+              </h1>
+              <div style={{ fontSize:14, opacity:0.85 }}>Staff Cover Plan</div>
+              <div style={{ fontSize:12, opacity:0.6, marginTop:4 }}>
+                {lastFetched
+                  ? <>Last refreshed {fmtTime(lastFetched)} · <button onClick={()=>load(sheetId)}
+                      style={{ background:'none', border:'none', color:'rgba(255,255,255,0.65)',
+                        cursor:'pointer', fontSize:12, padding:0, fontFamily:'Arial' }}>
+                      refresh now
+                    </button></>
+                  : 'Not yet loaded'}
+              </div>
+            </div>
+
+            {/* View tabs */}
+            <div style={{ display:'flex', background:'rgba(0,0,0,0.2)', borderRadius:6, padding:3, gap:3 }}>
+              {[
+                { id:'week',  label:'Week view' },
+                { id:'today', label:`Today${todayCount > 0 ? ` (${todayCount})` : ''}` },
+              ].map(tab => (
+                <button key={tab.id} onClick={() => {
+                  setView(tab.id);
+                  if (tab.id === 'today') setWeekStart(weekMonday(today));
+                }}
+                  style={{ padding:'6px 16px', fontSize:13, borderRadius:4, border:'none',
+                    cursor:'pointer', fontFamily:'Arial', fontWeight: view===tab.id ? 'bold' : 'normal',
+                    background: view===tab.id ? 'white' : 'transparent',
+                    color: view===tab.id ? '#1a1a8c' : 'rgba(255,255,255,0.8)' }}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main card */}
+        <div style={{ maxWidth:1040, margin:'0 auto', background:'white', borderRadius:8,
+          padding:'20px 22px', boxShadow:'0 1px 6px rgba(0,0,0,0.08)' }}>
+
+          {!sheetId ? (
+            <div style={{ textAlign:'center', padding:'50px 0', color:'#94a3b8' }}>
+              <div style={{ fontSize:32, marginBottom:10 }}>📋</div>
+              <div style={{ fontSize:15, marginBottom:6 }}>No Google Sheet connected yet.</div>
+              <div style={{ fontSize:13 }}>Click "Connect Google Sheet" above to get started.</div>
+            </div>
+          ) : loading && entries.length === 0 ? (
+            <div style={{ textAlign:'center', padding:'50px 0', color:'#94a3b8', fontSize:14 }}>
+              Loading cover plan…
+            </div>
+          ) : error ? (
+            <div style={{ background:'#fee2e2', border:'1px solid #fca5a5', borderRadius:4,
+              padding:'16px 18px', color:'#991b1b', fontSize:14 }}>
+              <strong>Could not load plan</strong><br/>{error}
+            </div>
+          ) : view === 'today' ? (
+            <>
+              <div style={{ marginBottom:16 }}>
+                <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 2px' }}>Today's cover</h2>
+                <div style={{ fontSize:13, color:'#64748b' }}>{fmtLong(today)}</div>
+              </div>
+              <TodayPanel entries={entries} />
+            </>
+          ) : (
+            <>
+              {/* Week nav */}
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
+                <button onClick={() => setWeekStart(d => addDays(d, -7))}
+                  style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
+                    borderRadius:4, cursor:'pointer', background:'white', color:'#334155' }}>‹</button>
+                <div style={{ flex:1, textAlign:'center', fontWeight:'bold', fontSize:15, color:'#1e3a8a' }}>
+                  {fmtShort(weekStart)} – {fmtShort(addDays(weekStart, 4))}
+                  {isThisWeek && <span style={{ fontSize:11, fontWeight:'normal', color:'#64748b',
+                    marginLeft:8, background:'#f0f4ff', padding:'1px 7px', borderRadius:10 }}>
+                    This week
+                  </span>}
+                </div>
+                <button onClick={() => setWeekStart(d => addDays(d, 7))}
+                  style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
+                    borderRadius:4, cursor:'pointer', background:'white', color:'#334155' }}>›</button>
+                {!isThisWeek && (
+                  <button onClick={() => setWeekStart(weekMonday(today))}
+                    style={{ padding:'5px 12px', fontSize:12, border:'1px solid #1a1a8c',
+                      borderRadius:4, cursor:'pointer', color:'#1a1a8c', background:'white' }}>
+                    Back to this week
+                  </button>
+                )}
+              </div>
+
+              {weekEntries.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>
+                  No cover recorded for this week.
+                </div>
+              ) : (
+                <WeekGrid entries={weekEntries} weekStart={weekStart} />
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Legend */}
+        {entries.length > 0 && (
+          <div style={{ maxWidth:1040, margin:'10px auto 0', paddingLeft:4 }}>
+            <Legend />
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
