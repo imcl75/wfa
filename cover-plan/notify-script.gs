@@ -1,16 +1,58 @@
 // ── WFA Cover Plan — Google Apps Script ──────────────────────────────────────
 //
-// SETUP:
-//   1. In your Google Sheet, click Extensions → Apps Script
-//   2. Delete any existing code, paste this entire file
-//   3. Click Save (disk icon)
-//   4. Click Run → onOpen once to authorise (approve the permissions popup)
-//   5. Reload your Google Sheet — a new "Cover Plan" menu will appear
+// ── GOOGLE SHEET SETUP (do these steps in order) ─────────────────────────────
 //
-// USAGE:
+//   STEP 1 — Set locale to UK (do this before entering any data)
+//     File → Settings → Locale → United Kingdom → Save settings
+//     Reload the sheet after saving.
+//
+//   STEP 2 — Rename the first tab
+//     Right-click the tab at the bottom → Rename → type: Plan
+//
+//   STEP 3 — Set up Column A (Date)
+//     Select column A → Format → Number → Date
+//     Enter dates as DD/MM/YYYY (e.g. 14/04/2026)
+//
+//   STEP 4 — Set up Column B (Day — auto-fills from date)
+//     Select column B → Format → Number → Automatic
+//     In cell B2 enter this formula, then drag it down the column:
+//       =IF(A2="","",CHOOSE(WEEKDAY(A2,2),"Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
+//
+//   STEP 5 — Add the remaining column headers in Row 1:
+//     A: Date  B: Day  C: Session  D: Teacher Out  E: Class  F: Cover Staff  G: Reason  H: Notes
+//
+//   STEP 6 — Make the sheet publicly readable
+//     Click Share → Change to "Anyone with the link" → Viewer → Done
+//
+//   STEP 7 — Note your Sheet ID
+//     It's the long string in the URL between /d/ and /edit
+//     You'll paste this into the cover plan viewer to connect it.
+//
+//   STEP 8 — Add this Apps Script
+//     Extensions → Apps Script → delete existing code → paste this file → Save
+//     Click Run → onOpen once to grant permissions (approve the popup)
+//     Reload your sheet — a "Cover Plan" menu appears in the toolbar
+//
+// ── COLUMN REFERENCE ──────────────────────────────────────────────────────────
+//
+//   Date        DD/MM/YYYY  (column formatted as Date)
+//   Day         Auto-filled by formula (column formatted as Automatic)
+//   Session     Must be exactly:  AM  PM  Lunch
+//   Teacher Out First name of staff member who is out of class
+//   Class       e.g. Y4, Reception
+//   Cover Staff Who is covering
+//   Reason      Must be exactly:  PPA  Leadership  Training  Sick  Trip  Other
+//   Notes       Optional free text
+//
+// ── USAGE ─────────────────────────────────────────────────────────────────────
+//
 //   When you finish updating the plan, click:
 //     Cover Plan → Publish & Notify Staff
-//   This emails everyone on the NOTIFICATION_EMAILS list and timestamps the update.
+//   This emails everyone on the NOTIFICATION_EMAILS list with today's cover
+//   summary and a link to the viewer.
+//
+//   To update the email list: edit NOTIFICATION_EMAILS below and save.
+//   No other changes needed.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 
