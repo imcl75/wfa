@@ -122,12 +122,12 @@
       return fields;
     }
 
-    const headers = splitLine(lines[0]).map(h => h.replace(/^"|"$/g,''));
+    const headers = splitLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
     return lines.slice(1)
       .map(line => {
         const vals = splitLine(line);
         const obj = {};
-        headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^"|"$/g,''); });
+        headers.forEach((h, i) => { obj[h] = (vals[i] || '').replace(/^"|"$/g,'').trim(); });
         return obj;
       })
       .filter(row => Object.values(row).some(v => v));
