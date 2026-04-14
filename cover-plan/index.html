@@ -113,7 +113,7 @@
   async function fetchPlan(sheetId) {
     const rows = await fetchSheet(sheetId, 'Plan');
     if (!rows) throw new Error('Could not read sheet. Check the Sheet ID and that sharing is set to "Anyone with the link can view".');
-    return rows.filter(r => r['Date']);
+    return rows.filter(r => r['Date'] && r['Teacher Out'] && r['Teacher Out'].trim());
   }
 
   async function fetchEvents(sheetId) {
