@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Release Schedule — Staff Guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 13pt;
+      color: #222;
+      background: white;
+      padding: 40px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header-strip { background: #1798d3; height: 10px; border-radius: 6px 6px 0 0; }
+    header {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      padding: 20px 28px 24px;
+      margin-bottom: 36px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    header img { height: 64px; }
+    .header-text h1 {
+      font-family: 'Nunito', Arial, sans-serif;
+      font-size: 18pt;
+      font-weight: 900;
+      color: #1798d3;
+      margin-bottom: 4px;
+    }
+    .header-text p { font-size: 11pt; color: #64748b; }
+
+    /* Section headings */
+    h2 {
+      font-family: 'Nunito', Arial, sans-serif;
+      font-size: 15pt;
+      font-weight: 900;
+      color: white;
+      background: #1798d3;
+      padding: 8px 16px;
+      border-radius: 5px;
+      margin: 36px 0 18px 0;
+    }
+    h3 {
+      font-size: 12pt;
+      font-weight: bold;
+      color: #1798d3;
+      margin: 22px 0 8px 0;
+      border-bottom: 1.5px solid #e0f0fa;
+      padding-bottom: 4px;
+    }
+
+    p { line-height: 1.65; margin-bottom: 10px; }
+
+    /* Steps */
+    .step {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+    .step-num {
+      background: #1798d3;
+      color: white;
+      font-weight: bold;
+      font-size: 13pt;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .step-body { flex: 1; }
+    .step-body strong { display: block; font-size: 12pt; margin-bottom: 3px; }
+    .step-body p { margin: 0; font-size: 11.5pt; color: #334155; }
+
+    /* URL box */
+    .url-box {
+      background: #f0f8fd;
+      border: 1.5px solid #93c5fd;
+      border-radius: 4px;
+      padding: 10px 16px;
+      font-size: 13pt;
+      font-weight: bold;
+      color: #1798d3;
+      margin: 8px 0 12px 0;
+      letter-spacing: 0.3px;
+      word-break: break-all;
+    }
+
+    /* Notes and tips */
+    .note {
+      background: #fff8e6;
+      border-left: 4px solid #f59e0b;
+      padding: 11px 15px;
+      border-radius: 0 4px 4px 0;
+      margin: 14px 0;
+      font-size: 11.5pt;
+      line-height: 1.6;
+    }
+    .note strong { color: #92400e; }
+    .tip {
+      background: #f0f8fd;
+      border-left: 4px solid #1798d3;
+      padding: 11px 15px;
+      border-radius: 0 4px 4px 0;
+      margin: 14px 0;
+      font-size: 11.5pt;
+      line-height: 1.6;
+    }
+
+    /* Colour swatches */
+    .colour-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+    .swatch {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11pt;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 5px 10px;
+    }
+    .swatch-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 16px;
+      font-size: 11.5pt;
+    }
+    th {
+      background: #f0f8fd;
+      border: 1.5px solid #bae0f5;
+      padding: 8px 12px;
+      text-align: left;
+      color: #1798d3;
+      font-weight: bold;
+    }
+    td {
+      border: 1.5px solid #e2e8f0;
+      padding: 7px 12px;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #fafafa; }
+
+    /* View cards */
+    .view-card {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .view-card h4 {
+      font-size: 12pt;
+      font-weight: bold;
+      color: #1798d3;
+      margin-bottom: 6px;
+    }
+    .view-card p { margin: 0; font-size: 11.5pt; color: #334155; }
+
+    /* Part divider */
+    .part-divider {
+      text-align: center;
+      margin: 48px 0 8px;
+      position: relative;
+    }
+    .part-divider::before {
+      content: '';
+      display: block;
+      height: 2px;
+      background: #e2e8f0;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+    }
+    .part-divider span {
+      position: relative;
+      background: white;
+      padding: 0 16px;
+      font-size: 10pt;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    footer {
+      margin-top: 48px;
+      padding-top: 14px;
+      border-top: 1px solid #e2e8f0;
+      font-size: 10pt;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    @media print {
+      body { padding: 20px; }
+      h2 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .header-strip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .swatch-dot { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-strip"></div>
+  <header>
+    <img src="logo.png" alt="Wallscourt Farm Academy">
+    <div class="header-text">
+      <h1>Release Schedule — Staff Guide</h1>
+      <p>How to view and manage the release schedule</p>
+    </div>
+  </header>
+
+  <!-- ── PART 1: VIEWING ──────────────────────────────────────────────────── -->
+
+  <h2>Part 1 &nbsp;·&nbsp; Viewing the schedule</h2>
+
+  <p>The release schedule is a live web page — it updates automatically and can be viewed on any device including phones, tablets and laptops. You do not need to log in or install anything.</p>
+
+  <h3>How to access it</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <strong>Open the schedule in your browser</strong>
+      <p>Go to the following address:</p>
+      <div class="url-box">https://imcl75.github.io/wfa/cover-plan/</div>
+      <p>Bookmark this page so you can find it easily next time.</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    The schedule refreshes automatically every 3 minutes. You can also tap <strong>refresh now</strong> in the top bar at any time to get the latest version immediately.
+  </div>
+
+  <h3>The three views</h3>
+
+  <div class="view-card">
+    <h4>Week view</h4>
+    <p>Shows the full week as a grid — one column per day, one row per session (Before School, AM, Lunch, PM, After School). Today's column is highlighted in blue. Use the arrow buttons to move between weeks. Cards are colour-coded by year group.</p>
+  </div>
+
+  <div class="view-card">
+    <h4>Today view</h4>
+    <p>Shows only today's arrangements as a flat list, grouped by session. Useful for a quick check at the start of the day.</p>
+  </div>
+
+  <div class="view-card">
+    <h4>My view</h4>
+    <p>Shows your personal schedule — every session where you are out of class or covering someone else, grouped by week. Select your name from the dropdown the first time you use it; the page will remember your choice.</p>
+  </div>
+
+  <h3>Understanding the cards</h3>
+
+  <p>Each card shows:</p>
+  <ul style="margin: 6px 0 12px 20px; line-height: 2;">
+    <li><strong>Name</strong> of the teacher who is out</li>
+    <li><strong>Cover Staff</strong> — who is covering them</li>
+    <li><strong>Reason</strong> badge (e.g. PPA, ECT1, Training)</li>
+    <li><strong>Time</strong> badge — if the session is only part of a session (e.g. 10:00 – 11:30)</li>
+    <li><strong>Notes</strong> — any additional information</li>
+  </ul>
+
+  <p>Whole-school events (such as Staff Meetings, FLC, or PAC) appear as a full-width banner with an <strong>All Staff</strong> label rather than individual cards.</p>
+
+  <h3>Year group colours</h3>
+
+  <p>Cards are colour-coded by the year group of the teacher who is out:</p>
+
+  <div class="colour-grid">
+    <div class="swatch"><div class="swatch-dot" style="background:#93c5fd;"></div>Reception</div>
+    <div class="swatch"><div class="swatch-dot" style="background:#fdba74;"></div>Year 1</div>
+    <div class="swatch"><div class="swatch-dot" style="background:#6ee7b7;"></div>Year 2</div>
+    <div class="swatch"><div class="swatch-dot" style="background:#f9a8d4;"></div>Year 3</div>
+    <div class="swatch"><div class="swatch-dot" style="background:#60a5fa;"></div>Year 4</div>
+    <div class="swatch"><div class="swatch-dot" style="background:#fb923c;"></div>Year 5</div>
+    <div class="swatch"><div class="swatch-dot" style="background:#4ade80;"></div>Year 6</div>
+  </div>
+
+  <h3>Long-term absences</h3>
+
+  <p>If a member of staff is on long-term sick leave, an orange banner will appear at the top of every view showing their name, role, and any relevant notes (e.g. expected return date).</p>
+
+  <!-- ── PART 2: MANAGING ─────────────────────────────────────────────────── -->
+
+  <div class="part-divider"><span>For the cover manager</span></div>
+
+  <h2>Part 2 &nbsp;·&nbsp; Managing the schedule</h2>
+
+  <p>The schedule is driven by a Google Sheet. When you update the sheet, the viewer picks up the changes automatically within 3 minutes. You can also notify all staff immediately using the <strong>Release Schedule → Publish &amp; Notify Staff</strong> menu in the sheet.</p>
+
+  <h3>The four tabs</h3>
+
+  <table>
+    <tr><th>Tab</th><th>Purpose</th></tr>
+    <tr><td><strong>Plan</strong></td><td>One row per cover arrangement. This is where you do most of your work.</td></tr>
+    <tr><td><strong>Events</strong></td><td>Week-level events shown as banners above the grid (e.g. Y6 SATs week, INSET Day).</td></tr>
+    <tr><td><strong>Weeks</strong></td><td>Maps each teaching week to a term and week number (e.g. T5W1).</td></tr>
+    <tr><td><strong>Staff</strong></td><td>Staff names, roles, and year groups. Used to colour-code cards and show illness banners.</td></tr>
+  </table>
+
+  <h3>Plan tab — column reference</h3>
+
+  <table>
+    <tr><th>Column</th><th>Notes</th></tr>
+    <tr>
+      <td><strong>Date</strong></td>
+      <td>Enter as DD/MM/YYYY. Column must be formatted as <em>Date</em> in Google Sheets.</td>
+    </tr>
+    <tr>
+      <td><strong>Day</strong></td>
+      <td>Auto-filled by formula — do not edit.</td>
+    </tr>
+    <tr>
+      <td><strong>Term/Week</strong></td>
+      <td>Auto-filled by formula from the Weeks tab — do not edit.</td>
+    </tr>
+    <tr>
+      <td><strong>Session</strong></td>
+      <td>Must be exactly one of: <code>Before School</code> · <code>AM</code> · <code>Lunch</code> · <code>PM</code> · <code>After School</code><br>Leave <strong>blank</strong> to mark the entry as All Day (appears in both AM and PM).</td>
+    </tr>
+    <tr>
+      <td><strong>Teacher Out</strong></td>
+      <td>First name of the staff member who is out. Use <strong>All Staff</strong> for whole-school events — these show as a banner rather than individual cards.</td>
+    </tr>
+    <tr>
+      <td><strong>Class</strong></td>
+      <td>Optional. The year group being covered (e.g. <code>Y4</code>, <code>Reception</code>). Leave blank — the viewer will look this up automatically from the Staff tab based on the teacher's name.</td>
+    </tr>
+    <tr>
+      <td><strong>Cover Staff</strong></td>
+      <td>Who is covering. Leave blank if not yet confirmed — the viewer will show <em>TBC</em>.</td>
+    </tr>
+    <tr>
+      <td><strong>Reason</strong></td>
+      <td>See the reason codes table below. Use the dropdown list in the sheet.</td>
+    </tr>
+    <tr>
+      <td><strong>Notes</strong></td>
+      <td>Optional free text — shown on the card.</td>
+    </tr>
+    <tr>
+      <td><strong>Time From</strong></td>
+      <td>Optional start time, e.g. <code>10:00</code>. Use with Time To to show a time range on the card.</td>
+    </tr>
+    <tr>
+      <td><strong>Time To</strong></td>
+      <td>Optional end time, e.g. <code>11:30</code>.</td>
+    </tr>
+  </table>
+
+  <h3>Reason codes</h3>
+
+  <table>
+    <tr><th>Code</th><th>Meaning</th></tr>
+    <tr><td>PPA</td><td>Planning, Preparation &amp; Assessment</td></tr>
+    <tr><td>Leadership</td><td>Headteacher / Deputy out of class</td></tr>
+    <tr><td>Phase Lead</td><td>Phase leader duties</td></tr>
+    <tr><td>Training</td><td>CPD or off-site training</td></tr>
+    <tr><td>ECT1</td><td>Early Career Teacher — Year 1</td></tr>
+    <tr><td>ECT2</td><td>Early Career Teacher — Year 2</td></tr>
+    <tr><td>RA</td><td>Raising Attainment</td></tr>
+    <tr><td>Sports</td><td>Sports coaching / PE specialist cover</td></tr>
+    <tr><td>Trip</td><td>Class trip</td></tr>
+    <tr><td>Illness</td><td>Absence due to illness</td></tr>
+    <tr><td>Staff Meeting</td><td>Whole-school or team meeting</td></tr>
+    <tr><td>FLC</td><td>Family Learning Conference</td></tr>
+    <tr><td>PAC</td><td>Primary Academy Collaboration</td></tr>
+    <tr><td>CLF Conference</td><td>CLF-wide conference or event</td></tr>
+    <tr><td>Supervision</td><td>Supervision duty</td></tr>
+    <tr><td>Other</td><td>Anything not listed above</td></tr>
+  </table>
+
+  <h3>Events tab</h3>
+
+  <p>Use this tab for week-level events that affect the whole school or a year group — things like SATs week, INSET days, or bank holidays. These appear as coloured banners above the week grid.</p>
+
+  <table>
+    <tr><th>Column</th><th>Notes</th></tr>
+    <tr><td><strong>Start Date</strong></td><td>DD/MM/YYYY — the first day of the event.</td></tr>
+    <tr><td><strong>End Date</strong></td><td>DD/MM/YYYY — leave blank for single-day events.</td></tr>
+    <tr><td><strong>Event</strong></td><td>Name of the event, e.g. <em>Y6 SATs</em>, <em>INSET Day</em>.</td></tr>
+    <tr><td><strong>Notes</strong></td><td>Optional additional detail.</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Half terms and holidays</strong> go in the Events tab, not the Weeks tab. The Weeks tab should only contain actual teaching weeks.
+  </div>
+
+  <h3>Weeks tab</h3>
+
+  <p>One row per teaching week. This powers the T5W1-style labels shown throughout the viewer.</p>
+
+  <table>
+    <tr><th>Column</th><th>Notes</th></tr>
+    <tr><td><strong>Week Start</strong></td><td>The Monday of that teaching week, as DD/MM/YYYY.</td></tr>
+    <tr><td><strong>Term</strong></td><td>Term number, e.g. <code>5</code>.</td></tr>
+    <tr><td><strong>Week</strong></td><td>Week number within the term, e.g. <code>1</code>.</td></tr>
+  </table>
+
+  <h3>Staff tab</h3>
+
+  <p>Used to automatically colour-code cards by year group, and to display illness banners for long-term absences.</p>
+
+  <table>
+    <tr><th>Column</th><th>Notes</th></tr>
+    <tr><td><strong>Name</strong></td><td>First name (must match exactly what is entered in the Teacher Out column of the Plan tab).</td></tr>
+    <tr><td><strong>Role</strong></td><td>e.g. Class Teacher, Teaching Partner, Cover.</td></tr>
+    <tr><td><strong>Year Group</strong></td><td>Must be exactly: <code>Reception</code>, <code>Y1</code>, <code>Y2</code>, <code>Y3</code>, <code>Y4</code>, <code>Y5</code>, or <code>Y6</code>. Leave blank for staff not linked to a specific year group.</td></tr>
+    <tr><td><strong>Status</strong></td><td>Leave blank normally. Set to <code>Illness</code> to show a persistent banner for long-term absence.</td></tr>
+    <tr><td><strong>Notes</strong></td><td>Optional — shown in the illness banner, e.g. <em>Expected return w/c 12 May</em>.</td></tr>
+  </table>
+
+  <h3>Notifying staff</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <strong>Finish updating the Plan tab</strong>
+      <p>Make sure all cover arrangements for the day are entered and correct.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <strong>Click Release Schedule → Publish &amp; Notify Staff</strong>
+      <p>This sends an email to all staff with a summary of today's cover and a link to the viewer. The viewer itself updates automatically every 3 minutes, so you only need to send a notification when you want to alert staff to a change.</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    Staff do not need to do anything to receive the notification — they just need to be on the mailing list in the Apps Script. To update the list, ask your administrator to edit the <code>NOTIFICATION_EMAILS</code> section of the script.
+  </div>
+
+  <footer>
+    Wallscourt Farm Academy &nbsp;·&nbsp; Release Schedule Staff Guide
+  </footer>
+
+</body>
+</html>
