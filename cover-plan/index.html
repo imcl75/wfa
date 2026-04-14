@@ -54,9 +54,16 @@
     'Y5':        { bg:'#ffedd5', border:'#fb923c', label:'#c2410c' },  // medium orange
     'Y6':        { bg:'#bbf7d0', border:'#4ade80', label:'#15803d' },  // medium green
   };
-  function yearColour(entry) {
+  function yearColour(entry, staffByName) {
+    // Explicit Class override first, then look up from staff, then reason fallback
     const cls = (entry['Class'] || '').trim();
-    return YEAR_COLOURS[cls] || REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
+    if (cls && YEAR_COLOURS[cls]) return YEAR_COLOURS[cls];
+    if (staffByName) {
+      const name = (entry['Teacher Out'] || '').trim();
+      const yg   = staffByName.get(name);
+      if (yg && YEAR_COLOURS[yg]) return YEAR_COLOURS[yg];
+    }
+    return REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -205,9 +212,9 @@
     );
   }
 
-  function SlotCard({ entry }) {
+  function SlotCard({ entry, staffByName }) {
     if (isAllStaff(entry)) return <AllStaffCard entry={entry}/>;
-    const c = yearColour(entry);
+    const c = yearColour(entry, staffByName);
     const time     = getTimeRange(entry);
     const hasNotes = entry['Notes'] && entry['Notes'].trim();
     return (
@@ -361,8 +368,11 @@
 
   // ── Week grid view ────────────────────────────────────────────────────────────
 
-  function WeekGrid({ entries, weekStart }) {
+  function WeekGrid({ entries, weekStart, staff }) {
     const today = new Date(); today.setHours(0,0,0,0);
+    const staffByName = new Map((staff || []).map(s => [
+      (s['Name'] || '').trim(), (s['Year Group'] || '').trim()
+    ]));
     const grid = {};
     DAYS.forEach(d => { grid[d] = {}; SESSIONS.forEach(s => { grid[d][s] = []; }); });
 
@@ -422,7 +432,7 @@
                       background: isToday ? '#f0f4ff' : 'white', verticalAlign:'top', minWidth:130 }}>
                       {slots.length === 0
                         ? <span style={{ color:'#d1d5db', fontSize:12 }}>—</span>
-                        : slots.map((e, idx) => <SlotCard key={idx} entry={e}/>)
+                        : slots.map((e, idx) => <SlotCard key={idx} entry={e} staffByName={staffByName}/>)
                       }
                     </td>
                   );
@@ -899,7 +909,7 @@
               <EventBanners events={events} weekStart={weekStart} />
               {weekEntries.length === 0
                 ? <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>No cover recorded for this week.</div>
-                : <WeekGrid entries={weekEntries} weekStart={weekStart}/>
+                : <WeekGrid entries={weekEntries} weekStart={weekStart} staff={staff}/>
               }
             </>
           )}
