@@ -6,9 +6,10 @@
 //     File → Settings → Locale → United Kingdom → Save settings
 //     Reload the sheet after saving.
 //
-//   STEP 2 — Create two tabs
+//   STEP 2 — Create three tabs
 //     Rename the first tab: right-click → Rename → type: Plan
 //     Add a second tab: click the + button → Rename → type: Events
+//     Add a third tab: click the + button → Rename → type: Weeks
 //
 //   STEP 3 — Set up Column A (Date)
 //     Select column A → Format → Number → Date
@@ -26,6 +27,14 @@
 //     A: Start Date  B: End Date  C: Event  D: Notes
 //     (End Date can be left blank for single-day events)
 //     Example events: Y6 SATs, INSET Day, Bank Holiday, Parents Evening, School Trip (whole school)
+//
+//   And in Row 1 of the Weeks tab:
+//     A: Week Start  B: Term  C: Week
+//     One row per teaching week — Week Start must be the Monday of that week (DD/MM/YYYY)
+//     Example:
+//       20/04/2026 | 5 | 1
+//       27/04/2026 | 5 | 2
+//       04/05/2026 | 5 | 3
 //
 //   STEP 6 — Make the sheet publicly readable
 //     Click Share → Change to "Anyone with the link" → Viewer → Done

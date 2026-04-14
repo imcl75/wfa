@@ -118,6 +118,23 @@
     return (rows || []).filter(r => r['Start Date']);
   }
 
+  async function fetchWeeks(sheetId) {
+    const rows = await fetchSheet(sheetId, 'Weeks');
+    return (rows || [])
+      .filter(r => r['Week Start'])
+      .map(r => ({ date: parseDate(r['Week Start']), term: r['Term'], week: r['Week'] }))
+      .filter(r => r.date);
+  }
+
+  function getWeekLabel(weekStart, weeks) {
+    const match = weeks.find(w => sameDay(w.date, weekStart));
+    if (!match) return null;
+    return {
+      short: `T${match.term}W${match.week}`,
+      long:  `Term ${match.term} · Week ${match.week}`,
+    };
+  }
+
   // ── Shared sub-components ─────────────────────────────────────────────────────
 
   function ReasonBadge({ reason }) {
@@ -405,9 +422,12 @@
 
     function renderWeek(week) {
       const isCurrent = sameDay(week.start, weekMonday(today));
+      const lbl = getWeekLabel(week.start, weeks);
       return (
         <div key={week.start.toISOString()} style={{ marginBottom:20 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+            {lbl && <span style={{ fontSize:12, fontWeight:'bold', background:'#f0f4ff',
+              color:'#1e3a8a', padding:'1px 8px', borderRadius:4 }}>{lbl.short}</span>}
             <div style={{ fontSize:13, fontWeight:'bold', color:'#1e3a8a' }}>
               {fmtShort(week.start)} – {fmtShort(addDays(week.start, 4))}
             </div>
@@ -565,6 +585,7 @@
     const [sheetId,     setSheetId]     = useState(() => localStorage.getItem('wfa_cover_sheet_id') || '');
     const [entries,     setEntries]     = useState([]);
     const [events,      setEvents]      = useState([]);
+    const [weeks,       setWeeks]       = useState([]);
     const [loading,     setLoading]     = useState(false);
     const [error,       setError]       = useState('');
     const [lastFetched, setLastFetched] = useState(null);
@@ -578,9 +599,10 @@
       if (!id) return;
       setLoading(true); setError('');
       try {
-        const [rows, evts] = await Promise.all([fetchPlan(id), fetchEvents(id)]);
+        const [rows, evts, wks] = await Promise.all([fetchPlan(id), fetchEvents(id), fetchWeeks(id)]);
         setEntries(rows);
         setEvents(evts);
+        setWeeks(wks);
         setLastFetched(new Date());
       } catch(e) { setError(e.message); }
       setLoading(false);
@@ -702,10 +724,32 @@
                 <button onClick={() => setWeekStart(d => addDays(d, -7))}
                   style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
                     borderRadius:4, cursor:'pointer', background:'white', color:'#334155' }}>‹</button>
-                <div style={{ flex:1, textAlign:'center', fontWeight:'bold', fontSize:15, color:'#1e3a8a' }}>
-                  {fmtShort(weekStart)} – {fmtShort(addDays(weekStart, 4))}
-                  {isThisWeek && <span style={{ fontSize:11, fontWeight:'normal', color:'#64748b',
-                    marginLeft:8, background:'#f0f4ff', padding:'1px 7px', borderRadius:10 }}>This week</span>}
+                <div style={{ flex:1, textAlign:'center' }}>
+                  {(() => {
+                    const lbl = getWeekLabel(weekStart, weeks);
+                    return lbl ? (
+                      <>
+                        <div style={{ fontWeight:'bold', fontSize:15, color:'#1e3a8a' }}>
+                          {lbl.long}
+                          {isThisWeek && <span style={{ fontSize:11, fontWeight:'normal', color:'#64748b',
+                            marginLeft:8, background:'#f0f4ff', padding:'1px 7px', borderRadius:10 }}>
+                            This week
+                          </span>}
+                        </div>
+                        <div style={{ fontSize:12, color:'#64748b', marginTop:2 }}>
+                          {fmtShort(weekStart)} – {fmtShort(addDays(weekStart, 4))}
+                        </div>
+                      </>
+                    ) : (
+                      <div style={{ fontWeight:'bold', fontSize:15, color:'#1e3a8a' }}>
+                        {fmtShort(weekStart)} – {fmtShort(addDays(weekStart, 4))}
+                        {isThisWeek && <span style={{ fontSize:11, fontWeight:'normal', color:'#64748b',
+                          marginLeft:8, background:'#f0f4ff', padding:'1px 7px', borderRadius:10 }}>
+                          This week
+                        </span>}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <button onClick={() => setWeekStart(d => addDays(d, 7))}
                   style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
