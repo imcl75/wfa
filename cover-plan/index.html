@@ -382,6 +382,7 @@
       if (firstName.toLowerCase() !== name.toLowerCase())
         staffByName.set(firstName.toLowerCase(), yg);
     });
+    console.log('[WFA] staff rows:', staff?.length, '| staffByName:', Object.fromEntries(staffByName));
     const grid = {};
     DAYS.forEach(d => { grid[d] = {}; SESSIONS.forEach(s => { grid[d][s] = []; }); });
 
