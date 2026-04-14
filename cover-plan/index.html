@@ -15,12 +15,12 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-  const { useState, useEffect, useCallback, useRef } = React;
+  const { useState, useEffect, useCallback } = React;
 
   // ── Constants ────────────────────────────────────────────────────────────────
 
-  const DAYS     = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-  const DAY_ABR  = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri' };
+  const DAYS    = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const DAY_ABR = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri' };
   const SESSIONS = ['AM','PM','Lunch'];
 
   const REASON_COLOURS = {
@@ -42,24 +42,25 @@
     return d;
   }
   function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
-  function sameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
-  function fmtShort(d)   { return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); }
-  function fmtLong(d)    { return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
-  function fmtTime(d)    { return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }); }
+  function sameDay(a, b) {
+    return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+  }
+  function fmtShort(d)  { return d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); }
+  function fmtLong(d)   { return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long', year:'numeric' }); }
+  function fmtTime(d)   { return d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' }); }
+  function fmtWeekday(d){ return d.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' }); }
 
   function parseDate(str) {
     if (!str) return null;
     str = String(str).trim();
-    // DD/MM/YYYY
     let m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (m) return new Date(+m[3], +m[2]-1, +m[1]);
-    // YYYY-MM-DD
     m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (m) return new Date(+m[1], +m[2]-1, +m[3]);
     return null;
   }
 
-  // ── CSV parser (handles quoted fields) ────────────────────────────────────────
+  // ── CSV parser ────────────────────────────────────────────────────────────────
 
   function parseCSV(text) {
     const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').trim().split('\n');
@@ -90,7 +91,7 @@
       .filter(row => Object.values(row).some(v => v));
   }
 
-  // ── Fetch plan data from Google Sheet ─────────────────────────────────────────
+  // ── Fetch ─────────────────────────────────────────────────────────────────────
 
   async function fetchPlan(sheetId) {
     const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Plan`;
@@ -101,57 +102,15 @@
     return parseCSV(text).filter(r => r['Date']);
   }
 
-  // ── Components ────────────────────────────────────────────────────────────────
+  // ── Shared sub-components ─────────────────────────────────────────────────────
 
-  function SettingsPanel({ sheetId, onSave }) {
-    const [draft, setDraft] = useState('');
-    const [open, setOpen]   = useState(!sheetId);
-
-    function extractId(input) {
-      // Accept full URL or bare ID
-      const m = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-      return m ? m[1] : input.trim();
-    }
-
-    function save() {
-      const id = extractId(draft);
-      if (!id) return;
-      localStorage.setItem('wfa_cover_sheet_id', id);
-      onSave(id);
-      setOpen(false);
-    }
-
-    if (!open) return (
-      <div style={{ textAlign:'right', marginBottom:6 }}>
-        <button onClick={()=>setOpen(true)} style={{ fontSize:12, color:'rgba(255,255,255,0.55)',
-          background:'transparent', border:'none', cursor:'pointer', fontFamily:'Arial' }}>
-          ⚙ {sheetId ? 'Sheet connected ✓ — change' : 'Connect Google Sheet'}
-        </button>
-      </div>
-    );
-
+  function ReasonBadge({ reason }) {
+    const c = REASON_COLOURS[reason] || DEFAULT_COLOUR;
     return (
-      <div style={{ background:'rgba(0,0,0,0.22)', borderRadius:4, padding:'14px 16px', marginBottom:12 }}>
-        <p style={{ margin:'0 0 8px', fontSize:13, color:'rgba(255,255,255,0.9)', fontFamily:'Arial' }}>
-          Paste your Google Sheet URL or ID. The sheet must be shared as "Anyone with the link can view".
-        </p>
-        <div style={{ display:'flex', gap:8 }}>
-          <input value={draft} onChange={e=>setDraft(e.target.value)}
-            onKeyDown={e=>e.key==='Enter'&&save()}
-            placeholder="Paste Google Sheet URL or ID…"
-            style={{ flex:1, padding:'7px 10px', fontSize:13, fontFamily:'Arial', border:'none', borderRadius:4 }}
-          />
-          <button onClick={save} style={{ padding:'7px 16px', fontSize:13, fontWeight:'bold',
-            background:'#e8a000', color:'white', border:'none', borderRadius:4, cursor:'pointer' }}>
-            Save
-          </button>
-          {sheetId && <button onClick={()=>setOpen(false)} style={{ padding:'7px 12px', fontSize:13,
-            background:'transparent', color:'rgba(255,255,255,0.7)',
-            border:'1px solid rgba(255,255,255,0.3)', borderRadius:4, cursor:'pointer' }}>
-            Cancel
-          </button>}
-        </div>
-      </div>
+      <span style={{ background:c.border, color:c.label, fontSize:10.5, fontWeight:'bold',
+        padding:'1px 5px', borderRadius:3, letterSpacing:'0.02em', flexShrink:0 }}>
+        {reason || 'Other'}
+      </span>
     );
   }
 
@@ -168,31 +127,79 @@
         <div style={{ color:'#1a1a8c', marginTop:1 }}>
           → {entry['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic' }}>Cover TBC</span>}
         </div>
-        <div style={{ marginTop:2 }}>
-          <span style={{ background:c.border, color:c.label, fontSize:10.5, fontWeight:'bold',
-            padding:'1px 5px', borderRadius:3, letterSpacing:'0.02em' }}>
-            {entry['Reason'] || 'Other'}
-          </span>
-          {hasNotes && <span style={{ color:'#666', fontSize:11, marginLeft:5 }}>{entry['Notes']}</span>}
+        <div style={{ marginTop:2, display:'flex', alignItems:'center', gap:6 }}>
+          <ReasonBadge reason={entry['Reason']}/>
+          {hasNotes && <span style={{ color:'#666', fontSize:11 }}>{entry['Notes']}</span>}
         </div>
       </div>
     );
   }
 
+  // ── Settings panel ────────────────────────────────────────────────────────────
+
+  function SettingsPanel({ sheetId, onSave }) {
+    const [draft, setDraft] = useState('');
+    const [open, setOpen]   = useState(!sheetId);
+
+    function extractId(input) {
+      const m = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? m[1] : input.trim();
+    }
+    function save() {
+      const id = extractId(draft);
+      if (!id) return;
+      localStorage.setItem('wfa_cover_sheet_id', id);
+      onSave(id); setOpen(false);
+    }
+
+    if (!open) return (
+      <div style={{ textAlign:'right', marginBottom:6 }}>
+        <button onClick={()=>setOpen(true)} style={{ fontSize:12, color:'rgba(255,255,255,0.55)',
+          background:'transparent', border:'none', cursor:'pointer', fontFamily:'Arial' }}>
+          ⚙ {sheetId ? 'Sheet connected ✓ — change' : 'Connect Google Sheet'}
+        </button>
+      </div>
+    );
+
+    return (
+      <div style={{ background:'rgba(0,0,0,0.22)', borderRadius:4, padding:'14px 16px', marginBottom:12 }}>
+        <p style={{ margin:'0 0 8px', fontSize:13, color:'rgba(255,255,255,0.9)' }}>
+          Paste your Google Sheet URL or ID. Must be shared as "Anyone with the link can view".
+        </p>
+        <div style={{ display:'flex', gap:8 }}>
+          <input value={draft} onChange={e=>setDraft(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&save()}
+            placeholder="Paste Google Sheet URL or ID…"
+            style={{ flex:1, padding:'7px 10px', fontSize:13, border:'none', borderRadius:4 }}
+          />
+          <button onClick={save} style={{ padding:'7px 16px', fontSize:13, fontWeight:'bold',
+            background:'#e8a000', color:'white', border:'none', borderRadius:4, cursor:'pointer' }}>
+            Save
+          </button>
+          {sheetId && <button onClick={()=>setOpen(false)} style={{ padding:'7px 12px', fontSize:13,
+            background:'transparent', color:'rgba(255,255,255,0.7)',
+            border:'1px solid rgba(255,255,255,0.3)', borderRadius:4, cursor:'pointer' }}>
+            Cancel
+          </button>}
+        </div>
+      </div>
+    );
+  }
+
+  // ── Week grid view ────────────────────────────────────────────────────────────
+
   function WeekGrid({ entries, weekStart }) {
     const today = new Date(); today.setHours(0,0,0,0);
-
-    // Build Day × Session lookup
     const grid = {};
     DAYS.forEach(d => { grid[d] = {}; SESSIONS.forEach(s => { grid[d][s] = []; }); });
 
     entries.forEach(e => {
       const dt = parseDate(e['Date']);
       if (!dt) return;
-      const dayIdx = dt.getDay() - 1; // 0=Mon
+      const dayIdx = dt.getDay() - 1;
       if (dayIdx < 0 || dayIdx > 4) return;
       const day = DAYS[dayIdx];
-      const session = e['Session'] && SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
+      const session = SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
       grid[day][session].push(e);
     });
 
@@ -211,8 +218,7 @@
                 return (
                   <th key={day} style={{ border:'1px solid #e2e8f0', padding:'10px 8px',
                     background: isToday ? '#1a1a8c' : '#f0f4ff',
-                    color: isToday ? 'white' : '#1e3a8a', textAlign:'center',
-                    fontSize:13, fontWeight:'bold' }}>
+                    color: isToday ? 'white' : '#1e3a8a', textAlign:'center', fontSize:13, fontWeight:'bold' }}>
                     <div>{DAY_ABR[day]}</div>
                     <div style={{ fontSize:11, fontWeight:'normal', opacity:0.8 }}>{fmtShort(d)}</div>
                     {isToday && <div style={{ fontSize:10, fontWeight:'normal', opacity:0.7, marginTop:1 }}>TODAY</div>}
@@ -229,15 +235,14 @@
                   {session}
                 </td>
                 {DAYS.map((day, i) => {
-                  const d = dayDates[i];
-                  const isToday = sameDay(d, today);
+                  const isToday = sameDay(dayDates[i], today);
                   const slots = grid[day][session];
                   return (
                     <td key={day} style={{ border:'1px solid #e2e8f0', padding:'8px 7px',
                       background: isToday ? '#f0f4ff' : 'white', verticalAlign:'top', minWidth:130 }}>
                       {slots.length === 0
                         ? <span style={{ color:'#d1d5db', fontSize:12 }}>—</span>
-                        : slots.map((e, idx) => <SlotCard key={idx} entry={e} />)
+                        : slots.map((e, idx) => <SlotCard key={idx} entry={e}/>)
                       }
                     </td>
                   );
@@ -249,6 +254,8 @@
       </div>
     );
   }
+
+  // ── Today view ────────────────────────────────────────────────────────────────
 
   function TodayPanel({ entries }) {
     const today = new Date(); today.setHours(0,0,0,0);
@@ -266,7 +273,7 @@
     const bySession = {};
     SESSIONS.forEach(s => { bySession[s] = []; });
     todayRows.forEach(e => {
-      const s = e['Session'] && SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
+      const s = SESSIONS.includes(e['Session']) ? e['Session'] : 'AM';
       bySession[s].push(e);
     });
 
@@ -281,7 +288,7 @@
               return (
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 14px',
                   background:'white', border:`1px solid ${c.border}`, borderLeft:`4px solid ${c.border}`,
-                  borderRadius:4, marginBottom:6, fontFamily:'Arial', flexWrap:'wrap' }}>
+                  borderRadius:4, marginBottom:6, flexWrap:'wrap' }}>
                   <div style={{ flex:1, minWidth:160 }}>
                     <span style={{ fontWeight:'bold', fontSize:14 }}>{e['Teacher Out'] || '?'}</span>
                     {e['Class'] && <span style={{ color:'#666', fontSize:13 }}> · {e['Class']}</span>}
@@ -289,10 +296,7 @@
                   <div style={{ color:'#1a1a8c', fontWeight:'bold', fontSize:14, flexShrink:0 }}>
                     → {e['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic', fontWeight:'normal' }}>TBC</span>}
                   </div>
-                  <div style={{ flexShrink:0 }}>
-                    <span style={{ background:c.bg, color:c.label, fontSize:11, fontWeight:'bold',
-                      padding:'2px 7px', borderRadius:3 }}>{e['Reason'] || 'Other'}</span>
-                  </div>
+                  <ReasonBadge reason={e['Reason']}/>
                   {e['Notes'] && e['Notes'].trim() &&
                     <div style={{ width:'100%', fontSize:12, color:'#64748b', paddingTop:4 }}>{e['Notes']}</div>}
                 </div>
@@ -304,11 +308,185 @@
     );
   }
 
+  // ── My view ───────────────────────────────────────────────────────────────────
+
+  function MyView({ entries, myName, onNameChange, allNames }) {
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    // Entries involving this person
+    const mine = entries
+      .filter(e => {
+        const out   = (e['Teacher Out'] || '').trim().toLowerCase();
+        const cover = (e['Cover Staff'] || '').trim().toLowerCase();
+        const me    = myName.trim().toLowerCase();
+        return out === me || cover === me;
+      })
+      .map(e => ({ ...e, _date: parseDate(e['Date']) }))
+      .filter(e => e._date)
+      .sort((a, b) => a._date - b._date);
+
+    // Group by week
+    const weekMap = new Map();
+    mine.forEach(e => {
+      const key = weekMonday(e._date).toISOString();
+      if (!weekMap.has(key)) weekMap.set(key, { start: weekMonday(e._date), entries: [] });
+      weekMap.get(key).entries.push(e);
+    });
+
+    const weeks = [...weekMap.values()].sort((a, b) => a.start - b.start);
+    const upcoming = weeks.filter(w => addDays(w.start, 5) >= today);
+    const past     = weeks.filter(w => addDays(w.start, 5) < today);
+
+    const [showPast, setShowPast] = useState(false);
+
+    function renderWeek(week) {
+      const isCurrent = sameDay(week.start, weekMonday(today));
+      return (
+        <div key={week.start.toISOString()} style={{ marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+            <div style={{ fontSize:13, fontWeight:'bold', color:'#1e3a8a' }}>
+              {fmtShort(week.start)} – {fmtShort(addDays(week.start, 4))}
+            </div>
+            {isCurrent && (
+              <span style={{ fontSize:11, background:'#1a1a8c', color:'white',
+                padding:'1px 7px', borderRadius:10 }}>This week</span>
+            )}
+          </div>
+          {week.entries.map((e, i) => renderEntry(e, i))}
+        </div>
+      );
+    }
+
+    function renderEntry(e, i) {
+      const me     = myName.trim().toLowerCase();
+      const isOut  = (e['Teacher Out'] || '').trim().toLowerCase() === me;
+      const isToday = sameDay(e._date, today);
+      const c      = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
+
+      const sessionBadge = (
+        <span style={{ fontSize:11, fontWeight:'bold', background:'#f1f5f9',
+          color:'#475569', padding:'1px 6px', borderRadius:3 }}>
+          {e['Session'] || 'AM'}
+        </span>
+      );
+
+      if (isOut) {
+        // I am OUT — show who's covering me
+        return (
+          <div key={i} style={{ display:'flex', gap:12, padding:'11px 14px', marginBottom:7,
+            background: isToday ? '#fff7ed' : '#fff',
+            border:`1px solid ${c.border}`, borderLeft:`4px solid #f97316`,
+            borderRadius:4, flexWrap:'wrap', alignItems:'flex-start' }}>
+            <div style={{ flexShrink:0, paddingTop:1 }}>
+              <span style={{ fontSize:11, fontWeight:'bold', background:'#ffedd5',
+                color:'#c2410c', padding:'2px 7px', borderRadius:3, letterSpacing:'0.02em' }}>
+                OUT
+              </span>
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13.5, color:'#111', marginBottom:3 }}>
+                {fmtWeekday(e._date)} · {sessionBadge}
+                {isToday && <span style={{ marginLeft:6, fontSize:11, color:'#c2410c', fontWeight:'bold' }}>TODAY</span>}
+              </div>
+              <div style={{ fontSize:13, color:'#555' }}>
+                {e['Class'] && <span style={{ marginRight:6 }}>{e['Class']} · </span>}
+                <ReasonBadge reason={e['Reason']}/>
+                {e['Notes'] && <span style={{ color:'#64748b', fontSize:12, marginLeft:6 }}>{e['Notes']}</span>}
+              </div>
+              <div style={{ fontSize:13, color:'#1a1a8c', marginTop:4 }}>
+                Covered by: <strong>{e['Cover Staff'] || <span style={{ color:'#c00', fontStyle:'italic' }}>TBC</span>}</strong>
+              </div>
+            </div>
+          </div>
+        );
+      } else {
+        // I am COVERING someone else
+        return (
+          <div key={i} style={{ display:'flex', gap:12, padding:'11px 14px', marginBottom:7,
+            background: isToday ? '#eff6ff' : '#fff',
+            border:`1px solid ${c.border}`, borderLeft:`4px solid #3b82f6`,
+            borderRadius:4, flexWrap:'wrap', alignItems:'flex-start' }}>
+            <div style={{ flexShrink:0, paddingTop:1 }}>
+              <span style={{ fontSize:11, fontWeight:'bold', background:'#dbeafe',
+                color:'#1d4ed8', padding:'2px 7px', borderRadius:3, letterSpacing:'0.02em' }}>
+                COVERING
+              </span>
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13.5, color:'#111', marginBottom:3 }}>
+                {fmtWeekday(e._date)} · {sessionBadge}
+                {isToday && <span style={{ marginLeft:6, fontSize:11, color:'#1d4ed8', fontWeight:'bold' }}>TODAY</span>}
+              </div>
+              <div style={{ fontSize:13, color:'#555' }}>
+                Covering: <strong>{e['Teacher Out'] || '?'}</strong>
+                {e['Class'] && <span style={{ color:'#888' }}> ({e['Class']})</span>}
+                <span style={{ marginLeft:8 }}><ReasonBadge reason={e['Reason']}/></span>
+                {e['Notes'] && <span style={{ color:'#64748b', fontSize:12, marginLeft:6 }}>{e['Notes']}</span>}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
+
+    return (
+      <div>
+        {/* Name picker */}
+        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20,
+          padding:'12px 14px', background:'#f8fafc', borderRadius:6, border:'1px solid #e2e8f0' }}>
+          <label style={{ fontSize:13, color:'#475569', fontWeight:'bold', flexShrink:0 }}>
+            Viewing schedule for:
+          </label>
+          <select value={myName} onChange={e => onNameChange(e.target.value)}
+            style={{ padding:'6px 10px', fontSize:14, border:'1px solid #cbd5e1',
+              borderRadius:4, color:'#1e293b', background:'white', flex:1, maxWidth:260 }}>
+            <option value="">— select your name —</option>
+            {allNames.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </div>
+
+        {!myName ? (
+          <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>
+            Select your name above to see your personal schedule.
+          </div>
+        ) : mine.length === 0 ? (
+          <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>
+            No arrangements found for <strong>{myName}</strong> in the current plan.
+          </div>
+        ) : (
+          <>
+            {upcoming.length === 0
+              ? <div style={{ color:'#94a3b8', fontSize:13, marginBottom:16 }}>No upcoming arrangements.</div>
+              : upcoming.map(w => renderWeek(w))
+            }
+
+            {past.length > 0 && (
+              <div style={{ marginTop:8 }}>
+                <button onClick={() => setShowPast(p => !p)}
+                  style={{ fontSize:12, color:'#94a3b8', background:'none', border:'none',
+                    cursor:'pointer', padding:0, fontFamily:'Arial' }}>
+                  {showPast ? '▲ Hide' : '▼ Show'} past arrangements ({past.reduce((n,w)=>n+w.entries.length,0)})
+                </button>
+                {showPast && (
+                  <div style={{ marginTop:12, opacity:0.7 }}>
+                    {past.map(w => renderWeek(w))}
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // ── Legend ────────────────────────────────────────────────────────────────────
+
   function Legend() {
     return (
       <div style={{ display:'flex', gap:10, flexWrap:'wrap', padding:'12px 0 4px' }}>
         {Object.entries(REASON_COLOURS).map(([label, c]) => (
-          <div key={label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, fontFamily:'Arial' }}>
+          <div key={label} style={{ display:'flex', alignItems:'center', gap:5, fontSize:12 }}>
             <div style={{ width:13, height:13, background:c.bg, border:`1px solid ${c.border}`, borderRadius:2 }}/>
             <span style={{ color:'#64748b' }}>{label}</span>
           </div>
@@ -320,13 +498,14 @@
   // ── Main App ──────────────────────────────────────────────────────────────────
 
   function App() {
-    const [sheetId,    setSheetId]    = useState(() => localStorage.getItem('wfa_cover_sheet_id') || '');
-    const [entries,    setEntries]    = useState([]);
-    const [loading,    setLoading]    = useState(false);
-    const [error,      setError]      = useState('');
-    const [lastFetched,setLastFetched]= useState(null);
-    const [weekStart,  setWeekStart]  = useState(() => weekMonday(new Date()));
-    const [view,       setView]       = useState('week'); // 'week' | 'today'
+    const [sheetId,     setSheetId]     = useState(() => localStorage.getItem('wfa_cover_sheet_id') || '');
+    const [entries,     setEntries]     = useState([]);
+    const [loading,     setLoading]     = useState(false);
+    const [error,       setError]       = useState('');
+    const [lastFetched, setLastFetched] = useState(null);
+    const [weekStart,   setWeekStart]   = useState(() => weekMonday(new Date()));
+    const [view,        setView]        = useState('week');
+    const [myName,      setMyName]      = useState(() => localStorage.getItem('wfa_my_name') || '');
 
     const today = new Date(); today.setHours(0,0,0,0);
 
@@ -337,32 +516,43 @@
         const rows = await fetchPlan(id);
         setEntries(rows);
         setLastFetched(new Date());
-      } catch(e) {
-        setError(e.message);
-      }
+      } catch(e) { setError(e.message); }
       setLoading(false);
     }, []);
 
-    // Initial load + auto-refresh every 3 minutes
     useEffect(() => {
       if (sheetId) load(sheetId);
       const t = setInterval(() => { if (sheetId) load(sheetId); }, 3 * 60 * 1000);
       return () => clearInterval(t);
     }, [sheetId, load]);
 
-    const weekEnd = addDays(weekStart, 5);
-    const weekEntries = entries.filter(e => {
-      const d = parseDate(e['Date']);
-      return d && d >= weekStart && d < weekEnd;
-    });
+    function handleNameChange(name) {
+      setMyName(name);
+      localStorage.setItem('wfa_my_name', name);
+    }
 
-    const isThisWeek = sameDay(weekStart, weekMonday(today));
+    // Build sorted unique name list from both Teacher Out and Cover Staff columns
+    const allNames = [...new Set(
+      entries.flatMap(e => [e['Teacher Out'], e['Cover Staff']])
+        .map(n => (n || '').trim())
+        .filter(Boolean)
+    )].sort();
 
-    // Count today's cover for the tab badge
-    const todayCount = entries.filter(e => {
-      const d = parseDate(e['Date']);
-      return d && sameDay(d, today);
-    }).length;
+    const weekEnd      = addDays(weekStart, 5);
+    const weekEntries  = entries.filter(e => { const d = parseDate(e['Date']); return d && d >= weekStart && d < weekEnd; });
+    const isThisWeek   = sameDay(weekStart, weekMonday(today));
+    const todayCount   = entries.filter(e => { const d = parseDate(e['Date']); return d && sameDay(d, today); }).length;
+    const myCount      = myName ? entries.filter(e => {
+      const d = parseDate(e['Date']); if (!d || d < today) return false;
+      const me = myName.toLowerCase();
+      return (e['Teacher Out']||'').toLowerCase()===me || (e['Cover Staff']||'').toLowerCase()===me;
+    }).length : 0;
+
+    const TABS = [
+      { id:'week',  label:'Week view' },
+      { id:'today', label:`Today${todayCount > 0 ? ` (${todayCount})` : ''}` },
+      { id:'mine',  label:`My view${myCount > 0 ? ` (${myCount})` : ''}` },
+    ];
 
     return (
       <div style={{ fontFamily:'Arial', background:'#f0f4f8', minHeight:'100vh', padding:'16px' }}>
@@ -371,14 +561,12 @@
         <div style={{ maxWidth:1040, margin:'0 auto 14px', background:'#1a1a8c',
           borderRadius:8, padding:'18px 22px', color:'white' }}>
 
-          <SettingsPanel sheetId={sheetId} onSave={id => { setSheetId(id); load(id); }} />
+          <SettingsPanel sheetId={sheetId} onSave={id => { setSheetId(id); load(id); }}/>
 
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between',
             flexWrap:'wrap', gap:12 }}>
             <div>
-              <h1 style={{ fontSize:18, fontWeight:'bold', margin:'0 0 3px' }}>
-                Wallscourt Farm Academy
-              </h1>
+              <h1 style={{ fontSize:18, fontWeight:'bold', margin:'0 0 3px' }}>Wallscourt Farm Academy</h1>
               <div style={{ fontSize:14, opacity:0.85 }}>Staff Cover Plan</div>
               <div style={{ fontSize:12, opacity:0.6, marginTop:4 }}>
                 {lastFetched
@@ -391,17 +579,14 @@
               </div>
             </div>
 
-            {/* View tabs */}
+            {/* Tabs */}
             <div style={{ display:'flex', background:'rgba(0,0,0,0.2)', borderRadius:6, padding:3, gap:3 }}>
-              {[
-                { id:'week',  label:'Week view' },
-                { id:'today', label:`Today${todayCount > 0 ? ` (${todayCount})` : ''}` },
-              ].map(tab => (
+              {TABS.map(tab => (
                 <button key={tab.id} onClick={() => {
                   setView(tab.id);
                   if (tab.id === 'today') setWeekStart(weekMonday(today));
                 }}
-                  style={{ padding:'6px 16px', fontSize:13, borderRadius:4, border:'none',
+                  style={{ padding:'6px 14px', fontSize:13, borderRadius:4, border:'none',
                     cursor:'pointer', fontFamily:'Arial', fontWeight: view===tab.id ? 'bold' : 'normal',
                     background: view===tab.id ? 'white' : 'transparent',
                     color: view===tab.id ? '#1a1a8c' : 'rgba(255,255,255,0.8)' }}>
@@ -437,11 +622,15 @@
                 <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 2px' }}>Today's cover</h2>
                 <div style={{ fontSize:13, color:'#64748b' }}>{fmtLong(today)}</div>
               </div>
-              <TodayPanel entries={entries} />
+              <TodayPanel entries={entries}/>
+            </>
+          ) : view === 'mine' ? (
+            <>
+              <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 16px' }}>My schedule</h2>
+              <MyView entries={entries} myName={myName} onNameChange={handleNameChange} allNames={allNames}/>
             </>
           ) : (
             <>
-              {/* Week nav */}
               <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16 }}>
                 <button onClick={() => setWeekStart(d => addDays(d, -7))}
                   style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
@@ -449,9 +638,7 @@
                 <div style={{ flex:1, textAlign:'center', fontWeight:'bold', fontSize:15, color:'#1e3a8a' }}>
                   {fmtShort(weekStart)} – {fmtShort(addDays(weekStart, 4))}
                   {isThisWeek && <span style={{ fontSize:11, fontWeight:'normal', color:'#64748b',
-                    marginLeft:8, background:'#f0f4ff', padding:'1px 7px', borderRadius:10 }}>
-                    This week
-                  </span>}
+                    marginLeft:8, background:'#f0f4ff', padding:'1px 7px', borderRadius:10 }}>This week</span>}
                 </div>
                 <button onClick={() => setWeekStart(d => addDays(d, 7))}
                   style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
@@ -464,22 +651,17 @@
                   </button>
                 )}
               </div>
-
-              {weekEntries.length === 0 ? (
-                <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>
-                  No cover recorded for this week.
-                </div>
-              ) : (
-                <WeekGrid entries={weekEntries} weekStart={weekStart} />
-              )}
+              {weekEntries.length === 0
+                ? <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>No cover recorded for this week.</div>
+                : <WeekGrid entries={weekEntries} weekStart={weekStart}/>
+              }
             </>
           )}
         </div>
 
-        {/* Legend */}
-        {entries.length > 0 && (
+        {entries.length > 0 && view !== 'mine' && (
           <div style={{ maxWidth:1040, margin:'10px auto 0', paddingLeft:4 }}>
-            <Legend />
+            <Legend/>
           </div>
         )}
 
@@ -487,7 +669,7 @@
     );
   }
 
-  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
