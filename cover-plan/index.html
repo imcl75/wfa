@@ -157,8 +157,6 @@
 
   async function fetchStaff(sheetId) {
     const rows = await fetchSheet(sheetId, 'Staff');
-    console.log('[WFA] fetchStaff raw rows:', rows);
-    if (rows && rows[0]) console.log('[WFA] fetchStaff first row keys:', Object.keys(rows[0]));
     return (rows || []).filter(r => r['Name']);
   }
 
@@ -384,7 +382,6 @@
       if (firstName.toLowerCase() !== name.toLowerCase())
         staffByName.set(firstName.toLowerCase(), yg);
     });
-    console.log('[WFA] staff rows:', staff?.length, '| staffByName:', Object.fromEntries(staffByName));
     const grid = {};
     DAYS.forEach(d => { grid[d] = {}; SESSIONS.forEach(s => { grid[d][s] = []; }); });
 
