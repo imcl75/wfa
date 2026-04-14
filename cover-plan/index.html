@@ -530,8 +530,18 @@
 
   // ── My view ───────────────────────────────────────────────────────────────────
 
-  function MyView({ entries, myName, onNameChange, allNames, termWeeks }) {
+  function MyView({ entries, myName, onNameChange, allNames, termWeeks, staff }) {
     const today = new Date(); today.setHours(0,0,0,0);
+    const staffByName = new Map();
+    (staff || []).forEach(s => {
+      const name = (s['Name'] || '').trim();
+      const yg   = (s['Year Group'] || '').trim();
+      if (!name) return;
+      staffByName.set(name.toLowerCase(), yg);
+      const firstName = name.split(' ')[0];
+      if (firstName.toLowerCase() !== name.toLowerCase())
+        staffByName.set(firstName.toLowerCase(), yg);
+    });
 
     // Entries involving this person
     const mine = entries
@@ -585,6 +595,7 @@
       const isOut  = (e['Teacher Out'] || '').trim().toLowerCase() === me;
       const isToday = sameDay(e._date, today);
       const c      = REASON_COLOURS[e['Reason']] || DEFAULT_COLOUR;
+      const yc     = yearColour(e, staffByName);
       const time   = getTimeRange(e);
 
       const sessionLabel = e['Session'] && e['Session'].trim() || 'All Day';
@@ -606,7 +617,7 @@
         return (
           <div key={i} style={{ display:'flex', gap:12, padding:'11px 14px', marginBottom:7,
             background: isToday ? '#fff7ed' : '#fff',
-            border:`1px solid ${c.border}`, borderLeft:`4px solid #f97316`,
+            border:`1px solid ${yc.border}`, borderLeft:`4px solid ${yc.border}`,
             borderRadius:4, flexWrap:'wrap', alignItems:'flex-start' }}>
             <div style={{ flexShrink:0, paddingTop:1 }}>
               <span style={{ fontSize:11, fontWeight:'bold', background:'#ffedd5',
@@ -635,7 +646,7 @@
         return (
           <div key={i} style={{ display:'flex', gap:12, padding:'11px 14px', marginBottom:7,
             background: isToday ? '#eff6ff' : '#fff',
-            border:`1px solid ${c.border}`, borderLeft:`4px solid #3b82f6`,
+            border:`1px solid ${yc.border}`, borderLeft:`4px solid ${yc.border}`,
             borderRadius:4, flexWrap:'wrap', alignItems:'flex-start' }}>
             <div style={{ flexShrink:0, paddingTop:1 }}>
               <span style={{ fontSize:11, fontWeight:'bold', background:'#dbeafe',
@@ -877,7 +888,7 @@
             <>
               <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 16px' }}>My schedule</h2>
               <IllnessBanner staff={staff.filter(s => s['Name']===myName && (s['Status']||'').toLowerCase()==='illness')}/>
-              <MyView entries={entries} myName={myName} onNameChange={handleNameChange} allNames={allNames} termWeeks={weeks}/>
+              <MyView entries={entries} myName={myName} onNameChange={handleNameChange} allNames={allNames} termWeeks={weeks} staff={staff}/>
             </>
           ) : (
             <>
