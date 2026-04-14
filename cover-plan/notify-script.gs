@@ -1,4 +1,4 @@
-// ── WFA Cover Plan — Google Apps Script ──────────────────────────────────────
+// ── WFA Release Schedule — Google Apps Script ──────────────────────────────────────
 //
 // ── GOOGLE SHEET SETUP (do these steps in order) ─────────────────────────────
 //
@@ -48,12 +48,12 @@
 //
 //   STEP 7 — Note your Sheet ID
 //     It's the long string in the URL between /d/ and /edit
-//     You'll paste this into the cover plan viewer to connect it.
+//     You'll paste this into the release schedule viewer to connect it.
 //
 //   STEP 8 — Add this Apps Script
 //     Extensions → Apps Script → delete existing code → paste this file → Save
 //     Click Run → onOpen once to grant permissions (approve the popup)
-//     Reload your sheet — a "Cover Plan" menu appears in the toolbar
+//     Reload your sheet — a "Release Schedule" menu appears in the toolbar
 //
 // ── COLUMN REFERENCE ──────────────────────────────────────────────────────────
 //
@@ -76,7 +76,7 @@
 // ── USAGE ─────────────────────────────────────────────────────────────────────
 //
 //   When you finish updating the plan, click:
-//     Cover Plan → Publish & Notify Staff
+//     Release Schedule → Publish & Notify Staff
 //   This emails everyone on the NOTIFICATION_EMAILS list with today's cover
 //   summary and a link to the viewer.
 //
@@ -125,7 +125,7 @@ const NOTIFICATION_EMAILS = [
 
 function onOpen() {
   SpreadsheetApp.getUi()
-    .createMenu('Cover Plan')
+    .createMenu('Release Schedule')
     .addItem('Publish & Notify Staff', 'publishAndNotify')
     .addSeparator()
     .addItem('View plan in browser', 'openViewer')
@@ -165,11 +165,11 @@ function publishAndNotify() {
         <div style="margin-top:20px;">
           <a href="${VIEWER_URL}" style="background:#1a1a8c;color:white;padding:10px 20px;
             border-radius:4px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;">
-            View full cover plan →
+            View full release schedule →
           </a>
         </div>
         <p style="margin-top:16px;font-size:11px;color:#999;">
-          This is an automated notification from the WFA Cover Plan.
+          This is an automated notification from the WFA Release Schedule.
           The plan updates automatically every 3 minutes — just refresh the page.
         </p>
       </div>

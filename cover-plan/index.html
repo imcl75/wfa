@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WFA Cover Plan</title>
+  <title>Release Schedule — Wallscourt Farm Academy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #f0f4f8; font-family: Arial, sans-serif; }
+    body { margin: 0; padding: 0; background: #f0f8fd; font-family: Arial, sans-serif; }
   </style>
 </head>
 <body>
@@ -787,7 +788,7 @@
       <div style={{ fontFamily:'Arial', background:'#f0f4f8', minHeight:'100vh', padding:'16px' }}>
 
         {/* Header */}
-        <div style={{ maxWidth:1040, margin:'0 auto 14px', background:'#1a1a8c',
+        <div style={{ maxWidth:1040, margin:'0 auto 14px', background:'#1798d3',
           borderRadius:8, padding:'18px 22px', color:'white' }}>
 
           <SettingsPanel sheetId={sheetId} onSave={id => { setSheetId(id); load(id); }}/>
@@ -795,12 +796,12 @@
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between',
             flexWrap:'wrap', gap:12 }}>
             <div>
-              <h1 style={{ fontSize:18, fontWeight:'bold', margin:'0 0 3px' }}>Wallscourt Farm Academy</h1>
-              <div style={{ fontSize:14, opacity:0.85 }}>Staff Cover Plan</div>
-              <div style={{ fontSize:12, opacity:0.6, marginTop:4 }}>
+              <h1 style={{ fontSize:20, fontWeight:900, margin:'0 0 2px', fontFamily:'Nunito, Arial, sans-serif' }}>Wallscourt Farm Academy</h1>
+              <div style={{ fontSize:14, opacity:0.9, fontFamily:'Nunito, Arial, sans-serif', fontWeight:700 }}>Release Schedule</div>
+              <div style={{ fontSize:12, opacity:0.7, marginTop:4 }}>
                 {lastFetched
                   ? <>Last refreshed {fmtTime(lastFetched)} · <button onClick={()=>load(sheetId)}
-                      style={{ background:'none', border:'none', color:'rgba(255,255,255,0.65)',
+                      style={{ background:'none', border:'none', color:'rgba(255,255,255,0.75)',
                         cursor:'pointer', fontSize:12, padding:0, fontFamily:'Arial' }}>
                       refresh now
                     </button></>
@@ -809,7 +810,7 @@
             </div>
 
             {/* Tabs */}
-            <div style={{ display:'flex', background:'rgba(0,0,0,0.2)', borderRadius:6, padding:3, gap:3 }}>
+            <div style={{ display:'flex', background:'rgba(0,0,0,0.15)', borderRadius:6, padding:3, gap:3 }}>
               {TABS.map(tab => (
                 <button key={tab.id} onClick={() => {
                   setView(tab.id);
@@ -818,7 +819,7 @@
                   style={{ padding:'6px 14px', fontSize:13, borderRadius:4, border:'none',
                     cursor:'pointer', fontFamily:'Arial', fontWeight: view===tab.id ? 'bold' : 'normal',
                     background: view===tab.id ? 'white' : 'transparent',
-                    color: view===tab.id ? '#1a1a8c' : 'rgba(255,255,255,0.8)' }}>
+                    color: view===tab.id ? '#1798d3' : 'rgba(255,255,255,0.85)' }}>
                   {tab.label}
                 </button>
               ))}
@@ -838,7 +839,7 @@
             </div>
           ) : loading && entries.length === 0 ? (
             <div style={{ textAlign:'center', padding:'50px 0', color:'#94a3b8', fontSize:14 }}>
-              Loading cover plan…
+              Loading release schedule…
             </div>
           ) : error ? (
             <div style={{ background:'#fee2e2', border:'1px solid #fca5a5', borderRadius:4,
