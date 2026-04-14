@@ -21,7 +21,8 @@
 
   const DAYS    = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
   const DAY_ABR = { Monday:'Mon', Tuesday:'Tue', Wednesday:'Wed', Thursday:'Thu', Friday:'Fri' };
-  const SESSIONS = ['AM','PM','Lunch'];
+  const SESSIONS     = ['Before School','AM','PM','Lunch','After School'];
+  const SESSION_ABR  = { 'Before School':'Before', AM:'AM', PM:'PM', Lunch:'Lunch', 'After School':'After' };
 
   const REASON_COLOURS = {
     'PPA':        { bg:'#dbeafe', border:'#93c5fd', label:'#1e40af' },
@@ -97,13 +98,24 @@
 
   // ── Fetch ─────────────────────────────────────────────────────────────────────
 
-  async function fetchPlan(sheetId) {
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=Plan`;
+  async function fetchSheet(sheetId, tabName) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
     const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`Could not read sheet (HTTP ${resp.status}). Check the Sheet ID and that sharing is set to "Anyone with the link can view".`);
+    if (!resp.ok) return null;
     const text = await resp.text();
-    if (text.includes('Sign in') || text.includes('<html')) throw new Error('Sheet is not publicly accessible. Set sharing to "Anyone with the link can view".');
-    return parseCSV(text).filter(r => r['Date']);
+    if (text.includes('Sign in') || text.includes('<html')) return null;
+    return parseCSV(text);
+  }
+
+  async function fetchPlan(sheetId) {
+    const rows = await fetchSheet(sheetId, 'Plan');
+    if (!rows) throw new Error('Could not read sheet. Check the Sheet ID and that sharing is set to "Anyone with the link can view".');
+    return rows.filter(r => r['Date']);
+  }
+
+  async function fetchEvents(sheetId) {
+    const rows = await fetchSheet(sheetId, 'Events');
+    return (rows || []).filter(r => r['Start Date']);
   }
 
   // ── Shared sub-components ─────────────────────────────────────────────────────
@@ -190,6 +202,53 @@
     );
   }
 
+  // ── Event banners ─────────────────────────────────────────────────────────────
+
+  function EventBanners({ events, weekStart }) {
+    if (!events || events.length === 0) return null;
+    const weekEnd = addDays(weekStart, 5);
+
+    const visible = events.filter(e => {
+      const start = parseDate(e['Start Date']);
+      const end   = parseDate(e['End Date'] || e['Start Date']);
+      if (!start) return false;
+      return start < weekEnd && end >= weekStart;
+    });
+
+    if (visible.length === 0) return null;
+
+    const EVENT_STYLES = [
+      { bg:'#fff7ed', border:'#fb923c', text:'#9a3412' },
+      { bg:'#f0fdf4', border:'#4ade80', text:'#166534' },
+      { bg:'#fdf4ff', border:'#e879f9', text:'#86198f' },
+      { bg:'#fffbeb', border:'#fbbf24', text:'#92400e' },
+    ];
+
+    return (
+      <div style={{ marginBottom:14, display:'flex', flexDirection:'column', gap:6 }}>
+        {visible.map((e, i) => {
+          const start = parseDate(e['Start Date']);
+          const end   = parseDate(e['End Date'] || e['Start Date']);
+          const s     = EVENT_STYLES[i % EVENT_STYLES.length];
+          const sameDate = sameDay(start, end);
+          const dateRange = sameDate
+            ? fmtShort(start)
+            : `${fmtShort(start)} – ${fmtShort(end)}`;
+          return (
+            <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 14px',
+              background:s.bg, border:`1px solid ${s.border}`, borderLeft:`4px solid ${s.border}`,
+              borderRadius:4, fontSize:13 }}>
+              <span style={{ fontSize:16 }}>📅</span>
+              <span style={{ fontWeight:'bold', color:s.text }}>{e['Event'] || '—'}</span>
+              <span style={{ color:'#64748b', fontSize:12 }}>{dateRange}</span>
+              {e['Notes'] && <span style={{ color:'#64748b', fontSize:12 }}>· {e['Notes']}</span>}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   // ── Week grid view ────────────────────────────────────────────────────────────
 
   function WeekGrid({ entries, weekStart }) {
@@ -235,8 +294,9 @@
             {SESSIONS.map(session => (
               <tr key={session}>
                 <td style={{ border:'1px solid #e2e8f0', padding:'8px 6px', background:'#f8fafc',
-                  fontWeight:'bold', fontSize:12, color:'#64748b', textAlign:'center', verticalAlign:'top' }}>
-                  {session}
+                  fontWeight:'bold', fontSize:11, color:'#64748b', textAlign:'center', verticalAlign:'top',
+                  whiteSpace:'nowrap' }}>
+                  {SESSION_ABR[session] || session}
                 </td>
                 {DAYS.map((day, i) => {
                   const isToday = sameDay(dayDates[i], today);
@@ -504,6 +564,7 @@
   function App() {
     const [sheetId,     setSheetId]     = useState(() => localStorage.getItem('wfa_cover_sheet_id') || '');
     const [entries,     setEntries]     = useState([]);
+    const [events,      setEvents]      = useState([]);
     const [loading,     setLoading]     = useState(false);
     const [error,       setError]       = useState('');
     const [lastFetched, setLastFetched] = useState(null);
@@ -517,8 +578,9 @@
       if (!id) return;
       setLoading(true); setError('');
       try {
-        const rows = await fetchPlan(id);
+        const [rows, evts] = await Promise.all([fetchPlan(id), fetchEvents(id)]);
         setEntries(rows);
+        setEvents(evts);
         setLastFetched(new Date());
       } catch(e) { setError(e.message); }
       setLoading(false);
@@ -626,6 +688,7 @@
                 <h2 style={{ fontSize:16, color:'#1e3a8a', margin:'0 0 2px' }}>Today's cover</h2>
                 <div style={{ fontSize:13, color:'#64748b' }}>{fmtLong(today)}</div>
               </div>
+              <EventBanners events={events} weekStart={today} />
               <TodayPanel entries={entries}/>
             </>
           ) : view === 'mine' ? (
@@ -655,6 +718,7 @@
                   </button>
                 )}
               </div>
+              <EventBanners events={events} weekStart={weekStart} />
               {weekEntries.length === 0
                 ? <div style={{ textAlign:'center', padding:'30px 0', color:'#94a3b8', fontSize:14 }}>No cover recorded for this week.</div>
                 : <WeekGrid entries={weekEntries} weekStart={weekStart}/>

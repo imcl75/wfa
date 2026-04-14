@@ -6,8 +6,9 @@
 //     File → Settings → Locale → United Kingdom → Save settings
 //     Reload the sheet after saving.
 //
-//   STEP 2 — Rename the first tab
-//     Right-click the tab at the bottom → Rename → type: Plan
+//   STEP 2 — Create two tabs
+//     Rename the first tab: right-click → Rename → type: Plan
+//     Add a second tab: click the + button → Rename → type: Events
 //
 //   STEP 3 — Set up Column A (Date)
 //     Select column A → Format → Number → Date
@@ -18,8 +19,13 @@
 //     In cell B2 enter this formula, then drag it down the column:
 //       =IF(A2="","",CHOOSE(WEEKDAY(A2,2),"Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"))
 //
-//   STEP 5 — Add the remaining column headers in Row 1:
+//   STEP 5 — Add column headers in Row 1 of the Plan tab:
 //     A: Date  B: Day  C: Session  D: Teacher Out  E: Class  F: Cover Staff  G: Reason  H: Notes
+//
+//   And in Row 1 of the Events tab:
+//     A: Start Date  B: End Date  C: Event  D: Notes
+//     (End Date can be left blank for single-day events)
+//     Example events: Y6 SATs, INSET Day, Bank Holiday, Parents Evening, School Trip (whole school)
 //
 //   STEP 6 — Make the sheet publicly readable
 //     Click Share → Change to "Anyone with the link" → Viewer → Done
@@ -37,7 +43,7 @@
 //
 //   Date        DD/MM/YYYY  (column formatted as Date)
 //   Day         Auto-filled by formula (column formatted as Automatic)
-//   Session     Must be exactly:  AM  PM  Lunch
+//   Session     Must be exactly:  Before School  AM  PM  Lunch  After School
 //   Teacher Out First name of staff member who is out of class
 //   Class       e.g. Y4, Reception
 //   Cover Staff Who is covering
