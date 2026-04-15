@@ -37,7 +37,7 @@
     .stat-dot { width:7px; height:7px; border-radius:50%; }
     .stat strong { color:#1e3a8a; }
 
-    .app { display:grid; grid-template-columns:188px 1fr 210px; gap:10px; padding:10px; max-width:1340px; margin:0 auto; align-items:start; }
+    .app { display:grid; grid-template-columns:215px 1fr 270px; gap:10px; padding:10px; max-width:1680px; margin:0 auto; align-items:start; }
 
     .panel { background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.07); overflow:hidden; }
     .panel-hd { padding:9px 12px 7px; border-bottom:1px solid #f1f5f9; font-family:'Nunito',sans-serif; font-weight:900; font-size:13px; color:#1e3a8a; }
@@ -95,9 +95,19 @@
     .slot-del:hover { color:#dc2626; background:#fee2e2; }
     .slot-cover-zone { margin:3px 4px 4px; padding:3px 6px; font-size:10px; color:#94a3b8; border:1.5px dashed #e2e8f0; border-radius:3px; transition:all .12s; cursor:default; }
     .slot-cover-zone.over { border-color:#1798d3 !important; background:#bfdbfe !important; animation:none !important; }
-    .slot-cover-assigned { margin:3px 4px 4px; padding:3px 6px; font-size:10.5px; font-weight:bold; color:#166534; background:#f0fdf4; border:1.5px solid #86efac; border-radius:3px; display:flex; align-items:center; }
+    .slot-cover-assigned { margin:3px 4px 4px; padding:3px 6px; font-size:10.5px; font-weight:bold; color:#166534; background:#f0fdf4; border:1.5px solid #86efac; border-radius:3px; display:flex; align-items:center; gap:5px; }
     .slot-cover-assigned .cv-x { margin-left:auto; background:none; border:none; cursor:pointer; color:#94a3b8; font-size:12px; padding:0 1px; border-radius:2px; }
     .slot-cover-assigned .cv-x:hover { color:#dc2626; }
+    .cv-mini-avatar { width:16px; height:16px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:7px; font-weight:bold; flex-shrink:0; }
+
+    /* Cover load panel */
+    .cover-load-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-bottom:1px solid #f8fafc; }
+    .cover-load-row:last-child { border-bottom:none; }
+    .cover-load-avatar { width:22px; height:22px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold; flex-shrink:0; }
+    .cover-load-name { font-size:11.5px; font-weight:bold; color:#111; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .cover-load-pips { display:flex; gap:3px; flex-wrap:wrap; }
+    .cover-load-pip { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .cover-chip-count { font-size:9px; font-weight:bold; color:#1798d3; background:#e0f2fe; border-radius:8px; padding:0 5px; margin-left:auto; }
 
     /* YG header tints */
     .syg-Reception .slot-hd{background:#dbeafe} .syg-Y1 .slot-hd{background:#ffedd5} .syg-Y2 .slot-hd{background:#d1fae5}
@@ -192,10 +202,16 @@
   </div>
   <!-- Center -->
   <div id="centerPane"></div>
-  <!-- Right: entitlement -->
-  <div class="panel">
-    <div class="panel-hd">Entitlements <small>This week's allocation</small></div>
-    <div class="panel-body" id="entPanel"></div>
+  <!-- Right: entitlement + cover load -->
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div class="panel">
+      <div class="panel-hd">Entitlements <small>Teacher out-of-class time</small></div>
+      <div class="panel-body" id="entPanel"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-hd">Cover load <small>Sessions assigned this week</small></div>
+      <div class="panel-body" id="coverLoadPanel"></div>
+    </div>
   </div>
 </div>
 
@@ -304,6 +320,7 @@ function dotCls(yg)     { return 'dot-' + (yg || ''); }
 
 function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
 function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid).length; }
+function coverByName(name) { return COVER.find(c => c.name.toLowerCase() === (name||'').toLowerCase()); }
 
 function reasonOptions(tid, current) {
   const t = teacher(tid);
@@ -354,6 +371,7 @@ function render() {
   renderStaff();
   if (state.view === 'week') renderGrid(); else renderMyView();
   renderEnt();
+  renderCoverLoad();
   document.getElementById('tab-week').classList.toggle('active', state.view === 'week');
   document.getElementById('tab-mine').classList.toggle('active', state.view === 'mine');
 }
@@ -407,18 +425,25 @@ function renderStaff() {
     </div>`;
   });
 
+  // Count cover assignments for chips
+  const coverCounts = {};
+  slots().forEach(s => { if (s.cover) coverCounts[s.cover] = (coverCounts[s.cover]||0)+1; });
+
   html += `<div class="section-label" style="margin-top:14px">Cover staff — drag onto TBC</div>`;
   COVER.forEach(c => {
     const dragging = state.dragging?.type === 'cover' && state.dragging.id === c.id;
+    const n = coverCounts[c.name] || 0;
+    const countBadge = n > 0 ? `<span class="cover-chip-count">${n}</span>` : '';
     html += `<div class="cover-chip ${dragging?'dragging':''}"
       draggable="true"
       ondragstart="onCoverDragStart(event,'${c.id}','${c.name}')"
       ondragend="onDragEnd()">
       <div class="cover-avatar" style="background:${c.col}">${c.init}</div>
-      <div>
+      <div style="flex:1;min-width:0">
         <div class="cover-chip-name">${c.name}</div>
         <div class="cover-chip-role">${c.role}</div>
       </div>
+      ${countBadge}
     </div>`;
   });
 
@@ -474,8 +499,12 @@ function renderGrid() {
         const t = teacher(s.tid);
         const yg = t?.yg || null;
         const draggingThis = state.dragging?.type === 'slot' && state.dragging.slotId === s.id;
+        const cv = coverByName(s.cover);
         const coverHtml = s.cover
-          ? `<div class="slot-cover-assigned">✓ ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button></div>`
+          ? `<div class="slot-cover-assigned">
+               <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
+               ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button>
+             </div>`
           : `<div class="slot-cover-zone" data-slot="${s.id}"
                ondragover="onSlotCoverDragOver(event,${s.id})"
                ondragleave="onSlotCoverDragLeave(event,${s.id})"
@@ -608,6 +637,51 @@ function renderEnt() {
     html += `</div></div>`;
   });
   document.getElementById('entPanel').innerHTML = html || '<p style="color:#94a3b8;font-size:12px;padding:4px 0">No teachers placed yet.</p>';
+}
+
+function renderCoverLoad() {
+  // Count sessions per cover person name
+  const counts = {};
+  slots().forEach(s => {
+    if (s.cover) counts[s.cover] = (counts[s.cover] || 0) + 1;
+  });
+
+  // Sort: assigned people first (by count desc), then unassigned cover staff
+  const assigned = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  let html = '';
+
+  if (assigned.length === 0) {
+    html = '<p style="color:#94a3b8;font-size:12px;padding:4px 0">No cover assigned yet.</p>';
+  } else {
+    assigned.forEach(([name, n]) => {
+      const c = coverByName(name);
+      const col = c?.col || '#94a3b8';
+      const init = c?.init || name.slice(0,2).toUpperCase();
+      let pips = '';
+      for (let i = 0; i < n; i++) pips += `<div class="cover-load-pip" style="background:${col}"></div>`;
+      html += `<div class="cover-load-row">
+        <div class="cover-load-avatar" style="background:${col}">${init}</div>
+        <span class="cover-load-name">${name}</span>
+        <div class="cover-load-pips">${pips}</div>
+        <span style="font-size:10px;font-weight:bold;color:${col};min-width:16px;text-align:right">${n}</span>
+      </div>`;
+    });
+
+    // Show unassigned cover staff dimly
+    const unassigned = COVER.filter(c => !counts[c.name]);
+    if (unassigned.length) {
+      html += `<div class="section-label" style="margin-top:10px">Not yet assigned</div>`;
+      unassigned.forEach(c => {
+        html += `<div class="cover-load-row" style="opacity:.4">
+          <div class="cover-load-avatar" style="background:${c.col}">${c.init}</div>
+          <span class="cover-load-name">${c.name}</span>
+          <span style="font-size:10px;color:#cbd5e1">—</span>
+        </div>`;
+      });
+    }
+  }
+
+  document.getElementById('coverLoadPanel').innerHTML = html;
 }
 
 // ── Drag events ───────────────────────────────────────────────────────────────
