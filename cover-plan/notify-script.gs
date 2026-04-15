@@ -23,7 +23,9 @@
 //
 //     Plan tab:
 //       A: Date  B: Day  C: Term/Week  D: Session  E: Teacher Out  F: Class
-//       G: Cover Staff  H: Reason  I: Notes  J: Time  K: Time From  L: Time To  M: Source
+//       G: Cover Staff  H: Reason  I: Notes  J: Time  K: Time From  L: Time To  M: Type  N: Source
+//       Type: leave blank for cover arrangements. Set to "Lesson" for sessions where the teacher
+//       is present and teaching (e.g. PE) — these show without a cover staff line in the viewer.
 //       (Source is set automatically by the Generate function — do not edit it manually)
 //
 //     Events tab:
@@ -43,7 +45,8 @@
 //
 //     Recurring tab:
 //       A: Day  B: Session  C: Teacher Out  D: Cover Staff  E: Reason  F: Notes
-//       G: Time From  H: Time To
+//       G: Time From  H: Time To  I: Type
+//       Type: leave blank for cover. Set to "Lesson" for teacher-led sessions (e.g. PE).
 //       One row per recurring arrangement. Day must be exactly:
 //         Monday  Tuesday  Wednesday  Thursday  Friday
 //
@@ -183,6 +186,7 @@ function readRecurring(recurringSheet) {
       notes:     String(r[idx('Notes')]        || '').trim(),
       timeFrom:  String(r[idx('Time From')]    || '').trim(),
       timeTo:    String(r[idx('Time To')]      || '').trim(),
+      type:      String(r[idx('Type')]         || '').trim(),
     }));
 }
 
@@ -280,6 +284,7 @@ function generateTermSchedule() {
         'Notes':       r.notes,
         'Time From':   r.timeFrom,
         'Time To':     r.timeTo,
+        'Type':        r.type,
         'Source':      'Recurring',
       }));
     });
@@ -448,6 +453,7 @@ function regenerateFromWeek() {
         'Notes':       r.notes,
         'Time From':   r.timeFrom,
         'Time To':     r.timeTo,
+        'Type':        r.type,
         'Source':      'Recurring',
       }));
     });
