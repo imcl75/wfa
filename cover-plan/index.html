@@ -55,13 +55,20 @@
     'Y5':        { bg:'#ffedd5', border:'#fb923c', label:'#c2410c' },  // medium orange
     'Y6':        { bg:'#bbf7d0', border:'#4ade80', label:'#15803d' },  // medium green
   };
+  function canonicalYearGroup(str) {
+    if (!str) return null;
+    return Object.keys(YEAR_COLOURS).find(k => k.toLowerCase() === str.trim().toLowerCase()) || null;
+  }
+
   function yearColour(entry, staffByName) {
     // Explicit Class override first, then look up from staff, then reason fallback
     const cls = (entry['Class'] || '').trim();
     if (cls && YEAR_COLOURS[cls]) return YEAR_COLOURS[cls];
+    const out = (entry['Teacher Out'] || '').trim();
+    const outAsYG = canonicalYearGroup(out);
+    if (outAsYG) return YEAR_COLOURS[outAsYG];
     if (staffByName) {
-      const name = (entry['Teacher Out'] || '').trim().toLowerCase();
-      const yg   = staffByName.get(name);
+      const yg = staffByName.get(out.toLowerCase());
       if (yg && YEAR_COLOURS[yg]) return YEAR_COLOURS[yg];
     }
     return REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
@@ -204,9 +211,11 @@
   function yearGroup(entry, staffByName) {
     const cls = (entry['Class'] || '').trim();
     if (cls && YEAR_COLOURS[cls]) return cls;
+    const out = (entry['Teacher Out'] || '').trim();
+    const outAsYG = canonicalYearGroup(out);
+    if (outAsYG) return outAsYG;
     if (staffByName) {
-      const name = (entry['Teacher Out'] || '').trim().toLowerCase();
-      const yg = staffByName.get(name);
+      const yg = staffByName.get(out.toLowerCase());
       if (yg && YEAR_COLOURS[yg]) return yg;
     }
     return null;
@@ -895,7 +904,7 @@
     const allNames = [...new Set(
       entries.flatMap(e => [e['Teacher Out'], e['Cover Staff']])
         .map(n => (n || '').trim())
-        .filter(Boolean)
+        .filter(n => n && !canonicalYearGroup(n))
     )].sort();
 
     const weekEnd      = addDays(weekStart, 5);
