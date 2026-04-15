@@ -80,6 +80,10 @@
 //
 // ── USAGE ─────────────────────────────────────────────────────────────────────
 //
+//   Weeks tab: populate the entire year's teaching weeks at the start of the year.
+//     Having all terms in the tab is fine — Generate and Regenerate only ever
+//     act on the term you specify.
+//
 //   At the start of each term:
 //     Release Schedule → Generate Term Schedule
 //     Select which term to generate. Rows are added to the Plan tab for every
@@ -88,8 +92,9 @@
 //   If the recurring pattern changes mid-term:
 //     Update the Recurring tab, then:
 //     Release Schedule → Regenerate from Week...
-//     Select the week to regenerate from. Auto-generated rows from that week
-//     onwards are replaced; manually added rows are preserved.
+//     Enter the week label (e.g. T5W3). Auto-generated rows from that week to
+//     the end of the current term are replaced; manually added rows are preserved.
+//     Future terms are not affected.
 //
 //   When you finish updating the plan, click:
 //     Release Schedule → Publish & Notify Staff

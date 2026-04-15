@@ -416,7 +416,7 @@
 
   <h3>Weeks tab</h3>
 
-  <p>One row per teaching week. This powers the T5W1-style labels shown throughout the viewer.</p>
+  <p>One row per teaching week. This powers the T5W1-style labels shown throughout the viewer. Populate the entire year's teaching weeks at the start of the year — you only need to do this once.</p>
 
   <table>
     <tr><th>Column</th><th>Notes</th></tr>
@@ -424,6 +424,10 @@
     <tr><td><strong>Term</strong></td><td>Term number, e.g. <code>5</code>.</td></tr>
     <tr><td><strong>Week</strong></td><td>Week number within the term, e.g. <code>1</code>.</td></tr>
   </table>
+
+  <div class="tip">
+    Having all weeks in the tab does not affect the Generate or Regenerate functions — Generate only fills the term you choose, and Regenerate only affects the current term.
+  </div>
 
   <h3>Staff tab</h3>
 
@@ -480,7 +484,7 @@
   </div>
 
   <div class="note">
-    <strong>If the pattern changes from a certain week onwards</strong> — for example, Innes's PPA moves from Monday to Tuesday from week 3 — update the Recurring tab first, then use <strong>Release Schedule → Regenerate from Week…</strong> and enter the week label (e.g. T5W3). The script will replace all auto-generated entries from that week onwards with the updated pattern, while leaving any manually added entries intact.
+    <strong>If the pattern changes from a certain week onwards</strong> — for example, Innes's PPA moves from Monday to Tuesday from week 3 — update the Recurring tab first, then use <strong>Release Schedule → Regenerate from Week…</strong> and enter the week label (e.g. <code>T5W3</code>). The script replaces all auto-generated entries from that week to the end of the current term with the updated pattern, while leaving any manually added entries intact. It will not touch future terms.
   </div>
 
   <h3>Notifying staff</h3>
