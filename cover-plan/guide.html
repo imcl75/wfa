@@ -438,6 +438,51 @@
     <tr><td><strong>Notes</strong></td><td>Optional — shown in the illness banner, e.g. <em>Expected return w/c 12 May</em>.</td></tr>
   </table>
 
+  <h3>Setting up the term schedule</h3>
+
+  <p>Instead of entering every recurring arrangement by hand each term, use the <strong>Recurring tab</strong> and the Generate function to fill the Plan tab automatically.</p>
+
+  <p>The Recurring tab uses the same columns as Plan but without dates — just the repeating pattern:</p>
+
+  <table>
+    <tr><th>Column</th><th>Notes</th></tr>
+    <tr><td><strong>Day</strong></td><td>Must be exactly: <code>Monday</code> <code>Tuesday</code> <code>Wednesday</code> <code>Thursday</code> <code>Friday</code></td></tr>
+    <tr><td><strong>Session</strong></td><td>Same values as Plan tab. Leave blank for All Day.</td></tr>
+    <tr><td><strong>Teacher Out</strong></td><td>First name, as in the Plan tab.</td></tr>
+    <tr><td><strong>Cover Staff</strong></td><td>Who regularly covers this slot.</td></tr>
+    <tr><td><strong>Reason</strong></td><td>e.g. PPA, ECT1.</td></tr>
+    <tr><td><strong>Notes</strong></td><td>Optional.</td></tr>
+    <tr><td><strong>Time From / Time To</strong></td><td>Optional, if the session is a fixed time.</td></tr>
+  </table>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <strong>Fill in the Recurring tab</strong>
+      <p>Add one row for each arrangement that repeats every week — e.g. Innes out on Monday AM for PPA. You only need to do this once; update it if the pattern changes permanently.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <strong>At the start of each term: Release Schedule → Generate Term Schedule</strong>
+      <p>Enter the term number when prompted. The script reads the Recurring tab and the Weeks tab, calculates the correct date for each arrangement in each teaching week, and adds all the rows to the Plan tab automatically. Entries that already exist are skipped.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <strong>Edit exceptions in Plan as the term progresses</strong>
+      <p>If an arrangement changes for a specific day, just edit or delete that row in Plan directly. The Recurring tab does not need updating for one-off changes.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>If the pattern changes from a certain week onwards</strong> — for example, Innes's PPA moves from Monday to Tuesday from week 3 — update the Recurring tab first, then use <strong>Release Schedule → Regenerate from Week…</strong> and enter the week label (e.g. T5W3). The script will replace all auto-generated entries from that week onwards with the updated pattern, while leaving any manually added entries intact.
+  </div>
+
   <h3>Notifying staff</h3>
 
   <div class="step">
@@ -452,7 +497,7 @@
     <div class="step-num">2</div>
     <div class="step-body">
       <strong>Click Release Schedule → Publish &amp; Notify Staff</strong>
-      <p>This sends an email to all staff with a summary of today's cover and a link to the viewer. The viewer itself updates automatically every 3 minutes, so you only need to send a notification when you want to alert staff to a change.</p>
+      <p>This sends an email to all staff with a summary of today's arrangements and a link to the viewer. The viewer updates automatically every 3 minutes, so you only need to send a notification when you want to alert staff to a change.</p>
     </div>
   </div>
 
