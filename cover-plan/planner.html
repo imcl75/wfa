@@ -37,7 +37,7 @@
     .stat-dot { width:7px; height:7px; border-radius:50%; }
     .stat strong { color:#1e3a8a; }
 
-    .app { display:grid; grid-template-columns:215px 1fr 270px; gap:10px; padding:10px; max-width:1680px; margin:0 auto; align-items:start; }
+    .app { display:grid; grid-template-columns:255px 1fr; gap:10px; padding:10px; max-width:1680px; margin:0 auto; align-items:start; }
 
     .panel { background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.07); overflow:hidden; }
     .panel-hd { padding:9px 12px 7px; border-bottom:1px solid #f1f5f9; font-family:'Nunito',sans-serif; font-weight:900; font-size:13px; color:#1e3a8a; }
@@ -46,17 +46,20 @@
     .section-label { font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:#64748b; font-weight:bold; margin:10px 0 6px; }
     .section-label:first-child { margin-top:0; }
 
-    /* Teacher chips */
-    .teacher-chip { display:flex; align-items:center; gap:6px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
-    .teacher-chip:hover:not(.fully-booked) { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
+    /* Teacher chips — two-line design */
+    .teacher-chip { display:flex; flex-wrap:wrap; align-items:flex-start; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
+    .teacher-chip:hover { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
     .teacher-chip.dragging { opacity:.28; pointer-events:none; }
-    .teacher-chip.fully-booked { opacity:.5; cursor:grab; background:#f8fafc; border-style:dashed; }
+    .chip-top { display:flex; align-items:center; gap:6px; width:100%; }
     .yg-pip { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
-    .chip-name { font-size:12px; font-weight:bold; color:#111; }
-    .chip-ent { font-size:9px; color:#94a3b8; margin-left:auto; display:flex; gap:2px; align-items:center; }
-    .ent-mini { width:7px; height:7px; border-radius:50%; }
+    .chip-name { font-size:12px; font-weight:bold; color:#111; flex:1; }
+    .chip-done { width:16px; height:16px; border-radius:50%; background:#22c55e; color:white; font-size:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:bold; }
+    .chip-ents-row { display:flex; gap:9px; padding-left:15px; width:100%; margin-top:3px; flex-wrap:wrap; }
+    .chip-ent-item { display:flex; align-items:center; gap:3px; font-size:9px; color:#64748b; }
+    .ent-mini { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .ent-mini.used  { background:#1798d3; }
     .ent-mini.empty { background:#e2e8f0; border:1px solid #cbd5e1; }
+    .ent-mini.over  { background:#dc2626; }
 
     /* Cover chips */
     .cover-chip { display:flex; align-items:center; gap:7px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
@@ -124,20 +127,8 @@
     .rb-RA{background:#e0e7ff;color:#3730a3} .rb-SENCO{background:#f0f9ff;color:#0c4a6e} .rb-Illness{background:#fee2e2;color:#991b1b}
     .rb-Sports{background:#ccfbf1;color:#0f766e} .rb-Other{background:#f3f4f6;color:#374151}
 
-    /* Entitlement panel */
-    .ent-row { padding:6px 0; border-bottom:1px solid #f8fafc; }
-    .ent-row:last-child { border-bottom:none; }
-    .ent-teacher { display:flex; align-items:center; gap:5px; margin-bottom:3px; }
-    .ent-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
-    .ent-name { font-weight:bold; font-size:12px; color:#111; }
-    .ent-lines { padding-left:14px; }
-    .ent-line { display:flex; align-items:center; gap:5px; margin-bottom:2px; }
-    .ent-reason { font-size:10px; color:#64748b; min-width:65px; }
-    .ent-pips { display:flex; gap:3px; }
-    .ent-pip { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-    .ent-pip.used{background:#1798d3} .ent-pip.empty{background:#e2e8f0;border:1.5px solid #cbd5e1} .ent-pip.over{background:#dc2626}
-    .ent-status { font-size:9.5px; font-weight:bold; }
-    .ent-ok{color:#166534} .ent-warn{color:#c2410c} .ent-miss{color:#94a3b8}
+    /* Cover load (within staff panel) */
+    .cover-load-section { margin-top:4px; border-top:1px solid #f1f5f9; padding-top:8px; }
 
     /* My view */
     .my-view-wrap { background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.07); padding:18px 20px; }
@@ -195,24 +186,13 @@
 <div class="stats-bar" id="statsBar"></div>
 
 <div class="app" id="app">
-  <!-- Left: staff -->
+  <!-- Left: staff roster (teachers + entitlements + cover staff + load) -->
   <div class="panel">
-    <div class="panel-hd">Staff <small>Drag to grid</small></div>
+    <div class="panel-hd">Staff roster <small>Drag teachers or cover staff onto grid</small></div>
     <div class="panel-body" id="staffPanel"></div>
   </div>
   <!-- Center -->
   <div id="centerPane"></div>
-  <!-- Right: entitlement + cover load -->
-  <div style="display:flex;flex-direction:column;gap:10px">
-    <div class="panel">
-      <div class="panel-hd">Entitlements <small>Teacher out-of-class time</small></div>
-      <div class="panel-body" id="entPanel"></div>
-    </div>
-    <div class="panel">
-      <div class="panel-hd">Cover load <small>Sessions assigned this week</small></div>
-      <div class="panel-body" id="coverLoadPanel"></div>
-    </div>
-  </div>
 </div>
 
 <footer>Wallscourt Farm Academy · Cover Planner · Prototype — not connected to live data</footer>
@@ -347,7 +327,7 @@ function reasonOptions(tid, current) {
     const remaining = e.n - (used[e.r]||0);
     // Show if capacity remains, OR it's the value already on this slot (don't hide what's selected)
     if (remaining > 0 || e.r === current) {
-      const suffix = remaining <= 0   ? ' (used)'
+      const suffix = remaining <= 0   ? ' ✓'
                    : e.n > 1          ? ` (${remaining} left)`
                    : '';
       opts.push(`<option value="${e.r}"${e.r===current?' selected':''}>${e.r}${suffix}</option>`);
@@ -379,26 +359,13 @@ function getDayEvent(weekIdx, dayIdx) {
   return EVENTS[key] || null;
 }
 
-// ── Entitlement compute ───────────────────────────────────────────────────────
-
-function computeEnt() {
-  const used = {};
-  slots().forEach(s => {
-    if (!used[s.tid]) used[s.tid] = {};
-    used[s.tid][s.reason] = (used[s.tid][s.reason] || 0) + 1;
-  });
-  return used;
-}
-
 // ── Render ────────────────────────────────────────────────────────────────────
 
 function render() {
   renderWeekLabel();
   renderStats();
-  renderStaff();
+  renderStaff();  // includes entitlement rows + cover load
   if (state.view === 'week') renderGrid(); else renderMyView();
-  renderEnt();
-  renderCoverLoad();
   document.getElementById('tab-week').classList.toggle('active', state.view === 'week');
   document.getElementById('tab-mine').classList.toggle('active', state.view === 'mine');
 }
@@ -427,41 +394,64 @@ function renderStats() {
 }
 
 function renderStaff() {
-  const isDragCover = state.dragging?.type === 'cover';
-  let html = `<div class="section-label">Teachers — drag to mark as out</div>`;
+  const reasonUsedAll = {};
+  TEACHERS.forEach(t => { reasonUsedAll[t.id] = teacherReasonUsed(t.id); });
+
+  let html = `<div class="section-label">Teachers</div>`;
 
   TEACHERS.forEach(t => {
-    const used = teacherUsageCount(t.id);
-    const total = maxEnt(t);
-    const fullyBooked = used >= total;
+    const usedMap = reasonUsedAll[t.id];
+    const totalSlots = teacherUsageCount(t.id);
+    const namedTotal = maxEnt(t);
+    const allNamedDone = t.ent.every(e => (usedMap[e.r]||0) >= e.n);
     const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
 
-    // Mini pip indicators
-    let pips = '';
-    for (let i = 0; i < total; i++) {
-      pips += `<div class="ent-mini ${i < used ? 'used' : 'empty'}"></div>`;
+    // Entitlement pip row — one item per named entitlement
+    let entItems = '';
+    t.ent.forEach(e => {
+      const usedN = usedMap[e.r] || 0;
+      let pips = '';
+      for (let i = 0; i < e.n; i++) {
+        const cls = i < usedN ? (i >= e.n ? 'over' : 'used') : 'empty';
+        pips += `<div class="ent-mini ${cls}"></div>`;
+      }
+      // Over-allocated extras
+      for (let i = e.n; i < usedN; i++) pips += `<div class="ent-mini over"></div>`;
+      entItems += `<span class="chip-ent-item">${e.r} ${pips}</span>`;
+    });
+    // Extra (Other) slots beyond named ents
+    const extraCount = Math.max(0, totalSlots - namedTotal);
+    if (extraCount > 0) {
+      let xPips = '';
+      for (let i = 0; i < extraCount; i++) xPips += `<div class="ent-mini over"></div>`;
+      entItems += `<span class="chip-ent-item">Extra ${xPips}</span>`;
     }
 
-    html += `<div class="teacher-chip ${dragging?'dragging':''} ${fullyBooked?'fully-booked':''}"
+    const doneHtml = allNamedDone ? `<div class="chip-done" title="All named entitlements scheduled">✓</div>` : '';
+
+    html += `<div class="teacher-chip ${dragging?'dragging':''}"
       draggable="true"
-      title="${fullyBooked ? 'Named entitlements used — drag to add an extra session (Other)' : ''}"
       ondragstart="onTeacherDragStart(event,'${t.id}')"
       ondragend="onDragEnd()">
-      <div class="yg-pip ${pipCls(t.yg)}"></div>
-      <span class="chip-name">${t.name}</span>
-      <span class="chip-ent">${pips}</span>
+      <div class="chip-top">
+        <div class="yg-pip ${pipCls(t.yg)}"></div>
+        <span class="chip-name">${t.name}</span>
+        ${doneHtml}
+      </div>
+      <div class="chip-ents-row">${entItems}</div>
     </div>`;
   });
 
-  // Count cover assignments for chips
+  // Cover staff with session counts
   const coverCounts = {};
   slots().forEach(s => { if (s.cover) coverCounts[s.cover] = (coverCounts[s.cover]||0)+1; });
 
-  html += `<div class="section-label" style="margin-top:14px">Cover staff — drag onto TBC</div>`;
+  html += `<div class="section-label" style="margin-top:14px">Cover staff</div>`;
   COVER.forEach(c => {
     const dragging = state.dragging?.type === 'cover' && state.dragging.id === c.id;
     const n = coverCounts[c.name] || 0;
-    const countBadge = n > 0 ? `<span class="cover-chip-count">${n}</span>` : '';
+    let pipRow = '';
+    for (let i = 0; i < n; i++) pipRow += `<div class="ent-mini used" style="background:${c.col}"></div>`;
     html += `<div class="cover-chip ${dragging?'dragging':''}"
       draggable="true"
       ondragstart="onCoverDragStart(event,'${c.id}','${c.name}')"
@@ -469,9 +459,12 @@ function renderStaff() {
       <div class="cover-avatar" style="background:${c.col}">${c.init}</div>
       <div style="flex:1;min-width:0">
         <div class="cover-chip-name">${c.name}</div>
-        <div class="cover-chip-role">${c.role}</div>
+        <div style="display:flex;align-items:center;gap:4px;margin-top:2px">
+          <span class="cover-chip-role">${c.role}</span>
+          ${n > 0 ? `<div style="display:flex;gap:2px;margin-left:4px">${pipRow}</div>` : ''}
+        </div>
       </div>
-      ${countBadge}
+      ${n > 0 ? `<span class="cover-chip-count">${n}</span>` : ''}
     </div>`;
   });
 
@@ -640,77 +633,6 @@ function renderMyView() {
   document.getElementById('centerPane').innerHTML = html;
 }
 
-function renderEnt() {
-  const used = computeEnt();
-  let html = '';
-  TEACHERS.forEach(t => {
-    if (!t.ent?.length) return;
-    const u = used[t.id] || {};
-    html += `<div class="ent-row">
-      <div class="ent-teacher">
-        <div class="ent-dot ${dotCls(t.yg)}"></div>
-        <span class="ent-name">${t.name}</span>
-      </div><div class="ent-lines">`;
-    t.ent.forEach(e => {
-      const usedN = u[e.r] || 0, overN = Math.max(0,usedN-e.n), filledN = Math.min(usedN,e.n), emptyN = Math.max(0,e.n-usedN);
-      let pips = '';
-      for (let i=0;i<filledN;i++) pips += `<div class="ent-pip used"></div>`;
-      for (let i=0;i<emptyN; i++) pips += `<div class="ent-pip empty"></div>`;
-      for (let i=0;i<overN;  i++) pips += `<div class="ent-pip over"></div>`;
-      const status = overN > 0 ? `<span class="ent-status ent-warn">+${overN}</span>`
-                   : usedN === e.n ? `<span class="ent-status ent-ok">✓</span>`
-                   : `<span class="ent-status ent-miss">${usedN}/${e.n}</span>`;
-      html += `<div class="ent-line"><span class="ent-reason">${e.r}</span><div class="ent-pips">${pips}</div>${status}</div>`;
-    });
-    html += `</div></div>`;
-  });
-  document.getElementById('entPanel').innerHTML = html || '<p style="color:#94a3b8;font-size:12px;padding:4px 0">No teachers placed yet.</p>';
-}
-
-function renderCoverLoad() {
-  // Count sessions per cover person name
-  const counts = {};
-  slots().forEach(s => {
-    if (s.cover) counts[s.cover] = (counts[s.cover] || 0) + 1;
-  });
-
-  // Sort: assigned people first (by count desc), then unassigned cover staff
-  const assigned = Object.entries(counts).sort((a,b) => b[1]-a[1]);
-  let html = '';
-
-  if (assigned.length === 0) {
-    html = '<p style="color:#94a3b8;font-size:12px;padding:4px 0">No cover assigned yet.</p>';
-  } else {
-    assigned.forEach(([name, n]) => {
-      const c = coverByName(name);
-      const col = c?.col || '#94a3b8';
-      const init = c?.init || name.slice(0,2).toUpperCase();
-      let pips = '';
-      for (let i = 0; i < n; i++) pips += `<div class="cover-load-pip" style="background:${col}"></div>`;
-      html += `<div class="cover-load-row">
-        <div class="cover-load-avatar" style="background:${col}">${init}</div>
-        <span class="cover-load-name">${name}</span>
-        <div class="cover-load-pips">${pips}</div>
-        <span style="font-size:10px;font-weight:bold;color:${col};min-width:16px;text-align:right">${n}</span>
-      </div>`;
-    });
-
-    // Show unassigned cover staff dimly
-    const unassigned = COVER.filter(c => !counts[c.name]);
-    if (unassigned.length) {
-      html += `<div class="section-label" style="margin-top:10px">Not yet assigned</div>`;
-      unassigned.forEach(c => {
-        html += `<div class="cover-load-row" style="opacity:.4">
-          <div class="cover-load-avatar" style="background:${c.col}">${c.init}</div>
-          <span class="cover-load-name">${c.name}</span>
-          <span style="font-size:10px;color:#cbd5e1">—</span>
-        </div>`;
-      });
-    }
-  }
-
-  document.getElementById('coverLoadPanel').innerHTML = html;
-}
 
 // ── Drag events ───────────────────────────────────────────────────────────────
 
