@@ -198,6 +198,19 @@
   function lessonLabel(entry) {
     return (entry['Type'] || '').trim();
   }
+  function isSports(entry) {
+    return (entry['Type'] || '').trim().toLowerCase() === 'sports';
+  }
+  function yearGroup(entry, staffByName) {
+    const cls = (entry['Class'] || '').trim();
+    if (cls && YEAR_COLOURS[cls]) return cls;
+    if (staffByName) {
+      const name = (entry['Teacher Out'] || '').trim().toLowerCase();
+      const yg = staffByName.get(name);
+      if (yg && YEAR_COLOURS[yg]) return yg;
+    }
+    return null;
+  }
 
   function AllStaffCard({ entry }) {
     const c = REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
@@ -223,12 +236,16 @@
     const c = yearColour(entry, staffByName);
     const time = getTimeRange(entry);
     const hasNotes = entry['Notes'] && entry['Notes'].trim();
+    const sports = isSports(entry);
+    const primaryLabel = sports
+      ? (yearGroup(entry, staffByName) || entry['Teacher Out'] || '?')
+      : (entry['Teacher Out'] || '?');
     return (
       <div style={{ background:c.bg, border:`1px dashed ${c.border}`, borderRadius:4,
         padding:'6px 9px', marginBottom:5, fontSize:12.5, fontFamily:'Arial', lineHeight:1.35, wordBreak:'break-word' }}>
         <div style={{ fontWeight:'bold', color:'#111' }}>
-          {entry['Teacher Out'] || '?'}
-          {entry['Class'] && <span style={{ fontWeight:'normal', color:'#555', marginLeft:4 }}>({entry['Class']})</span>}
+          {primaryLabel}
+          {!sports && entry['Class'] && <span style={{ fontWeight:'normal', color:'#555', marginLeft:4 }}>({entry['Class']})</span>}
           {time && <span style={{ fontWeight:'normal', color:c.label, marginLeft:6,
             fontSize:11, background:'white', border:`1px solid ${c.border}`,
             padding:'0 4px', borderRadius:3 }}>{time}</span>}
