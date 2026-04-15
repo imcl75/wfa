@@ -394,7 +394,7 @@ function regenerateFromWeek() {
   // Now regenerate from fromDate onwards
   // Get all weeks from this week onwards in the same term
   const weeksToGen = allWeeks.filter(w =>
-    (w.term > fromTerm) || (w.term === fromTerm && w.week >= fromWeek)
+    w.term === fromTerm && w.week >= fromWeek
   );
 
   // Group by term for generateTermSchedule-style generation
