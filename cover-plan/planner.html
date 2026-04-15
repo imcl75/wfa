@@ -50,7 +50,7 @@
     .teacher-chip { display:flex; align-items:center; gap:6px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
     .teacher-chip:hover:not(.fully-booked) { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
     .teacher-chip.dragging { opacity:.28; pointer-events:none; }
-    .teacher-chip.fully-booked { opacity:.45; cursor:not-allowed; background:#f8fafc; }
+    .teacher-chip.fully-booked { opacity:.5; cursor:grab; background:#f8fafc; border-style:dashed; }
     .yg-pip { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
     .chip-name { font-size:12px; font-weight:bold; color:#111; }
     .chip-ent { font-size:9px; color:#94a3b8; margin-left:auto; display:flex; gap:2px; align-items:center; }
@@ -322,12 +322,39 @@ function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
 function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid).length; }
 function coverByName(name) { return COVER.find(c => c.name.toLowerCase() === (name||'').toLowerCase()); }
 
+// Per-reason usage count for a teacher this week
+function teacherReasonUsed(tid) {
+  const used = {};
+  slots().filter(s => s.tid === tid).forEach(s => { used[s.reason] = (used[s.reason]||0)+1; });
+  return used;
+}
+
+// First entitlement reason that still has capacity, or 'Other' if all used
+function firstAvailableReason(tid) {
+  const t = teacher(tid);
+  if (!t) return 'Other';
+  const used = teacherReasonUsed(tid);
+  const avail = t.ent.find(e => (used[e.r]||0) < e.n);
+  return avail?.r || 'Other';
+}
+
 function reasonOptions(tid, current) {
   const t = teacher(tid);
-  // Only show this person's entitlement reasons, plus Other
-  const ents = t?.ent?.map(e => e.r) || REASONS;
-  const opts = [...new Set([...ents, 'Other'])];
-  return opts.map(r => `<option value="${r}"${r===current?' selected':''}>${r}</option>`).join('');
+  if (!t) return `<option value="Other"${current==='Other'?' selected':''}>Other</option>`;
+  const used = teacherReasonUsed(tid);
+  const opts = [];
+  t.ent.forEach(e => {
+    const remaining = e.n - (used[e.r]||0);
+    // Show if capacity remains, OR it's the value already on this slot (don't hide what's selected)
+    if (remaining > 0 || e.r === current) {
+      const suffix = remaining <= 0   ? ' (used)'
+                   : e.n > 1          ? ` (${remaining} left)`
+                   : '';
+      opts.push(`<option value="${e.r}"${e.r===current?' selected':''}>${e.r}${suffix}</option>`);
+    }
+  });
+  opts.push(`<option value="Other"${current==='Other'?' selected':''}>Other</option>`);
+  return opts.join('');
 }
 
 function allNames() {
@@ -416,7 +443,8 @@ function renderStaff() {
     }
 
     html += `<div class="teacher-chip ${dragging?'dragging':''} ${fullyBooked?'fully-booked':''}"
-      draggable="${!fullyBooked}"
+      draggable="true"
+      title="${fullyBooked ? 'Named entitlements used — drag to add an extra session (Other)' : ''}"
       ondragstart="onTeacherDragStart(event,'${t.id}')"
       ondragend="onDragEnd()">
       <div class="yg-pip ${pipCls(t.yg)}"></div>
@@ -731,8 +759,7 @@ function onCellDrop(e, dayIdx, session) {
     if (slots().find(s => s.tid === d.id && s.day === dayIdx && s.session === session)) {
       state.dragging = null; render(); return;
     }
-    const t = teacher(d.id);
-    const defaultReason = t?.ent?.[0]?.r || 'PPA';
+    const defaultReason = firstAvailableReason(d.id);
     setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null}]);
   }
 
