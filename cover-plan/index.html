@@ -55,6 +55,12 @@
     'Y5':        { bg:'#ffedd5', border:'#fb923c', label:'#c2410c' },  // medium orange
     'Y6':        { bg:'#bbf7d0', border:'#4ade80', label:'#15803d' },  // medium green
   };
+  const YEAR_ORDER = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6'];
+  function yearGroupRank(entry, staffByName) {
+    const yg = yearGroup(entry, staffByName);
+    const idx = YEAR_ORDER.indexOf(yg);
+    return idx === -1 ? 99 : idx;
+  }
   function canonicalYearGroup(str) {
     if (!str) return null;
     return Object.keys(YEAR_COLOURS).find(k => k.toLowerCase() === str.trim().toLowerCase()) || null;
@@ -514,7 +520,8 @@
                       background: isToday ? '#f0f4ff' : 'white', verticalAlign:'top', minWidth:130 }}>
                       {slots.length === 0
                         ? <span style={{ color:'#d1d5db', fontSize:12 }}>—</span>
-                        : slots.map((e, idx) => <SlotCard key={idx} entry={e} staffByName={staffByName}/>)
+                        : [...slots].sort((a,b) => yearGroupRank(a,staffByName) - yearGroupRank(b,staffByName))
+                            .map((e, idx) => <SlotCard key={idx} entry={e} staffByName={staffByName}/>)
                       }
                     </td>
                   );
