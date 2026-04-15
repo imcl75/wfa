@@ -294,8 +294,12 @@ function generateTermSchedule() {
 
   const lastRow = planSheet.getLastRow();
   planSheet.getRange(lastRow + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
-  const dateColNum = planHeaders.indexOf('Date') + 1;
-  planSheet.getRange(lastRow + 1, dateColNum, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
+  try {
+    const dateColNum = planHeaders.indexOf('Date') + 1;
+    planSheet.getRange(lastRow + 1, dateColNum, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
+  } catch(e) {
+    // Ignore — happens when the sheet is formatted as a Table (typed columns block format changes)
+  }
 
   ui.alert(
     `✓ Generated ${newRows.length} entries for Term ${termNum} (${termWeeks.length} weeks).` +
@@ -453,8 +457,12 @@ function regenerateFromWeek() {
     });
     const lastRow = planSheet.getLastRow();
     planSheet.getRange(lastRow + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
-    const dateColNum = planHeaders2.indexOf('Date') + 1;
-    planSheet.getRange(lastRow + 1, dateColNum, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
+    try {
+      const dateColNum = planHeaders2.indexOf('Date') + 1;
+      planSheet.getRange(lastRow + 1, dateColNum, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
+    } catch(e) {
+      // Ignore — happens when the sheet is formatted as a Table (typed columns block format changes)
+    }
   }
 
   ui.alert(
