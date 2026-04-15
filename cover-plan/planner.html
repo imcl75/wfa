@@ -9,250 +9,145 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f0f4f8; min-height: 100vh; font-size: 13px; }
 
-    /* ── Header ── */
     .header-strip { background: #1798d3; height: 8px; }
     header {
-      background: white;
-      padding: 11px 18px;
-      display: flex;
-      align-items: center;
-      gap: 13px;
+      background: white; padding: 11px 18px;
+      display: flex; align-items: center; gap: 13px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
     header img { height: 46px; }
-    .header-title { font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900; color: #1798d3; line-height: 1.2; }
-    .header-sub { font-size: 11px; color: #94a3b8; margin-top: 1px; }
-    .demo-badge {
-      font-size: 9px; font-weight: bold;
-      background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa;
-      padding: 1px 6px; border-radius: 10px; text-transform: uppercase;
-      letter-spacing: 0.04em; margin-left: 8px; vertical-align: middle;
-    }
-    .week-nav { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-    .week-nav button {
-      padding: 5px 11px; border: 1px solid #e2e8f0; border-radius: 4px;
-      background: white; cursor: pointer; font-size: 15px; color: #475569; line-height: 1;
-    }
-    .week-nav button:hover { background: #f0f8fd; border-color: #93c5fd; }
-    .week-nav button:disabled { opacity: 0.35; cursor: default; }
-    #weekLabel { font-weight: bold; font-size: 13px; color: #1e3a8a; text-align: center; min-width: 160px; }
-    #weekLabel small { display: block; font-size: 10px; color: #94a3b8; font-weight: normal; margin-top: 1px; }
+    .header-title { font-family:'Nunito',sans-serif; font-size:17px; font-weight:900; color:#1798d3; line-height:1.2; }
+    .header-sub { font-size:11px; color:#94a3b8; margin-top:1px; }
+    .demo-badge { font-size:9px; font-weight:bold; background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; padding:1px 6px; border-radius:10px; text-transform:uppercase; letter-spacing:.04em; margin-left:8px; vertical-align:middle; }
 
-    /* ── Stats bar ── */
-    .stats-bar {
-      background: white; border-bottom: 1px solid #e8eef4;
-      padding: 6px 18px; display: flex; gap: 18px; font-size: 11.5px; color: #64748b;
-    }
-    .stat { display: flex; align-items: center; gap: 5px; }
-    .stat-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .stat strong { color: #1e3a8a; }
+    /* View tabs */
+    .view-tabs { margin-left:auto; display:flex; gap:4px; align-items:center; }
+    .view-tab { padding:6px 14px; border:none; border-radius:5px; cursor:pointer; font-family:Arial; font-size:13px; background:#f0f8fd; color:#475569; transition:all .15s; }
+    .view-tab:hover { background:#e0f0fa; }
+    .view-tab.active { background:#1798d3; color:white; font-weight:bold; }
+    .week-nav { display:flex; align-items:center; gap:6px; margin-left:12px; }
+    .week-nav button { padding:5px 11px; border:1px solid #e2e8f0; border-radius:4px; background:white; cursor:pointer; font-size:15px; color:#475569; line-height:1; }
+    .week-nav button:hover { background:#f0f8fd; border-color:#93c5fd; }
+    .week-nav button:disabled { opacity:.35; cursor:default; }
+    #weekLabel { font-weight:bold; font-size:13px; color:#1e3a8a; text-align:center; min-width:150px; }
+    #weekLabel small { display:block; font-size:10px; color:#94a3b8; font-weight:normal; margin-top:1px; }
 
-    /* ── App layout ── */
-    .app {
-      display: grid;
-      grid-template-columns: 188px 1fr 210px;
-      gap: 10px;
-      padding: 10px;
-      max-width: 1340px;
-      margin: 0 auto;
-      align-items: start;
-    }
+    .stats-bar { background:white; border-bottom:1px solid #e8eef4; padding:6px 18px; display:flex; gap:18px; font-size:11.5px; color:#64748b; }
+    .stat { display:flex; align-items:center; gap:5px; }
+    .stat-dot { width:7px; height:7px; border-radius:50%; }
+    .stat strong { color:#1e3a8a; }
 
-    /* ── Panels ── */
-    .panel { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow: hidden; }
-    .panel-hd {
-      padding: 9px 12px 7px;
-      border-bottom: 1px solid #f1f5f9;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 900; font-size: 13px; color: #1e3a8a;
-    }
-    .panel-hd small { display: block; font-size: 10px; color: #94a3b8; font-weight: normal; font-family: Arial; margin-top: 1px; }
-    .panel-body { padding: 9px 10px; }
-    .section-label {
-      font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.08em;
-      color: #cbd5e1; font-weight: bold; margin: 10px 0 6px;
-    }
-    .section-label:first-child { margin-top: 0; }
+    .app { display:grid; grid-template-columns:188px 1fr 210px; gap:10px; padding:10px; max-width:1340px; margin:0 auto; align-items:start; }
 
-    /* ── Teacher chips (left panel, top) ── */
-    .teacher-chip {
-      display: flex; align-items: center; gap: 6px;
-      padding: 5px 8px; border: 1.5px solid #e2e8f0; border-radius: 5px;
-      margin-bottom: 4px; cursor: grab; user-select: none;
-      transition: all 0.12s; background: white;
-    }
-    .teacher-chip:hover { border-color: #1798d3; box-shadow: 0 2px 6px rgba(23,152,211,0.15); transform: translateY(-1px); }
-    .teacher-chip.dragging { opacity: 0.28; pointer-events: none; }
-    .teacher-chip.in-use { opacity: 0.5; cursor: not-allowed; }
-    .teacher-chip.in-use:hover { transform: none; box-shadow: none; border-color: #e2e8f0; }
-    .yg-pip { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
-    .chip-name { font-size: 12px; font-weight: bold; color: #111; }
-    .chip-yg { font-size: 9.5px; color: #94a3b8; margin-left: auto; }
+    .panel { background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.07); overflow:hidden; }
+    .panel-hd { padding:9px 12px 7px; border-bottom:1px solid #f1f5f9; font-family:'Nunito',sans-serif; font-weight:900; font-size:13px; color:#1e3a8a; }
+    .panel-hd small { display:block; font-size:10px; color:#94a3b8; font-weight:normal; font-family:Arial; margin-top:1px; }
+    .panel-body { padding:9px 10px; max-height:calc(100vh - 130px); overflow-y:auto; }
+    .section-label { font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:#cbd5e1; font-weight:bold; margin:10px 0 6px; }
+    .section-label:first-child { margin-top:0; }
 
-    /* ── Cover chips ── */
-    .cover-chip {
-      display: flex; align-items: center; gap: 7px;
-      padding: 5px 8px; border: 1.5px solid #e2e8f0; border-radius: 5px;
-      margin-bottom: 4px; cursor: grab; user-select: none;
-      transition: all 0.12s; background: white;
-    }
-    .cover-chip:hover { border-color: #1798d3; box-shadow: 0 2px 6px rgba(23,152,211,0.15); transform: translateY(-1px); }
-    .cover-chip.dragging { opacity: 0.28; pointer-events: none; }
-    .cover-avatar {
-      width: 22px; height: 22px; border-radius: 50%;
-      color: white; display: flex; align-items: center; justify-content: center;
-      font-size: 8.5px; font-weight: bold; flex-shrink: 0;
-    }
-    .cover-chip-name { font-size: 12px; font-weight: bold; color: #111; }
-    .cover-chip-role { font-size: 9.5px; color: #94a3b8; }
+    /* Teacher chips */
+    .teacher-chip { display:flex; align-items:center; gap:6px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
+    .teacher-chip:hover:not(.fully-booked) { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
+    .teacher-chip.dragging { opacity:.28; pointer-events:none; }
+    .teacher-chip.fully-booked { opacity:.45; cursor:not-allowed; background:#f8fafc; }
+    .yg-pip { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+    .chip-name { font-size:12px; font-weight:bold; color:#111; }
+    .chip-ent { font-size:9px; color:#94a3b8; margin-left:auto; display:flex; gap:2px; align-items:center; }
+    .ent-mini { width:7px; height:7px; border-radius:50%; }
+    .ent-mini.used  { background:#1798d3; }
+    .ent-mini.empty { background:#e2e8f0; border:1px solid #cbd5e1; }
 
-    /* ── Week grid ── */
-    .grid-wrap {
-      background: white; border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07); overflow-x: auto;
-    }
-    .week-grid { width: 100%; border-collapse: collapse; min-width: 620px; }
-    .week-grid th {
-      padding: 8px 6px; text-align: center;
-      font-size: 12px; font-weight: bold; color: #1e3a8a;
-      border-bottom: 2px solid #e2e8f0;
-      border-right: 1px solid #f1f5f9;
-    }
-    .week-grid th.is-today { background: #1a1a8c; color: white; }
-    .week-grid th:first-child { width: 52px; color: #94a3b8; border-right: 2px solid #e2e8f0; font-weight: normal; }
-    .session-cell {
-      font-size: 9.5px; font-weight: bold; color: #94a3b8;
-      text-transform: uppercase; letter-spacing: 0.06em;
-      text-align: center; vertical-align: top;
-      padding: 8px 3px; border-right: 2px solid #e2e8f0;
-      border-bottom: 1px solid #f1f5f9;
-      white-space: nowrap;
-    }
-    .grid-cell {
-      vertical-align: top; padding: 5px;
-      border-right: 1px solid #f1f5f9;
-      border-bottom: 1px solid #f1f5f9;
-      min-height: 56px; min-width: 115px;
-      transition: background 0.1s;
-    }
-    .grid-cell.teacher-ready { background: #f8faff; }
-    .grid-cell.teacher-over  { background: #dbeafe; outline: 2px dashed #1798d3; outline-offset: -2px; }
-    .grid-cell.cover-ready .slot-cover-zone { border-color: #93c5fd !important; background: #f0f8fd !important; color: #1798d3 !important; animation: pulse-zone 1.2s ease-in-out infinite; }
-    .grid-cell.cover-over   .slot-cover-zone { border-color: #1798d3 !important; background: #bfdbfe !important; animation: none; }
+    /* Cover chips */
+    .cover-chip { display:flex; align-items:center; gap:7px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
+    .cover-chip:hover { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
+    .cover-chip.dragging { opacity:.28; pointer-events:none; }
+    .cover-avatar { width:22px; height:22px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:bold; flex-shrink:0; }
+    .cover-chip-name { font-size:12px; font-weight:bold; color:#111; }
+    .cover-chip-role { font-size:9.5px; color:#94a3b8; }
 
-    @keyframes pulse-zone {
-      0%,100% { border-color: #93c5fd; }
-      50%      { border-color: #1798d3; }
-    }
+    /* Grid */
+    .grid-wrap { background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.07); overflow-x:auto; }
+    .week-grid { width:100%; border-collapse:collapse; min-width:620px; }
+    .week-grid th { padding:8px 6px; text-align:center; font-size:12px; font-weight:bold; color:#1e3a8a; border-bottom:2px solid #e2e8f0; border-right:1px solid #f1f5f9; }
+    .week-grid th.is-today { background:#1a1a8c; color:white; }
+    .week-grid th:first-child { width:52px; color:#94a3b8; border-right:2px solid #e2e8f0; font-weight:normal; }
+    .session-cell { font-size:9.5px; font-weight:bold; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; text-align:center; vertical-align:top; padding:8px 3px; border-right:2px solid #e2e8f0; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .grid-cell { vertical-align:top; padding:5px; border-right:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; min-height:56px; min-width:115px; transition:background .1s; }
+    .grid-cell.teacher-ready { background:#f8faff; }
+    .grid-cell.teacher-over  { background:#dbeafe !important; outline:2px dashed #1798d3; outline-offset:-2px; }
+    .grid-cell.slot-over     { background:#eff6ff !important; outline:2px dashed #60a5fa; outline-offset:-2px; }
+    .grid-cell.cover-ready .slot-cover-zone { border-color:#93c5fd !important; background:#f0f8fd !important; color:#1798d3 !important; animation:pulse-zone 1.2s ease-in-out infinite; }
+    .grid-cell.cover-over   .slot-cover-zone { border-color:#1798d3 !important; background:#bfdbfe !important; animation:none; }
+    @keyframes pulse-zone { 0%,100%{border-color:#93c5fd} 50%{border-color:#1798d3} }
+    .empty-hint { display:flex; align-items:center; justify-content:center; min-height:40px; color:#e2e8f0; font-size:20px; border-radius:4px; border:1.5px dashed transparent; transition:all .1s; }
+    .grid-cell.teacher-over .empty-hint,.grid-cell.slot-over .empty-hint { color:#1798d3; border-color:#1798d3; }
 
-    .empty-hint {
-      display: flex; align-items: center; justify-content: center;
-      min-height: 40px; color: #e2e8f0; font-size: 20px;
-      border-radius: 4px; border: 1.5px dashed transparent; transition: all 0.1s;
-    }
-    .grid-cell.teacher-over .empty-hint { color: #1798d3; border-color: #1798d3; }
+    /* Slot items */
+    .slot-item { border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:5px; overflow:hidden; font-size:11px; cursor:grab; }
+    .slot-item:active { cursor:grabbing; }
+    .slot-item.slot-dragging { opacity:.3; }
+    .slot-hd { display:flex; align-items:center; gap:3px; padding:4px 5px; border-bottom:1px solid rgba(0,0,0,.07); }
+    .slot-drag-handle { color:#cbd5e1; font-size:11px; cursor:grab; margin-right:1px; flex-shrink:0; }
+    .slot-name { font-weight:bold; flex:1; color:#111; font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .reason-sel { font-size:9.5px; font-weight:bold; border:none; border-radius:3px; padding:1px 2px; cursor:pointer; flex-shrink:0; max-width:72px; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='currentColor' opacity='.5'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 3px center; padding-right:13px; }
+    .slot-del { background:none; border:none; cursor:pointer; color:#cbd5e1; font-size:14px; line-height:1; padding:0 2px; border-radius:2px; flex-shrink:0; }
+    .slot-del:hover { color:#dc2626; background:#fee2e2; }
+    .slot-cover-zone { margin:3px 4px 4px; padding:3px 6px; font-size:10px; color:#94a3b8; border:1.5px dashed #e2e8f0; border-radius:3px; transition:all .12s; cursor:default; }
+    .slot-cover-zone.over { border-color:#1798d3 !important; background:#bfdbfe !important; animation:none !important; }
+    .slot-cover-assigned { margin:3px 4px 4px; padding:3px 6px; font-size:10.5px; font-weight:bold; color:#166534; background:#f0fdf4; border:1.5px solid #86efac; border-radius:3px; display:flex; align-items:center; }
+    .slot-cover-assigned .cv-x { margin-left:auto; background:none; border:none; cursor:pointer; color:#94a3b8; font-size:12px; padding:0 1px; border-radius:2px; }
+    .slot-cover-assigned .cv-x:hover { color:#dc2626; }
 
-    /* ── Slot items ── */
-    .slot-item {
-      border: 1.5px solid #e2e8f0; border-radius: 5px;
-      margin-bottom: 5px; overflow: hidden; font-size: 11px;
-    }
-    .slot-hd {
-      display: flex; align-items: center; gap: 3px;
-      padding: 4px 5px;
-      border-bottom: 1px solid rgba(0,0,0,0.07);
-    }
-    .slot-name { font-weight: bold; flex: 1; color: #111; font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .reason-sel {
-      font-size: 9.5px; font-weight: bold;
-      border: none; border-radius: 3px; padding: 1px 2px;
-      cursor: pointer; flex-shrink: 0; max-width: 72px;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='currentColor' opacity='.5'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 3px center;
-      padding-right: 13px;
-    }
-    .slot-del {
-      background: none; border: none; cursor: pointer;
-      color: #cbd5e1; font-size: 14px; line-height: 1;
-      padding: 0 2px; border-radius: 2px; flex-shrink: 0;
-    }
-    .slot-del:hover { color: #dc2626; background: #fee2e2; }
+    /* YG header tints */
+    .syg-Reception .slot-hd{background:#dbeafe} .syg-Y1 .slot-hd{background:#ffedd5} .syg-Y2 .slot-hd{background:#d1fae5}
+    .syg-Y3 .slot-hd{background:#fce7f3} .syg-Y4 .slot-hd{background:#bfdbfe} .syg-Y5 .slot-hd{background:#fed7aa} .syg-Y6 .slot-hd{background:#bbf7d0}
 
-    .slot-cover-zone {
-      margin: 3px 4px 4px;
-      padding: 3px 6px;
-      font-size: 10px; color: #94a3b8;
-      border: 1.5px dashed #e2e8f0; border-radius: 3px;
-      transition: all 0.12s; cursor: default;
-    }
-    .slot-cover-assigned {
-      margin: 3px 4px 4px;
-      padding: 3px 6px;
-      font-size: 10.5px; font-weight: bold; color: #166534;
-      background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 3px;
-      display: flex; align-items: center;
-    }
-    .slot-cover-assigned .cv-x {
-      margin-left: auto; background: none; border: none;
-      cursor: pointer; color: #94a3b8; font-size: 12px; padding: 0 1px; border-radius: 2px;
-    }
-    .slot-cover-assigned .cv-x:hover { color: #dc2626; }
+    /* Pips */
+    .pip-Reception,.dot-Reception{background:#93c5fd} .pip-Y1,.dot-Y1{background:#fb923c} .pip-Y2,.dot-Y2{background:#6ee7b7}
+    .pip-Y3,.dot-Y3{background:#f9a8d4} .pip-Y4,.dot-Y4{background:#60a5fa} .pip-Y5,.dot-Y5{background:#fdba74} .pip-Y6,.dot-Y6{background:#4ade80}
+    .pip-,.dot-{background:#cbd5e1}
 
-    /* Year group header colours */
-    .syg-Reception .slot-hd { background: #dbeafe; }
-    .syg-Y1        .slot-hd { background: #ffedd5; }
-    .syg-Y2        .slot-hd { background: #d1fae5; }
-    .syg-Y3        .slot-hd { background: #fce7f3; }
-    .syg-Y4        .slot-hd { background: #bfdbfe; }
-    .syg-Y5        .slot-hd { background: #fed7aa; }
-    .syg-Y6        .slot-hd { background: #bbf7d0; }
+    /* Reason colours */
+    .rb-PPA{background:#dbeafe;color:#1e40af} .rb-Phase{background:#fce7f3;color:#9d174d} .rb-Leadership{background:#fef3c7;color:#92400e}
+    .rb-Training{background:#ede9fe;color:#5b21b6} .rb-ECT1{background:#fef9c3;color:#713f12} .rb-ECT2{background:#fefce8;color:#854d0e}
+    .rb-RA{background:#e0e7ff;color:#3730a3} .rb-SENCO{background:#f0f9ff;color:#0c4a6e} .rb-Illness{background:#fee2e2;color:#991b1b}
+    .rb-Sports{background:#ccfbf1;color:#0f766e} .rb-Other{background:#f3f4f6;color:#374151}
 
-    /* YG pip colours */
-    .pip-Reception,.dot-Reception { background: #93c5fd; }
-    .pip-Y1,.dot-Y1 { background: #fb923c; }
-    .pip-Y2,.dot-Y2 { background: #6ee7b7; }
-    .pip-Y3,.dot-Y3 { background: #f9a8d4; }
-    .pip-Y4,.dot-Y4 { background: #60a5fa; }
-    .pip-Y5,.dot-Y5 { background: #fdba74; }
-    .pip-Y6,.dot-Y6 { background: #4ade80; }
-    .pip-,.dot- { background: #cbd5e1; }
+    /* Entitlement panel */
+    .ent-row { padding:6px 0; border-bottom:1px solid #f8fafc; }
+    .ent-row:last-child { border-bottom:none; }
+    .ent-teacher { display:flex; align-items:center; gap:5px; margin-bottom:3px; }
+    .ent-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+    .ent-name { font-weight:bold; font-size:12px; color:#111; }
+    .ent-lines { padding-left:14px; }
+    .ent-line { display:flex; align-items:center; gap:5px; margin-bottom:2px; }
+    .ent-reason { font-size:10px; color:#64748b; min-width:65px; }
+    .ent-pips { display:flex; gap:3px; }
+    .ent-pip { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+    .ent-pip.used{background:#1798d3} .ent-pip.empty{background:#e2e8f0;border:1.5px solid #cbd5e1} .ent-pip.over{background:#dc2626}
+    .ent-status { font-size:9.5px; font-weight:bold; }
+    .ent-ok{color:#166534} .ent-warn{color:#c2410c} .ent-miss{color:#94a3b8}
 
-    /* Reason select tints */
-    .rb-PPA        { background: #dbeafe; color: #1e40af; }
-    .rb-Phase      { background: #fce7f3; color: #9d174d; }
-    .rb-Leadership { background: #fef3c7; color: #92400e; }
-    .rb-Training   { background: #ede9fe; color: #5b21b6; }
-    .rb-ECT1       { background: #fef9c3; color: #713f12; }
-    .rb-ECT2       { background: #fefce8; color: #854d0e; }
-    .rb-RA         { background: #e0e7ff; color: #3730a3; }
-    .rb-SENCO      { background: #f0f9ff; color: #0c4a6e; }
-    .rb-Illness    { background: #fee2e2; color: #991b1b; }
-    .rb-Sports     { background: #ccfbf1; color: #0f766e; }
-    .rb-Other      { background: #f3f4f6; color: #374151; }
+    /* My view */
+    .my-view-wrap { background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,.07); padding:18px 20px; }
+    .my-name-row { display:flex; align-items:center; gap:10px; margin-bottom:20px; padding:11px 14px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; }
+    .my-name-row label { font-size:13px; color:#475569; font-weight:bold; flex-shrink:0; }
+    .my-name-row select { padding:6px 10px; font-size:14px; border:1px solid #cbd5e1; border-radius:4px; color:#1e293b; background:white; flex:1; max-width:240px; }
+    .my-week-group { margin-bottom:22px; }
+    .my-week-label { font-size:13px; font-weight:bold; color:#1e3a8a; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+    .my-week-label .wk-badge { font-size:11px; background:#f0f4ff; color:#1e3a8a; padding:1px 8px; border-radius:4px; }
+    .my-entry { display:flex; gap:12px; padding:10px 13px; border-radius:5px; border-left:4px solid #e2e8f0; border:1px solid #e2e8f0; margin-bottom:7px; border-left-width:4px; }
+    .my-badge { font-size:10px; font-weight:bold; padding:2px 7px; border-radius:3px; letter-spacing:.02em; flex-shrink:0; align-self:flex-start; margin-top:1px; }
+    .my-badge.out { background:#ffedd5; color:#c2410c; }
+    .my-badge.covering { background:#dbeafe; color:#1d4ed8; }
+    .my-entry-detail { flex:1; }
+    .my-entry-when { font-size:13px; color:#111; margin-bottom:3px; }
+    .my-entry-info { font-size:12px; color:#555; }
+    .my-entry-cover { font-size:12px; color:#1a1a8c; margin-top:2px; }
+    .my-empty { text-align:center; padding:30px 0; color:#94a3b8; font-size:14px; }
 
-    /* ── Entitlement panel ── */
-    .ent-row { padding: 6px 0; border-bottom: 1px solid #f8fafc; }
-    .ent-row:last-child { border-bottom: none; }
-    .ent-teacher { display: flex; align-items: center; gap: 5px; margin-bottom: 3px; }
-    .ent-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
-    .ent-name { font-weight: bold; font-size: 12px; color: #111; }
-    .ent-lines { padding-left: 14px; }
-    .ent-line { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
-    .ent-reason { font-size: 10px; color: #64748b; min-width: 65px; }
-    .ent-pips { display: flex; gap: 3px; }
-    .ent-pip {
-      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
-    }
-    .ent-pip.used  { background: #1798d3; }
-    .ent-pip.empty { background: #e2e8f0; border: 1.5px solid #cbd5e1; }
-    .ent-pip.over  { background: #dc2626; }
-    .ent-status { font-size: 9.5px; font-weight: bold; }
-    .ent-ok   { color: #166534; }
-    .ent-warn { color: #c2410c; }
-    .ent-miss { color: #94a3b8; }
-
-    footer { text-align: center; font-size: 11px; color: #cbd5e1; padding: 14px 0 22px; }
+    footer { text-align:center; font-size:11px; color:#cbd5e1; padding:14px 0 22px; }
   </style>
 </head>
 <body>
@@ -262,7 +157,11 @@
   <img src="logo.png" alt="Wallscourt Farm Academy">
   <div>
     <div class="header-title">Cover Planner <span class="demo-badge">Prototype</span></div>
-    <div class="header-sub">Drag teachers into sessions · Drag cover onto TBC slots</div>
+    <div class="header-sub">Drag teachers into sessions · Drag cover onto TBC slots · Drag slots to move</div>
+  </div>
+  <div class="view-tabs">
+    <button class="view-tab active" id="tab-week" onclick="setView('week')">Week</button>
+    <button class="view-tab" id="tab-mine" onclick="setView('mine')">My view</button>
   </div>
   <div class="week-nav">
     <button id="prevWeek" onclick="changeWeek(-1)">‹</button>
@@ -273,25 +172,19 @@
 
 <div class="stats-bar" id="statsBar"></div>
 
-<div class="app">
-
-  <!-- Left: staff lists -->
+<div class="app" id="app">
+  <!-- Left: staff -->
   <div class="panel">
     <div class="panel-hd">Staff <small>Drag to grid</small></div>
     <div class="panel-body" id="staffPanel"></div>
   </div>
-
-  <!-- Center: week grid -->
-  <div class="grid-wrap">
-    <table class="week-grid" id="weekGrid"></table>
-  </div>
-
-  <!-- Right: entitlement tracker -->
+  <!-- Center -->
+  <div id="centerPane"></div>
+  <!-- Right: entitlement -->
   <div class="panel">
     <div class="panel-hd">Entitlements <small>This week's allocation</small></div>
     <div class="panel-body" id="entPanel"></div>
   </div>
-
 </div>
 
 <footer>Wallscourt Farm Academy · Cover Planner · Prototype — not connected to live data</footer>
@@ -299,64 +192,53 @@
 <script>
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const SESSIONS = ['Before School','AM','Lunch','PM','After School'];
-const SESSION_SHORT = { 'Before School':'Before', AM:'AM', Lunch:'Lunch', PM:'PM', 'After School':'After' };
-const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-const REASONS = ['PPA','Phase Lead','Leadership','Training','ECT1','ECT2','RA','SENCO','Sports','Illness','Other'];
+const SESSIONS     = ['Before School','AM','Lunch','PM','After School'];
+const SESSION_SHORT= {'Before School':'Before',AM:'AM',Lunch:'Lunch',PM:'PM','After School':'After'};
+const DAYS         = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const REASONS      = ['PPA','Phase Lead','Leadership','Training','ECT1','ECT2','RA','SENCO','Sports','Illness','Other'];
+const REASON_CLS   = {'PPA':'PPA','Phase Lead':'Phase','Leadership':'Leadership','Training':'Training','ECT1':'ECT1','ECT2':'ECT2','RA':'RA','SENCO':'SENCO','Sports':'Sports','Illness':'Illness','Other':'Other'};
 
-const REASON_CLS = {
-  'PPA':'PPA','Phase Lead':'Phase','Leadership':'Leadership','Training':'Training',
-  'ECT1':'ECT1','ECT2':'ECT2','RA':'RA','SENCO':'SENCO','Sports':'Sports','Illness':'Illness','Other':'Other'
-};
-
-// Teaching weeks starting Mon 20 Apr 2026
 const WEEKS = [
-  { label:'T5 · Week 1', dates:['20','21','22','23','24'], month:'Apr', start: new Date(2026,3,20) },
-  { label:'T5 · Week 2', dates:['27','28','29','30','1'],  month:'Apr/May', start: new Date(2026,3,27) },
-  { label:'T5 · Week 3', dates:['4','5','6','7','8'],      month:'May', start: new Date(2026,4,4) },
-  { label:'T5 · Week 4', dates:['11','12','13','14','15'], month:'May', start: new Date(2026,4,11) },
-  { label:'T5 · Week 5', dates:['18','19','20','21','22'], month:'May', start: new Date(2026,4,18) },
+  {label:'T5 · Week 1', start:new Date(2026,3,20)},
+  {label:'T5 · Week 2', start:new Date(2026,3,27)},
+  {label:'T5 · Week 3', start:new Date(2026,4,4)},
+  {label:'T5 · Week 4', start:new Date(2026,4,11)},
+  {label:'T5 · Week 5', start:new Date(2026,4,18)},
 ];
 
-const TODAY_DAY = -1; // no "today" in prototype (-1 = none highlighted)
-
-// Teachers — people who can be dragged INTO the grid (they'll be "out of class")
 const TEACHERS = [
-  { id:'jess',    name:'Jess',     yg:'Y1',  ent:[{r:'PPA',n:1}] },
-  { id:'sarahm',  name:'Sarah M',  yg:'Y2',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}] },
-  { id:'clarek',  name:'Clare K',  yg:'Y3',  ent:[{r:'PPA',n:1}] },
-  { id:'innes',   name:'Innes',    yg:'Y4',  ent:[{r:'PPA',n:1},{r:'RA',n:1}] },
-  { id:'eloise',  name:'Eloise',   yg:'Y5',  ent:[{r:'PPA',n:1}] },
-  { id:'ellie',   name:'Ellie',    yg:'Y5',  ent:[{r:'PPA',n:1}] },
-  { id:'jon',     name:'Jon',      yg:'Y6',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}] },
-  { id:'reuben',  name:'Reuben',   yg:'Y3',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}] },
-  { id:'sally',   name:'Sally',    yg:'Y6',  ent:[{r:'PPA',n:1}] },
-  { id:'laura',   name:'Laura',    yg:'Y2',  ent:[{r:'PPA',n:1}] },
-  { id:'lutzm',   name:'Lutz Mae', yg:'Y3',  ent:[{r:'PPA',n:1}] },
-  { id:'william', name:'William',  yg:'Y4',  ent:[{r:'PPA',n:1}] },
-  { id:'jamie',   name:'Jamie',    yg:null,  ent:[{r:'PPA',n:1},{r:'ECT1',n:1}] },
-  { id:'leyla',   name:'Leyla',    yg:null,  ent:[{r:'Phase Lead',n:1}] },
-  { id:'ellen',   name:'Ellen',    yg:null,  ent:[{r:'SENCO',n:3}] },
+  {id:'jess',    name:'Jess',     yg:'Y1',  ent:[{r:'PPA',n:1}]},
+  {id:'sarahm',  name:'Sarah M',  yg:'Y2',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}]},
+  {id:'clarek',  name:'Clare K',  yg:'Y3',  ent:[{r:'PPA',n:1}]},
+  {id:'innes',   name:'Innes',    yg:'Y4',  ent:[{r:'PPA',n:1},{r:'RA',n:1}]},
+  {id:'eloise',  name:'Eloise',   yg:'Y5',  ent:[{r:'PPA',n:1}]},
+  {id:'ellie',   name:'Ellie',    yg:'Y5',  ent:[{r:'PPA',n:1}]},
+  {id:'jon',     name:'Jon',      yg:'Y6',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}]},
+  {id:'reuben',  name:'Reuben',   yg:'Y3',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}]},
+  {id:'sally',   name:'Sally',    yg:'Y6',  ent:[{r:'PPA',n:1}]},
+  {id:'laura',   name:'Laura',    yg:'Y2',  ent:[{r:'PPA',n:1}]},
+  {id:'lutzm',   name:'Lutz Mae', yg:'Y3',  ent:[{r:'PPA',n:1}]},
+  {id:'william', name:'William',  yg:'Y4',  ent:[{r:'PPA',n:1}]},
+  {id:'jamie',   name:'Jamie',    yg:null,  ent:[{r:'PPA',n:1},{r:'ECT1',n:1}]},
+  {id:'leyla',   name:'Leyla',    yg:null,  ent:[{r:'Phase Lead',n:1}]},
+  {id:'ellen',   name:'Ellen',    yg:null,  ent:[{r:'SENCO',n:3}]},
 ];
 
-// Cover staff — people who can be dragged onto TBC slots
 const COVER = [
-  { id:'c_ellen',    name:'Ellen',     role:'Cover Teacher',    init:'EL', col:'#1798d3' },
-  { id:'c_theresa',  name:'Theresa',   role:'Teaching Partner', init:'TH', col:'#7c3aed' },
-  { id:'c_chelsea',  name:'Chelsea',   role:'Teaching Partner', init:'CH', col:'#0891b2' },
-  { id:'c_catherine',name:'Catherine', role:'Teaching Partner', init:'CA', col:'#059669' },
-  { id:'c_kerry',    name:'Kerry',     role:'Teaching Partner', init:'KE', col:'#d97706' },
-  { id:'c_sam',      name:'Sam',       role:'Teaching Partner', init:'SA', col:'#dc2626' },
-  { id:'c_alasdair', name:'Alasdair',  role:'Teaching Partner', init:'AL', col:'#7c2d12' },
-  { id:'c_hettie',   name:'Hettie',    role:'Teaching Partner', init:'HE', col:'#be185d' },
-  { id:'c_leyla',    name:'Leyla',     role:'Cover',            init:'LE', col:'#0f766e' },
-  { id:'c_lutzm',    name:'Lutz Mae',  role:'Class Teacher',    init:'LM', col:'#4338ca' },
-  { id:'c_absports', name:'AB Sports', role:'External',         init:'AB', col:'#166534' },
-  { id:'c_supply',   name:'Supply',    role:'Supply (Jono)',     init:'SU', col:'#92400e' },
+  {id:'c_ellen',    name:'Ellen',     role:'Cover Teacher',    init:'EL', col:'#1798d3'},
+  {id:'c_theresa',  name:'Theresa',   role:'Teaching Partner', init:'TH', col:'#7c3aed'},
+  {id:'c_chelsea',  name:'Chelsea',   role:'Teaching Partner', init:'CH', col:'#0891b2'},
+  {id:'c_catherine',name:'Catherine', role:'Teaching Partner', init:'CA', col:'#059669'},
+  {id:'c_kerry',    name:'Kerry',     role:'Teaching Partner', init:'KE', col:'#d97706'},
+  {id:'c_sam',      name:'Sam',       role:'Teaching Partner', init:'SA', col:'#dc2626'},
+  {id:'c_alasdair', name:'Alasdair',  role:'Teaching Partner', init:'AL', col:'#7c2d12'},
+  {id:'c_hettie',   name:'Hettie',    role:'Teaching Partner', init:'HE', col:'#be185d'},
+  {id:'c_leyla',    name:'Leyla',     role:'Cover',            init:'LE', col:'#0f766e'},
+  {id:'c_lutzm',    name:'Lutz Mae',  role:'Class Teacher',    init:'LM', col:'#4338ca'},
+  {id:'c_absports', name:'AB Sports', role:'External',         init:'AB', col:'#166534'},
+  {id:'c_supply',   name:'Supply',    role:'Supply (Jono)',     init:'SU', col:'#92400e'},
 ];
 
-// Pre-populated week 1 (T5W1) slots
-// day: 0=Mon…4=Fri
 const WEEK1_SLOTS = [
   {id:1,  day:0,session:'AM', tid:'leyla',   reason:'Phase Lead',cover:null},
   {id:2,  day:0,session:'PM', tid:'jamie',   reason:'ECT1',      cover:'Theresa'},
@@ -386,44 +268,47 @@ const WEEK1_SLOTS = [
 
 const state = {
   weekIdx: 0,
-  // slots per week — week 0 pre-populated, others start empty
-  weekSlots: { 0: JSON.parse(JSON.stringify(WEEK1_SLOTS)) },
-  dragging: null,   // { type:'teacher'|'cover', id, name }
+  weekSlots: {0: JSON.parse(JSON.stringify(WEEK1_SLOTS))},
+  dragging: null,  // {type:'teacher'|'cover'|'slot', id, name, slotId?}
   nextId: 200,
+  view: 'week',
+  myName: '',
 };
 
-function slots() {
-  return state.weekSlots[state.weekIdx] || [];
-}
-function setSlots(arr) {
-  state.weekSlots[state.weekIdx] = arr;
-}
+function slots()        { return state.weekSlots[state.weekIdx] || []; }
+function setSlots(arr)  { state.weekSlots[state.weekIdx] = arr; }
+function teacher(tid)   { return TEACHERS.find(t => t.id === tid); }
+function rbCls(r)       { return 'rb-' + (REASON_CLS[r] || 'Other'); }
+function sygCls(yg)     { return yg ? 'syg-' + yg : ''; }
+function pipCls(yg)     { return 'pip-' + (yg || ''); }
+function dotCls(yg)     { return 'dot-' + (yg || ''); }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function teacher(tid) { return TEACHERS.find(t => t.id === tid); }
-
-function rbCls(reason) {
-  return 'rb-' + (REASON_CLS[reason] || 'Other');
-}
-
-function ygPipCls(yg) { return 'pip-' + (yg || ''); }
-function ygDotCls(yg) { return 'dot-' + (yg || ''); }
-function sygCls(yg) { return yg ? 'syg-' + yg : ''; }
+function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
+function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid).length; }
 
 function reasonOptions(current) {
-  return REASONS.map(r =>
-    `<option value="${r}" ${r === current ? 'selected' : ''}>${r}</option>`
-  ).join('');
+  return REASONS.map(r => `<option value="${r}"${r===current?' selected':''}>${r}</option>`).join('');
 }
 
-function tbcCount() { return slots().filter(s => !s.cover).length; }
-function coveredCount() { return slots().filter(s => s.cover).length; }
+function allNames() {
+  const names = new Set();
+  slots().forEach(s => {
+    const t = teacher(s.tid);
+    if (t) names.add(t.name);
+    if (s.cover) names.add(s.cover);
+  });
+  return [...names].sort();
+}
+
+function fmtDay(dayIdx, weekStart) {
+  const d = new Date(weekStart); d.setDate(d.getDate() + dayIdx);
+  return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+}
 
 // ── Entitlement compute ───────────────────────────────────────────────────────
 
 function computeEnt() {
-  const used = {}; // teacherId → { reason → count }
+  const used = {};
   slots().forEach(s => {
     if (!used[s.tid]) used[s.tid] = {};
     used[s.tid][s.reason] = (used[s.tid][s.reason] || 0) + 1;
@@ -437,69 +322,65 @@ function render() {
   renderWeekLabel();
   renderStats();
   renderStaff();
-  renderGrid();
+  if (state.view === 'week') renderGrid(); else renderMyView();
   renderEnt();
+  document.getElementById('tab-week').classList.toggle('active', state.view === 'week');
+  document.getElementById('tab-mine').classList.toggle('active', state.view === 'mine');
 }
 
 function renderWeekLabel() {
   const w = WEEKS[state.weekIdx];
-  const d = w.start;
-  const end = new Date(d); end.setDate(d.getDate() + 4);
-  const fmt = dt => dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-  document.getElementById('weekLabel').innerHTML =
-    `<div>${w.label}</div><small>${fmt(d)} – ${fmt(end)}</small>`;
+  const end = new Date(w.start); end.setDate(w.start.getDate() + 4);
+  const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  document.getElementById('weekLabel').innerHTML = `<div>${w.label}</div><small>${fmt(w.start)} – ${fmt(end)}</small>`;
   document.getElementById('prevWeek').disabled = state.weekIdx === 0;
   document.getElementById('nextWeek').disabled = state.weekIdx === WEEKS.length - 1;
 }
 
 function renderStats() {
-  const total = slots().length;
-  const covered = coveredCount();
-  const tbc = tbcCount();
-  const pct = total > 0 ? Math.round(covered / total * 100) : 100;
+  const total = slots().length, covered = slots().filter(s=>s.cover).length, tbc = total - covered;
+  const pct = total > 0 ? Math.round(covered/total*100) : 100;
   const bar = `<div style="width:${Math.min(pct,100)}%;height:6px;background:${tbc===0?'#22c55e':'#1798d3'};border-radius:3px;transition:width .3s"></div>`;
   document.getElementById('statsBar').innerHTML = `
-    <div class="stat">
-      <div class="stat-dot" style="background:#e2e8f0"></div>
-      <span><strong>${total}</strong> sessions out this week</span>
-    </div>
-    <div class="stat">
-      <div class="stat-dot" style="background:#22c55e"></div>
-      <span><strong>${covered}</strong> covered</span>
-    </div>
-    <div class="stat">
-      <div class="stat-dot" style="background:#ef4444"></div>
-      <span><strong>${tbc}</strong> TBC</span>
-    </div>
+    <div class="stat"><div class="stat-dot" style="background:#e2e8f0"></div><span><strong>${total}</strong> sessions out</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#22c55e"></div><span><strong>${covered}</strong> covered</span></div>
+    <div class="stat"><div class="stat-dot" style="background:#ef4444"></div><span><strong>${tbc}</strong> TBC</span></div>
     <div class="stat" style="flex:1">
-      <div style="flex:1;max-width:200px;background:#e2e8f0;border-radius:3px;overflow:hidden">${bar}</div>
+      <div style="flex:1;max-width:180px;background:#e2e8f0;border-radius:3px;overflow:hidden">${bar}</div>
       <span style="color:#1e3a8a;font-weight:bold;margin-left:6px">${pct}%</span>
     </div>`;
 }
 
 function renderStaff() {
-  const isDraggingCover = state.dragging?.type === 'cover';
-  const usedTeachers = new Set(slots().map(s => s.tid));
-
+  const isDragCover = state.dragging?.type === 'cover';
   let html = `<div class="section-label">Teachers — drag to mark as out</div>`;
+
   TEACHERS.forEach(t => {
-    const inUse = usedTeachers.has(t.id);
+    const used = teacherUsageCount(t.id);
+    const total = maxEnt(t);
+    const fullyBooked = used >= total;
     const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
-    const cls = [dragging ? 'dragging' : '', inUse ? 'in-use' : ''].join(' ');
-    html += `<div class="teacher-chip ${cls}"
-      draggable="${!inUse}"
+
+    // Mini pip indicators
+    let pips = '';
+    for (let i = 0; i < total; i++) {
+      pips += `<div class="ent-mini ${i < used ? 'used' : 'empty'}"></div>`;
+    }
+
+    html += `<div class="teacher-chip ${dragging?'dragging':''} ${fullyBooked?'fully-booked':''}"
+      draggable="${!fullyBooked}"
       ondragstart="onTeacherDragStart(event,'${t.id}')"
       ondragend="onDragEnd()">
-      <div class="yg-pip ${ygPipCls(t.yg)}"></div>
+      <div class="yg-pip ${pipCls(t.yg)}"></div>
       <span class="chip-name">${t.name}</span>
-      <span class="chip-yg">${t.yg || '—'}</span>
+      <span class="chip-ent">${pips}</span>
     </div>`;
   });
 
   html += `<div class="section-label" style="margin-top:14px">Cover staff — drag onto TBC</div>`;
   COVER.forEach(c => {
     const dragging = state.dragging?.type === 'cover' && state.dragging.id === c.id;
-    html += `<div class="cover-chip ${dragging ? 'dragging' : ''}"
+    html += `<div class="cover-chip ${dragging?'dragging':''}"
       draggable="true"
       ondragstart="onCoverDragStart(event,'${c.id}','${c.name}')"
       ondragend="onDragEnd()">
@@ -517,31 +398,30 @@ function renderStaff() {
 function renderGrid() {
   const w = WEEKS[state.weekIdx];
   const isDragTeacher = state.dragging?.type === 'teacher';
+  const isDragSlot    = state.dragging?.type === 'slot';
   const isDragCover   = state.dragging?.type === 'cover';
 
-  // Build slot lookup: day→session→[slots]
+  // Build slot lookup
   const slotMap = {};
-  DAYS.forEach((d,i) => {
-    slotMap[i] = {};
-    SESSIONS.forEach(s => { slotMap[i][s] = []; });
-  });
+  DAYS.forEach((_,i) => { slotMap[i] = {}; SESSIONS.forEach(s => { slotMap[i][s] = []; }); });
   slots().forEach(s => slotMap[s.day][s.session].push(s));
 
-  // Header
   let html = `<thead><tr>
     <th></th>
-    ${DAYS.map((d,i) => `<th class="${i===TODAY_DAY?'is-today':''}">
-      ${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${w.dates[i]}</span>
-    </th>`).join('')}
+    ${DAYS.map((d,i) => {
+      const dt = new Date(w.start); dt.setDate(w.start.getDate()+i);
+      return `<th>${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span></th>`;
+    }).join('')}
   </tr></thead><tbody>`;
 
   SESSIONS.forEach(session => {
-    html += `<tr>
-      <td class="session-cell">${SESSION_SHORT[session]}</td>`;
-    DAYS.forEach((d, dayIdx) => {
+    html += `<tr><td class="session-cell">${SESSION_SHORT[session]}</td>`;
+    DAYS.forEach((_,dayIdx) => {
       const cellSlots = slotMap[dayIdx][session];
       const hasTBC = cellSlots.some(s => !s.cover);
-      const readyCls = isDragTeacher ? 'teacher-ready' : (isDragCover && hasTBC ? 'cover-ready' : '');
+      let readyCls = '';
+      if (isDragTeacher || isDragSlot) readyCls = 'teacher-ready';
+      else if (isDragCover && hasTBC)  readyCls = 'cover-ready';
 
       html += `<td class="grid-cell ${readyCls}"
         ondragover="onCellDragOver(event,${dayIdx},'${session}')"
@@ -550,155 +430,209 @@ function renderGrid() {
 
       cellSlots.forEach(s => {
         const t = teacher(s.tid);
-        const yg = t ? t.yg : null;
+        const yg = t?.yg || null;
+        const draggingThis = state.dragging?.type === 'slot' && state.dragging.slotId === s.id;
         const coverHtml = s.cover
-          ? `<div class="slot-cover-assigned">✓ ${s.cover}
-               <button class="cv-x" onclick="unassignCover(${s.id})">×</button>
-             </div>`
+          ? `<div class="slot-cover-assigned">✓ ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button></div>`
           : `<div class="slot-cover-zone" data-slot="${s.id}"
                ondragover="onSlotCoverDragOver(event,${s.id})"
                ondragleave="onSlotCoverDragLeave(event,${s.id})"
-               ondrop="onSlotCoverDrop(event,${s.id})">
-               + TBC
-             </div>`;
+               ondrop="onSlotCoverDrop(event,${s.id})">+ TBC</div>`;
 
-        html += `<div class="slot-item ${sygCls(yg)}" id="slot-${s.id}">
+        html += `<div class="slot-item ${sygCls(yg)} ${draggingThis?'slot-dragging':''}"
+          draggable="true"
+          ondragstart="onSlotDragStart(event,${s.id})"
+          ondragend="onDragEnd()">
           <div class="slot-hd">
+            <span class="slot-drag-handle">⠿</span>
             <span class="slot-name">${t ? t.name : s.tid}</span>
-            <select class="reason-sel ${rbCls(s.reason)}" onchange="changeReason(${s.id},this.value)">
+            <select class="reason-sel ${rbCls(s.reason)}" onchange="changeReason(${s.id},this.value)" onclick="event.stopPropagation()">
               ${reasonOptions(s.reason)}
             </select>
-            <button class="slot-del" onclick="removeSlot(${s.id})" title="Remove">×</button>
+            <button class="slot-del" onclick="removeSlot(${s.id})">×</button>
           </div>
           ${coverHtml}
         </div>`;
       });
 
-      if (cellSlots.length === 0) {
-        html += `<div class="empty-hint">＋</div>`;
-      }
-
+      if (cellSlots.length === 0) html += `<div class="empty-hint">＋</div>`;
       html += `</td>`;
     });
     html += `</tr>`;
   });
 
   html += `</tbody>`;
-  document.getElementById('weekGrid').innerHTML = html;
+  document.getElementById('centerPane').innerHTML = `<div class="grid-wrap"><table class="week-grid">${html}</table></div>`;
+}
+
+function renderMyView() {
+  const w = WEEKS[state.weekIdx];
+  const names = allNames();
+  const me = state.myName;
+
+  let html = `<div class="my-view-wrap">
+    <div class="my-name-row">
+      <label>Viewing schedule for:</label>
+      <select onchange="setMyName(this.value)">
+        <option value="">— select your name —</option>
+        ${names.map(n => `<option value="${n}" ${n===me?'selected':''}>${n}</option>`).join('')}
+      </select>
+    </div>`;
+
+  if (!me) {
+    html += `<div class="my-empty">Select your name above to see your schedule.</div>`;
+  } else {
+    // Entries where I'm OUT
+    const outEntries = slots().filter(s => {
+      const t = teacher(s.tid);
+      return t && t.name.toLowerCase() === me.toLowerCase();
+    });
+    // Entries where I'm covering someone
+    const coveringEntries = slots().filter(s =>
+      s.cover && s.cover.toLowerCase() === me.toLowerCase()
+    );
+
+    if (outEntries.length === 0 && coveringEntries.length === 0) {
+      html += `<div class="my-empty">No arrangements found for <strong>${me}</strong> this week.</div>`;
+    } else {
+      html += `<div class="my-week-group">
+        <div class="my-week-label"><span class="wk-badge">${WEEKS[state.weekIdx].label}</span></div>`;
+
+      outEntries.forEach(s => {
+        const yg = teacher(s.tid)?.yg;
+        const borderCol = {Reception:'#93c5fd',Y1:'#fb923c',Y2:'#6ee7b7',Y3:'#f9a8d4',Y4:'#60a5fa',Y5:'#fdba74',Y6:'#4ade80'}[yg] || '#e2e8f0';
+        html += `<div class="my-entry" style="border-left-color:${borderCol}">
+          <span class="my-badge out">OUT</span>
+          <div class="my-entry-detail">
+            <div class="my-entry-when">${DAYS[s.day]} · ${s.session}</div>
+            <div class="my-entry-info"><span class="reason-sel ${rbCls(s.reason)}" style="padding:1px 5px;border-radius:3px;font-size:11px">${s.reason}</span></div>
+            <div class="my-entry-cover">${s.cover ? `Covered by: <strong>${s.cover}</strong>` : `<span style="color:#c00;font-style:italic">Cover TBC</span>`}</div>
+          </div>
+        </div>`;
+      });
+
+      coveringEntries.forEach(s => {
+        const t = teacher(s.tid);
+        const yg = t?.yg;
+        const borderCol = {Reception:'#93c5fd',Y1:'#fb923c',Y2:'#6ee7b7',Y3:'#f9a8d4',Y4:'#60a5fa',Y5:'#fdba74',Y6:'#4ade80'}[yg] || '#e2e8f0';
+        html += `<div class="my-entry" style="border-left-color:${borderCol}">
+          <span class="my-badge covering">COVERING</span>
+          <div class="my-entry-detail">
+            <div class="my-entry-when">${DAYS[s.day]} · ${s.session}</div>
+            <div class="my-entry-info">Covering: <strong>${t ? t.name : s.tid}</strong>
+              <span class="reason-sel ${rbCls(s.reason)}" style="padding:1px 5px;border-radius:3px;font-size:11px;margin-left:6px">${s.reason}</span>
+            </div>
+          </div>
+        </div>`;
+      });
+
+      html += `</div>`;
+    }
+  }
+
+  html += `</div>`;
+  document.getElementById('centerPane').innerHTML = html;
 }
 
 function renderEnt() {
   const used = computeEnt();
   let html = '';
-
   TEACHERS.forEach(t => {
-    if (!t.ent || t.ent.length === 0) return;
+    if (!t.ent?.length) return;
     const u = used[t.id] || {};
     html += `<div class="ent-row">
       <div class="ent-teacher">
-        <div class="ent-dot ${ygDotCls(t.yg)}"></div>
+        <div class="ent-dot ${dotCls(t.yg)}"></div>
         <span class="ent-name">${t.name}</span>
-      </div>
-      <div class="ent-lines">`;
-
+      </div><div class="ent-lines">`;
     t.ent.forEach(e => {
-      const usedN = u[e.r] || 0;
-      const overN = Math.max(0, usedN - e.n);
-      const filledN = Math.min(usedN, e.n);
-      const emptyN  = Math.max(0, e.n - usedN);
+      const usedN = u[e.r] || 0, overN = Math.max(0,usedN-e.n), filledN = Math.min(usedN,e.n), emptyN = Math.max(0,e.n-usedN);
       let pips = '';
-      for (let i = 0; i < filledN; i++) pips += `<div class="ent-pip used"></div>`;
-      for (let i = 0; i < emptyN;  i++) pips += `<div class="ent-pip empty"></div>`;
-      for (let i = 0; i < overN;   i++) pips += `<div class="ent-pip over"></div>`;
-      const status = overN > 0
-        ? `<span class="ent-status ent-warn">+${overN}</span>`
-        : usedN === e.n
-          ? `<span class="ent-status ent-ok">✓</span>`
-          : `<span class="ent-status ent-miss">${usedN}/${e.n}</span>`;
-
-      html += `<div class="ent-line">
-        <span class="ent-reason">${e.r}</span>
-        <div class="ent-pips">${pips}</div>
-        ${status}
-      </div>`;
+      for (let i=0;i<filledN;i++) pips += `<div class="ent-pip used"></div>`;
+      for (let i=0;i<emptyN; i++) pips += `<div class="ent-pip empty"></div>`;
+      for (let i=0;i<overN;  i++) pips += `<div class="ent-pip over"></div>`;
+      const status = overN > 0 ? `<span class="ent-status ent-warn">+${overN}</span>`
+                   : usedN === e.n ? `<span class="ent-status ent-ok">✓</span>`
+                   : `<span class="ent-status ent-miss">${usedN}/${e.n}</span>`;
+      html += `<div class="ent-line"><span class="ent-reason">${e.r}</span><div class="ent-pips">${pips}</div>${status}</div>`;
     });
-
     html += `</div></div>`;
   });
-
-  document.getElementById('entPanel').innerHTML = html || '<p style="color:#94a3b8;font-size:12px;padding:4px 0">No teachers in this week yet.</p>';
+  document.getElementById('entPanel').innerHTML = html || '<p style="color:#94a3b8;font-size:12px;padding:4px 0">No teachers placed yet.</p>';
 }
 
 // ── Drag events ───────────────────────────────────────────────────────────────
 
 function onTeacherDragStart(e, tid) {
-  const t = teacher(tid);
-  if (!t) return;
-  state.dragging = { type:'teacher', id: tid, name: t.name };
+  state.dragging = {type:'teacher', id:tid};
   e.dataTransfer.effectAllowed = 'copy';
   setTimeout(render, 0);
 }
-
 function onCoverDragStart(e, cid, name) {
-  state.dragging = { type:'cover', id: cid, name };
+  state.dragging = {type:'cover', id:cid, name};
   e.dataTransfer.effectAllowed = 'copy';
   setTimeout(render, 0);
 }
-
+function onSlotDragStart(e, slotId) {
+  e.stopPropagation();
+  state.dragging = {type:'slot', slotId};
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(render, 0);
+}
 function onDragEnd() {
   state.dragging = null;
   render();
 }
 
-// Cell-level drag (for teacher drops)
+// Cell-level
 function onCellDragOver(e, dayIdx, session) {
-  if (state.dragging?.type !== 'teacher') return;
+  const d = state.dragging;
+  if (!d || d.type === 'cover') return;
   e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  e.currentTarget.classList.add('teacher-over');
+  e.dataTransfer.dropEffect = d.type === 'slot' ? 'move' : 'copy';
+  e.currentTarget.classList.add(d.type === 'slot' ? 'slot-over' : 'teacher-over');
 }
-
 function onCellDragLeave(e) {
-  e.currentTarget.classList.remove('teacher-over');
+  e.currentTarget.classList.remove('teacher-over','slot-over');
 }
-
 function onCellDrop(e, dayIdx, session) {
-  e.currentTarget.classList.remove('teacher-over');
-  if (state.dragging?.type !== 'teacher') return;
+  e.currentTarget.classList.remove('teacher-over','slot-over');
+  const d = state.dragging;
+  if (!d) return;
   e.preventDefault();
 
-  const tid = state.dragging.id;
-  // Prevent duplicate: same teacher same day same session
-  const existing = slots().find(s => s.tid === tid && s.day === dayIdx && s.session === session);
-  if (existing) { state.dragging = null; render(); return; }
+  if (d.type === 'teacher') {
+    // Prevent: same teacher + same day + same session
+    if (slots().find(s => s.tid === d.id && s.day === dayIdx && s.session === session)) {
+      state.dragging = null; render(); return;
+    }
+    const t = teacher(d.id);
+    const defaultReason = t?.ent?.[0]?.r || 'PPA';
+    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, cover:null}]);
+  }
 
-  // Default reason = first entitlement of the teacher
-  const t = teacher(tid);
-  const defaultReason = t?.ent?.[0]?.r || 'PPA';
+  if (d.type === 'slot') {
+    const s = slots().find(x => x.id === d.slotId);
+    if (s) { s.day = dayIdx; s.session = session; }
+  }
 
-  const newSlot = { id: state.nextId++, day: dayIdx, session, tid, reason: defaultReason, cover: null };
-  setSlots([...slots(), newSlot]);
   state.dragging = null;
   render();
 }
 
-// Slot-level cover drag
+// Slot cover zones
 function onSlotCoverDragOver(e, slotId) {
   if (state.dragging?.type !== 'cover') return;
   e.preventDefault(); e.stopPropagation();
-  e.dataTransfer.dropEffect = 'copy';
   document.querySelector(`[data-slot="${slotId}"]`)?.classList.add('over');
 }
-
 function onSlotCoverDragLeave(e, slotId) {
   document.querySelector(`[data-slot="${slotId}"]`)?.classList.remove('over');
 }
-
 function onSlotCoverDrop(e, slotId) {
   document.querySelector(`[data-slot="${slotId}"]`)?.classList.remove('over');
   if (state.dragging?.type !== 'cover') return;
   e.preventDefault(); e.stopPropagation();
-
   const s = slots().find(x => x.id === slotId);
   if (!s || s.cover) return;
   s.cover = state.dragging.name;
@@ -708,27 +642,12 @@ function onSlotCoverDrop(e, slotId) {
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
-function removeSlot(slotId) {
-  setSlots(slots().filter(s => s.id !== slotId));
-  render();
-}
-
-function unassignCover(slotId) {
-  const s = slots().find(x => x.id === slotId);
-  if (s) { s.cover = null; render(); }
-}
-
-function changeReason(slotId, reason) {
-  const s = slots().find(x => x.id === slotId);
-  if (s) { s.reason = reason; render(); }
-}
-
-function changeWeek(dir) {
-  state.weekIdx = Math.max(0, Math.min(WEEKS.length - 1, state.weekIdx + dir));
-  // Initialise new week with empty slots if first visit
-  if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = [];
-  render();
-}
+function removeSlot(slotId)    { setSlots(slots().filter(s => s.id !== slotId)); render(); }
+function unassignCover(slotId) { const s = slots().find(x => x.id === slotId); if (s) { s.cover = null; render(); } }
+function changeReason(slotId, reason) { const s = slots().find(x => x.id === slotId); if (s) { s.reason = reason; render(); } }
+function changeWeek(dir)       { state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir)); if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = []; render(); }
+function setView(v)            { state.view = v; render(); }
+function setMyName(n)          { state.myName = n; render(); }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 render();
