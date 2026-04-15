@@ -43,7 +43,7 @@
     .panel-hd { padding:9px 12px 7px; border-bottom:1px solid #f1f5f9; font-family:'Nunito',sans-serif; font-weight:900; font-size:13px; color:#1e3a8a; }
     .panel-hd small { display:block; font-size:10px; color:#94a3b8; font-weight:normal; font-family:Arial; margin-top:1px; }
     .panel-body { padding:9px 10px; max-height:calc(100vh - 130px); overflow-y:auto; }
-    .section-label { font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:#cbd5e1; font-weight:bold; margin:10px 0 6px; }
+    .section-label { font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:#64748b; font-weight:bold; margin:10px 0 6px; }
     .section-label:first-child { margin-top:0; }
 
     /* Teacher chips */
@@ -148,6 +148,18 @@
     .my-empty { text-align:center; padding:30px 0; color:#94a3b8; font-size:14px; }
 
     footer { text-align:center; font-size:11px; color:#cbd5e1; padding:14px 0 22px; }
+
+    /* Event-blocked days */
+    .event-day-header { color:#dc2626; font-size:10px; font-weight:bold; margin-top:2px; letter-spacing:.01em; }
+    .event-day-header.inset { color:#b45309; }
+    .grid-cell.event-blocked { background:#fef2f2 !important; cursor:not-allowed; }
+    .grid-cell.event-blocked.inset { background:#fffbeb !important; }
+    .event-cell-label { text-align:center; padding:10px 4px; font-size:10px; font-weight:bold; color:#fca5a5; letter-spacing:.03em; }
+    .event-cell-label.inset { color:#fcd34d; }
+
+    /* Other reason free-text input */
+    .reason-note { font-size:10px; border:1px solid #e2e8f0; border-radius:3px; padding:1px 4px; width:68px; color:#374151; background:#fff; margin-left:2px; vertical-align:middle; }
+    .reason-note:focus { outline:none; border-color:#1798d3; }
   </style>
 </head>
 <body>
@@ -205,6 +217,13 @@ const WEEKS = [
   {label:'T5 · Week 4', start:new Date(2026,4,11)},
   {label:'T5 · Week 5', start:new Date(2026,4,18)},
 ];
+
+// Keyed by ISO date string (YYYY-MM-DD). type: 'bank-holiday' | 'inset' | 'other'
+const EVENTS = {
+  '2026-04-17': {label:'Good Friday',    type:'bank-holiday'},
+  '2026-05-04': {label:'May Bank Holiday', type:'bank-holiday'},
+  '2026-05-22': {label:'Inset Day',      type:'inset'},
+};
 
 const TEACHERS = [
   {id:'jess',    name:'Jess',     yg:'Y1',  ent:[{r:'PPA',n:1}]},
@@ -286,8 +305,12 @@ function dotCls(yg)     { return 'dot-' + (yg || ''); }
 function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
 function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid).length; }
 
-function reasonOptions(current) {
-  return REASONS.map(r => `<option value="${r}"${r===current?' selected':''}>${r}</option>`).join('');
+function reasonOptions(tid, current) {
+  const t = teacher(tid);
+  // Only show this person's entitlement reasons, plus Other
+  const ents = t?.ent?.map(e => e.r) || REASONS;
+  const opts = [...new Set([...ents, 'Other'])];
+  return opts.map(r => `<option value="${r}"${r===current?' selected':''}>${r}</option>`).join('');
 }
 
 function allNames() {
@@ -303,6 +326,13 @@ function allNames() {
 function fmtDay(dayIdx, weekStart) {
   const d = new Date(weekStart); d.setDate(d.getDate() + dayIdx);
   return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+}
+
+function getDayEvent(weekIdx, dayIdx) {
+  const w = WEEKS[weekIdx];
+  const d = new Date(w.start); d.setDate(w.start.getDate() + dayIdx);
+  const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return EVENTS[key] || null;
 }
 
 // ── Entitlement compute ───────────────────────────────────────────────────────
@@ -410,13 +440,25 @@ function renderGrid() {
     <th></th>
     ${DAYS.map((d,i) => {
       const dt = new Date(w.start); dt.setDate(w.start.getDate()+i);
-      return `<th>${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span></th>`;
+      const ev = getDayEvent(state.weekIdx, i);
+      const evHtml = ev ? `<div class="event-day-header ${ev.type==='inset'?'inset':''}">${ev.type==='bank-holiday'?'🏦':'📋'} ${ev.label}</div>` : '';
+      return `<th>${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${evHtml}</th>`;
     }).join('')}
   </tr></thead><tbody>`;
 
   SESSIONS.forEach(session => {
     html += `<tr><td class="session-cell">${SESSION_SHORT[session]}</td>`;
     DAYS.forEach((_,dayIdx) => {
+      const ev = getDayEvent(state.weekIdx, dayIdx);
+      if (ev) {
+        // Blocked day — show event label, no drop
+        const isCls = ev.type === 'inset' ? 'inset' : '';
+        html += `<td class="grid-cell event-blocked ${isCls}">
+          <div class="event-cell-label ${isCls}">${session === 'AM' ? ev.label : ''}</div>
+        </td>`;
+        return;
+      }
+
       const cellSlots = slotMap[dayIdx][session];
       const hasTBC = cellSlots.some(s => !s.cover);
       let readyCls = '';
@@ -439,6 +481,12 @@ function renderGrid() {
                ondragleave="onSlotCoverDragLeave(event,${s.id})"
                ondrop="onSlotCoverDrop(event,${s.id})">+ TBC</div>`;
 
+        const noteHtml = s.reason === 'Other'
+          ? `<input class="reason-note" type="text" placeholder="specify…" value="${(s.reasonNote||'').replace(/"/g,'&quot;')}"
+               onclick="event.stopPropagation()"
+               onchange="changeReasonNote(${s.id},this.value)">`
+          : '';
+
         html += `<div class="slot-item ${sygCls(yg)} ${draggingThis?'slot-dragging':''}"
           draggable="true"
           ondragstart="onSlotDragStart(event,${s.id})"
@@ -447,10 +495,11 @@ function renderGrid() {
             <span class="slot-drag-handle">⠿</span>
             <span class="slot-name">${t ? t.name : s.tid}</span>
             <select class="reason-sel ${rbCls(s.reason)}" onchange="changeReason(${s.id},this.value)" onclick="event.stopPropagation()">
-              ${reasonOptions(s.reason)}
+              ${reasonOptions(s.tid, s.reason)}
             </select>
             <button class="slot-del" onclick="removeSlot(${s.id})">×</button>
           </div>
+          ${noteHtml ? `<div style="padding:2px 5px 4px">${noteHtml}</div>` : ''}
           ${coverHtml}
         </div>`;
       });
@@ -602,16 +651,19 @@ function onCellDrop(e, dayIdx, session) {
   e.preventDefault();
 
   if (d.type === 'teacher') {
+    // Block drops onto event days
+    if (getDayEvent(state.weekIdx, dayIdx)) { state.dragging = null; render(); return; }
     // Prevent: same teacher + same day + same session
     if (slots().find(s => s.tid === d.id && s.day === dayIdx && s.session === session)) {
       state.dragging = null; render(); return;
     }
     const t = teacher(d.id);
     const defaultReason = t?.ent?.[0]?.r || 'PPA';
-    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, cover:null}]);
+    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null}]);
   }
 
   if (d.type === 'slot') {
+    if (getDayEvent(state.weekIdx, dayIdx)) { state.dragging = null; render(); return; }
     const s = slots().find(x => x.id === d.slotId);
     if (s) { s.day = dayIdx; s.session = session; }
   }
@@ -644,7 +696,8 @@ function onSlotCoverDrop(e, slotId) {
 
 function removeSlot(slotId)    { setSlots(slots().filter(s => s.id !== slotId)); render(); }
 function unassignCover(slotId) { const s = slots().find(x => x.id === slotId); if (s) { s.cover = null; render(); } }
-function changeReason(slotId, reason) { const s = slots().find(x => x.id === slotId); if (s) { s.reason = reason; render(); } }
+function changeReason(slotId, reason) { const s = slots().find(x => x.id === slotId); if (s) { s.reason = reason; if (reason !== 'Other') s.reasonNote = ''; render(); } }
+function changeReasonNote(slotId, note) { const s = slots().find(x => x.id === slotId); if (s) s.reasonNote = note; }
 function changeWeek(dir)       { state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir)); if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = []; render(); }
 function setView(v)            { state.view = v; render(); }
 function setMyName(n)          { state.myName = n; render(); }
