@@ -152,6 +152,35 @@ function onOpen() {
 
 const DAY_OFFSETS = { Monday: 0, Tuesday: 1, Wednesday: 2, Thursday: 3, Friday: 4 };
 
+// Builds a Plan row array using the actual column header positions in the sheet,
+// so the column order in the sheet doesn't matter.
+function makePlanRow(planHeaders, fields) {
+  const row = new Array(planHeaders.length).fill('');
+  Object.entries(fields).forEach(([col, val]) => {
+    const idx = planHeaders.indexOf(col);
+    if (idx >= 0) row[idx] = val;
+  });
+  return row;
+}
+
+function readRecurring(recurringSheet) {
+  const data    = recurringSheet.getDataRange().getValues();
+  const headers = data[0].map(h => String(h).trim());
+  const idx = name => headers.indexOf(name);
+  return data.slice(1)
+    .filter(r => r[idx('Day')] && r[idx('Teacher Out')])
+    .map(r => ({
+      day:       String(r[idx('Day')]          || '').trim(),
+      session:   String(r[idx('Session')]      || '').trim(),
+      teacherOut:String(r[idx('Teacher Out')]  || '').trim(),
+      coverStaff:String(r[idx('Cover Staff')]  || '').trim(),
+      reason:    String(r[idx('Reason')]       || '').trim(),
+      notes:     String(r[idx('Notes')]        || '').trim(),
+      timeFrom:  String(r[idx('Time From')]    || '').trim(),
+      timeTo:    String(r[idx('Time To')]      || '').trim(),
+    }));
+}
+
 function generateTermSchedule() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const ui = SpreadsheetApp.getUi();
@@ -160,13 +189,17 @@ function generateTermSchedule() {
   const weeksSheet     = ss.getSheetByName('Weeks');
   const planSheet      = ss.getSheetByName('Plan');
 
-  if (!recurringSheet) { ui.alert('No Recurring tab found. Please create it first (see setup instructions).'); return; }
+  if (!recurringSheet) { ui.alert('No Recurring tab found.'); return; }
   if (!weeksSheet)     { ui.alert('No Weeks tab found.'); return; }
   if (!planSheet)      { ui.alert('No Plan tab found.'); return; }
 
+  // Read Plan headers (determines column positions for writing)
+  const planHeaders = planSheet.getRange(1, 1, 1, planSheet.getLastColumn())
+    .getValues()[0].map(h => String(h).trim());
+
   // Read Weeks tab
-  const weeksData = weeksSheet.getDataRange().getValues();
-  const wkHeaders = weeksData[0].map(h => String(h).trim());
+  const weeksData  = weeksSheet.getDataRange().getValues();
+  const wkHeaders  = weeksData[0].map(h => String(h).trim());
   const wkStartIdx = wkHeaders.indexOf('Week Start');
   const wkTermIdx  = wkHeaders.indexOf('Term');
   const wkWeekIdx  = wkHeaders.indexOf('Week');
@@ -177,9 +210,8 @@ function generateTermSchedule() {
       .map(r => Number(r[wkTermIdx]))
   )].sort();
 
-  if (allTerms.length === 0) { ui.alert('No terms found in the Weeks tab. Please add week data first.'); return; }
+  if (allTerms.length === 0) { ui.alert('No terms found in the Weeks tab.'); return; }
 
-  // Ask which term
   const response = ui.prompt(
     'Generate Term Schedule',
     `Available terms: ${allTerms.join(', ')}\n\nEnter the term number to generate:`,
@@ -189,11 +221,9 @@ function generateTermSchedule() {
 
   const termNum = parseInt(response.getResponseText().trim());
   if (isNaN(termNum) || !allTerms.includes(termNum)) {
-    ui.alert(`Term ${termNum} not found in the Weeks tab.`);
-    return;
+    ui.alert(`Term ${termNum} not found in the Weeks tab.`); return;
   }
 
-  // Get all teaching weeks for this term
   const termWeeks = weeksData.slice(1)
     .filter(r => Number(r[wkTermIdx]) === termNum && r[wkStartIdx])
     .map(r => ({
@@ -203,94 +233,73 @@ function generateTermSchedule() {
 
   if (termWeeks.length === 0) { ui.alert(`No weeks found for Term ${termNum}.`); return; }
 
-  // Read Recurring tab
-  const recurData    = recurringSheet.getDataRange().getValues();
-  const recurHeaders = recurData[0].map(h => String(h).trim());
-  const rDayIdx      = recurHeaders.indexOf('Day');
-  const rSessIdx     = recurHeaders.indexOf('Session');
-  const rOutIdx      = recurHeaders.indexOf('Teacher Out');
-  const rCoverIdx    = recurHeaders.indexOf('Cover Staff');
-  const rReasonIdx   = recurHeaders.indexOf('Reason');
-  const rNotesIdx    = recurHeaders.indexOf('Notes');
-  const rTimeFromIdx = recurHeaders.indexOf('Time From');
-  const rTimeToIdx   = recurHeaders.indexOf('Time To');
+  const recurRows = readRecurring(recurringSheet);
+  if (recurRows.length === 0) { ui.alert('No entries in the Recurring tab.'); return; }
 
-  const recurRows = recurData.slice(1).filter(r => r[rDayIdx] && r[rOutIdx]);
-  if (recurRows.length === 0) { ui.alert('No entries found in the Recurring tab. Please add your recurring schedule first.'); return; }
-
-  // Read existing Plan rows to check for duplicates
-  const planData    = planSheet.getDataRange().getValues();
-  const planHeaders = planData[0].map(h => String(h).trim());
-  const pDateIdx    = planHeaders.indexOf('Date');
-  const pOutIdx     = planHeaders.indexOf('Teacher Out');
-  const pSessIdx    = planHeaders.indexOf('Session');
-
+  // Build duplicate-check set from existing Plan rows
+  const planData = planSheet.getDataRange().getValues();
+  const ph = planData[0].map(h => String(h).trim());
   const tz = Session.getScriptTimeZone();
   const existingKeys = new Set(
     planData.slice(1).map(r => {
-      const d = r[pDateIdx];
+      const d = r[ph.indexOf('Date')];
       const ds = d instanceof Date ? Utilities.formatDate(d, tz, 'dd/MM/yyyy') : String(d).trim();
-      return `${ds}|${String(r[pOutIdx]).trim()}|${String(r[pSessIdx]).trim()}`;
+      return `${ds}|${String(r[ph.indexOf('Teacher Out')]).trim()}|${String(r[ph.indexOf('Session')]).trim()}`;
     })
   );
 
-  // Generate new rows
   const newRows = [];
   let skipped = 0;
 
   termWeeks.forEach(week => {
     recurRows.forEach(r => {
-      const day    = String(r[rDayIdx]).trim();
-      const offset = DAY_OFFSETS[day];
+      const offset = DAY_OFFSETS[r.day];
       if (offset === undefined) return;
 
       const date = new Date(week.start);
       date.setDate(date.getDate() + offset);
-      const dateStr   = Utilities.formatDate(date, tz, 'dd/MM/yyyy');
-      const session   = String(r[rSessIdx] || '').trim();
-      const teacherOut = String(r[rOutIdx] || '').trim();
+      const dateStr = Utilities.formatDate(date, tz, 'dd/MM/yyyy');
 
-      const key = `${dateStr}|${teacherOut}|${session}`;
+      const key = `${dateStr}|${r.teacherOut}|${r.session}`;
       if (existingKeys.has(key)) { skipped++; return; }
       existingKeys.add(key);
 
-      newRows.push([
-        dateStr,                              // A: Date
-        day,                                  // B: Day
-        `T${termNum}W${week.week}`,           // C: Term/Week
-        session,                              // D: Session
-        teacherOut,                           // E: Teacher Out
-        '',                                   // F: Class
-        String(r[rCoverIdx]   || '').trim(),  // G: Cover Staff
-        String(r[rReasonIdx]  || '').trim(),  // H: Reason
-        String(r[rNotesIdx]   || '').trim(),  // I: Notes
-        '',                                   // J: Time (legacy)
-        String(r[rTimeFromIdx]|| '').trim(),  // K: Time From
-        String(r[rTimeToIdx]  || '').trim(),  // L: Time To
-        'Recurring',                          // M: Source
-      ]);
+      newRows.push(makePlanRow(planHeaders, {
+        'Date':        dateStr,
+        'Day':         r.day,
+        'Term/Week':   `T${termNum}W${week.week}`,
+        'Session':     r.session,
+        'Teacher Out': r.teacherOut,
+        'Cover Staff': r.coverStaff,
+        'Reason':      r.reason,
+        'Notes':       r.notes,
+        'Time From':   r.timeFrom,
+        'Time To':     r.timeTo,
+        'Source':      'Recurring',
+      }));
     });
   });
 
   if (newRows.length === 0) {
-    ui.alert(`Nothing to add — all entries already exist in the Plan tab.\n(${skipped} skipped as duplicates)`);
+    ui.alert(`Nothing to add — all entries already exist.\n(${skipped} skipped)`);
     return;
   }
 
-  // Sort by date, then by teacher name
   newRows.sort((a, b) => {
     const pd = s => { const [d,m,y] = s.split('/'); return new Date(y, m-1, d); };
-    return pd(a[0]) - pd(b[0]) || a[4].localeCompare(b[4]);
+    const di = planHeaders.indexOf('Date');
+    const ti = planHeaders.indexOf('Teacher Out');
+    return pd(a[di]) - pd(b[di]) || String(a[ti]).localeCompare(String(b[ti]));
   });
 
-  // Append to Plan and format date column
   const lastRow = planSheet.getLastRow();
   planSheet.getRange(lastRow + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
-  planSheet.getRange(lastRow + 1, 1, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
+  const dateColNum = planHeaders.indexOf('Date') + 1;
+  planSheet.getRange(lastRow + 1, dateColNum, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
 
   ui.alert(
     `✓ Generated ${newRows.length} entries for Term ${termNum} (${termWeeks.length} weeks).` +
-    (skipped ? `\n${skipped} entries already existed and were skipped.` : '')
+    (skipped ? `\n${skipped} entries skipped (already existed).` : '')
   );
 }
 
@@ -400,64 +409,52 @@ function regenerateFromWeek() {
     })
   );
 
-  // Read Recurring tab
-  const recurData    = recurringSheet.getDataRange().getValues();
-  const recurHeaders = recurData[0].map(h => String(h).trim());
-  const rDayIdx      = recurHeaders.indexOf('Day');
-  const rSessIdx     = recurHeaders.indexOf('Session');
-  const rOutIdx      = recurHeaders.indexOf('Teacher Out');
-  const rCoverIdx    = recurHeaders.indexOf('Cover Staff');
-  const rReasonIdx   = recurHeaders.indexOf('Reason');
-  const rNotesIdx    = recurHeaders.indexOf('Notes');
-  const rTimeFromIdx = recurHeaders.indexOf('Time From');
-  const rTimeToIdx   = recurHeaders.indexOf('Time To');
-  const recurRows    = recurData.slice(1).filter(r => r[rDayIdx] && r[rOutIdx]);
+  // Read Recurring tab (column-name-aware)
+  const recurRows = readRecurring(recurringSheet);
 
   const newRows = [];
   let skipped = 0;
 
   weeksToGen.forEach(week => {
     recurRows.forEach(r => {
-      const day    = String(r[rDayIdx]).trim();
-      const offset = DAY_OFFSETS[day];
+      const offset = DAY_OFFSETS[r.day];
       if (offset === undefined) return;
 
       const date = new Date(week.start);
       date.setDate(date.getDate() + offset);
-      const dateStr    = Utilities.formatDate(date, tz, 'dd/MM/yyyy');
-      const session    = String(r[rSessIdx] || '').trim();
-      const teacherOut = String(r[rOutIdx]  || '').trim();
+      const dateStr = Utilities.formatDate(date, tz, 'dd/MM/yyyy');
 
-      const key = `${dateStr}|${teacherOut}|${session}`;
+      const key = `${dateStr}|${r.teacherOut}|${r.session}`;
       if (existingKeys.has(key)) { skipped++; return; }
       existingKeys.add(key);
 
-      newRows.push([
-        dateStr,
-        day,
-        `T${week.term}W${week.week}`,
-        session,
-        teacherOut,
-        '',
-        String(r[rCoverIdx]   || '').trim(),
-        String(r[rReasonIdx]  || '').trim(),
-        String(r[rNotesIdx]   || '').trim(),
-        '',
-        String(r[rTimeFromIdx]|| '').trim(),
-        String(r[rTimeToIdx]  || '').trim(),
-        'Recurring',
-      ]);
+      newRows.push(makePlanRow(planHeaders2, {
+        'Date':        dateStr,
+        'Day':         r.day,
+        'Term/Week':   `T${week.term}W${week.week}`,
+        'Session':     r.session,
+        'Teacher Out': r.teacherOut,
+        'Cover Staff': r.coverStaff,
+        'Reason':      r.reason,
+        'Notes':       r.notes,
+        'Time From':   r.timeFrom,
+        'Time To':     r.timeTo,
+        'Source':      'Recurring',
+      }));
     });
   });
 
   if (newRows.length > 0) {
     newRows.sort((a, b) => {
       const pd = s => { const [d,m,y] = s.split('/'); return new Date(y, m-1, d); };
-      return pd(a[0]) - pd(b[0]) || a[4].localeCompare(b[4]);
+      const di = planHeaders2.indexOf('Date');
+      const ti = planHeaders2.indexOf('Teacher Out');
+      return pd(a[di]) - pd(b[di]) || String(a[ti]).localeCompare(String(b[ti]));
     });
     const lastRow = planSheet.getLastRow();
     planSheet.getRange(lastRow + 1, 1, newRows.length, newRows[0].length).setValues(newRows);
-    planSheet.getRange(lastRow + 1, 1, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
+    const dateColNum = planHeaders2.indexOf('Date') + 1;
+    planSheet.getRange(lastRow + 1, dateColNum, newRows.length, 1).setNumberFormat('dd/mm/yyyy');
   }
 
   ui.alert(
