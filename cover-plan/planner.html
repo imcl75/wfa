@@ -74,8 +74,15 @@
     .week-grid { width:100%; border-collapse:collapse; min-width:620px; }
     .week-grid th { padding:8px 6px; text-align:center; font-size:12px; font-weight:bold; color:#1e3a8a; border-bottom:2px solid #e2e8f0; border-right:1px solid #f1f5f9; }
     .week-grid th.is-today { background:#1a1a8c; color:white; }
-    .week-grid th:first-child { width:52px; color:#94a3b8; border-right:2px solid #e2e8f0; font-weight:normal; }
-    .session-cell { font-size:9.5px; font-weight:bold; color:#94a3b8; text-transform:uppercase; letter-spacing:.06em; text-align:center; vertical-align:top; padding:8px 3px; border-right:2px solid #e2e8f0; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+    .week-grid th:first-child { width:70px; color:#94a3b8; border-right:2px solid #e2e8f0; font-weight:normal; }
+    .session-cell { font-size:9px; font-weight:bold; color:#64748b; text-transform:uppercase; letter-spacing:.05em; text-align:center; vertical-align:middle; padding:6px 4px; border-right:2px solid #e2e8f0; border-bottom:1px solid #f1f5f9; white-space:normal; line-height:1.3; }
+
+    /* Session row colour banding — applied via <tr class> in renderGrid */
+    .srow-before .session-cell, .srow-before .grid-cell:not(.event-blocked) { background:#fffbeb; }
+    .srow-am     .session-cell, .srow-am     .grid-cell:not(.event-blocked) { background:#ffffff; }
+    .srow-lunch  .session-cell, .srow-lunch  .grid-cell:not(.event-blocked) { background:#f0fdf4; }
+    .srow-pm     .session-cell, .srow-pm     .grid-cell:not(.event-blocked) { background:#f0f9ff; }
+    .srow-after  .session-cell, .srow-after  .grid-cell:not(.event-blocked) { background:#faf5ff; }
     .grid-cell { vertical-align:top; padding:5px; border-right:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9; min-height:56px; min-width:115px; transition:background .1s; }
     .grid-cell.teacher-ready { background:#f8faff; }
     .grid-cell.teacher-over  { background:#dbeafe !important; outline:2px dashed #1798d3; outline-offset:-2px; }
@@ -177,9 +184,6 @@
     .cell-note .note-del:hover { color:white; background:rgba(255,255,255,.15); }
     .add-note-btn { display:flex; align-items:center; justify-content:center; gap:4px; width:100%; padding:4px; font-size:10px; color:#cbd5e1; cursor:pointer; border:1.5px dashed transparent; border-radius:4px; background:none; transition:all .12s; }
     .add-note-btn:hover { color:#94a3b8; border-color:#e2e8f0; }
-    /* Off-allocation session rows — dark label, light content area */
-    .session-cell.off-alloc { background:#1e293b; color:white; font-size:8.5px; }
-    .grid-cell.off-alloc { background:#fafbfc; }
 
     /* Action buttons */
     .action-btn { padding:3px 10px; border:1px solid #e2e8f0; border-radius:4px; background:white; cursor:pointer; font-size:11px; color:#475569; transition:all .12s; }
@@ -292,7 +296,7 @@
 
 const SESSIONS     = ['Before School','AM','Lunch','PM','After School'];
 const OFF_ALLOC    = new Set(['Before School','Lunch','After School']);
-const SESSION_SHORT= {'Before School':'Before',AM:'AM',Lunch:'Lunch',PM:'PM','After School':'After'};
+const SESSION_SHORT= {'Before School':'Before School',AM:'AM',Lunch:'Lunch',PM:'PM','After School':'After School'};
 const DAYS         = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 const REASONS      = ['PPA','Phase Lead','Leadership','Training','ECT1','ECT2','RA','SENCO','Sports','Illness','Other'];
 const REASON_CLS   = {'PPA':'PPA','Phase Lead':'Phase','Leadership':'Leadership','Training':'Training','ECT1':'ECT1','ECT2':'ECT2','RA':'RA','SENCO':'SENCO','Sports':'Sports','Illness':'Illness','Other':'Other'};
@@ -623,9 +627,11 @@ function renderGrid() {
     }).join('')}
   </tr></thead><tbody>`;
 
+  const SESSION_ROW_CLS = {'Before School':'srow-before','AM':'srow-am','Lunch':'srow-lunch','PM':'srow-pm','After School':'srow-after'};
   SESSIONS.forEach(session => {
     const isOffAlloc = OFF_ALLOC.has(session);
-    html += `<tr><td class="session-cell${isOffAlloc?' off-alloc':''}">${SESSION_SHORT[session]}</td>`;
+    const rowCls = SESSION_ROW_CLS[session] || '';
+    html += `<tr class="${rowCls}"><td class="session-cell">${SESSION_SHORT[session]}</td>`;
     DAYS.forEach((_,dayIdx) => {
       const ev = getDayEvent(state.weekIdx, dayIdx);
       if (ev) {
@@ -640,8 +646,7 @@ function renderGrid() {
       if (isDragTeacher || isDragSlot) readyCls = 'teacher-ready';
       else if (isDragCover && hasTBC)  readyCls = 'cover-ready';
 
-      const offAllocCls = isOffAlloc ? 'off-alloc' : '';
-      html += `<td class="grid-cell ${readyCls} ${offAllocCls}"
+      html += `<td class="grid-cell ${readyCls}"
         ondragover="onCellDragOver(event,${dayIdx},'${session}')"
         ondragleave="onCellDragLeave(event)"
         ondrop="onCellDrop(event,${dayIdx},'${session}')">`;
