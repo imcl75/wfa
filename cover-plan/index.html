@@ -837,7 +837,7 @@
               </div>
 
               {/* Tabs */}
-              <div style={{ display:'flex', gap:2 }}>
+              <div style={{ display:'flex', gap:2, alignItems:'center' }}>
                 {TABS.map(tab => (
                   <button key={tab.id} onClick={() => {
                     setView(tab.id);
@@ -850,6 +850,14 @@
                     {tab.label}
                   </button>
                 ))}
+                {view === 'week' && !isThisWeek && (
+                  <button onClick={() => setWeekStart(weekMonday(today))}
+                    style={{ padding:'7px 14px', fontSize:13, border:'1.5px solid #1798d3',
+                      borderRadius:5, cursor:'pointer', fontFamily:'Arial', fontWeight:'normal',
+                      background:'white', color:'#1798d3', marginLeft:6 }}>
+                    ↩ This week
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -926,13 +934,6 @@
                 <button onClick={() => setWeekStart(d => addDays(d, 7))}
                   style={{ padding:'5px 14px', fontSize:15, border:'1px solid #e2e8f0',
                     borderRadius:4, cursor:'pointer', background:'white', color:'#334155' }}>›</button>
-                {!isThisWeek && (
-                  <button onClick={() => setWeekStart(weekMonday(today))}
-                    style={{ padding:'5px 12px', fontSize:12, border:'1px solid #1a1a8c',
-                      borderRadius:4, cursor:'pointer', color:'#1a1a8c', background:'white' }}>
-                    Back to this week
-                  </button>
-                )}
               </div>
               <IllnessBanner staff={staff}/>
               <EventBanners events={events} weekStart={weekStart} />
