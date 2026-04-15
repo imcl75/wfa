@@ -46,14 +46,15 @@
     .section-label { font-size:9.5px; text-transform:uppercase; letter-spacing:.08em; color:#64748b; font-weight:bold; margin:10px 0 6px; }
     .section-label:first-child { margin-top:0; }
 
-    /* Teacher chips — single row */
-    .teacher-chip { display:flex; align-items:center; gap:9px; padding:6px 9px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
+    /* Teacher chips — two-row (name always visible, ents below) */
+    .teacher-chip { display:flex; flex-direction:column; gap:3px; padding:6px 9px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
     .teacher-chip:hover { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
     .teacher-chip.dragging { opacity:.28; pointer-events:none; }
+    .chip-row1 { display:flex; align-items:center; gap:9px; }
+    .chip-row2 { display:flex; align-items:center; gap:7px; padding-left:19px; flex-wrap:wrap; }
     .yg-pip { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
-    .chip-name { font-size:12px; font-weight:bold; color:#111; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .chip-name { font-size:12px; font-weight:bold; color:#111; flex:1; }
     .chip-done { width:16px; height:16px; border-radius:50%; background:#22c55e; color:white; font-size:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-weight:bold; }
-    .chip-ents { display:flex; align-items:center; gap:7px; flex-shrink:0; }
     .chip-ent-item { display:flex; align-items:center; gap:2px; font-size:9px; color:#64748b; white-space:nowrap; }
     .ent-mini { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
     .ent-mini.used  { background:#1798d3; }
@@ -101,6 +102,9 @@
     .slot-cover-assigned .cv-x { margin-left:auto; background:none; border:none; cursor:pointer; color:#94a3b8; font-size:12px; padding:0 1px; border-radius:2px; }
     .slot-cover-assigned .cv-x:hover { color:#dc2626; }
     .cv-mini-avatar { width:16px; height:16px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:7px; font-weight:bold; flex-shrink:0; }
+    .nocover-slot { border-color:#cbd5e1 !important; }
+    .nocover-slot .slot-hd { background:#f8fafc !important; }
+    .nocover-slot .slot-name { color:#475569 !important; }
 
     /* Cover load panel */
     .cover-load-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-bottom:1px solid #f8fafc; }
@@ -152,10 +156,25 @@
     /* Event-blocked days */
     .event-day-header { color:#dc2626; font-size:10px; font-weight:bold; margin-top:2px; letter-spacing:.01em; }
     .event-day-header.inset { color:#b45309; }
-    .grid-cell.event-blocked { background:#fef2f2 !important; cursor:not-allowed; }
-    .grid-cell.event-blocked.inset { background:#fffbeb !important; }
-    .event-cell-label { text-align:center; padding:10px 4px; font-size:10px; font-weight:bold; color:#fca5a5; letter-spacing:.03em; }
+    .grid-cell.event-blocked {
+      background: repeating-linear-gradient(-45deg, #fef2f2 0, #fef2f2 4px, #fff8f8 4px, #fff8f8 9px) !important;
+      cursor:not-allowed;
+    }
+    .grid-cell.event-blocked.inset {
+      background: repeating-linear-gradient(-45deg, #fffbeb 0, #fffbeb 4px, #fffff5 4px, #fffff5 9px) !important;
+    }
+    .event-cell-label { text-align:center; padding:4px; font-size:9.5px; font-weight:bold; color:#fca5a5; letter-spacing:.03em; }
     .event-cell-label.inset { color:#fcd34d; }
+
+    /* Day reset button */
+    .day-reset-btn { position:absolute; top:4px; right:4px; background:none; border:none; cursor:pointer; color:#cbd5e1; font-size:10px; padding:1px 3px; border-radius:2px; line-height:1; }
+    .day-reset-btn:hover { color:#dc2626; background:#fee2e2; }
+
+    /* Action buttons */
+    .action-btn { padding:3px 10px; border:1px solid #e2e8f0; border-radius:4px; background:white; cursor:pointer; font-size:11px; color:#475569; transition:all .12s; }
+    .action-btn:hover:not(:disabled) { border-color:#1798d3; color:#1798d3; }
+    .action-btn.danger:hover { border-color:#dc2626 !important; color:#dc2626 !important; }
+    .action-btn:disabled { opacity:.4; cursor:default; }
 
     /* Other reason free-text input */
     .reason-note { font-size:10px; border:1px solid #e2e8f0; border-radius:3px; padding:1px 4px; width:68px; color:#374151; background:#fff; margin-left:2px; vertical-align:middle; }
@@ -241,6 +260,8 @@ const TEACHERS = [
   {id:'jamie',   name:'Jamie',    yg:null,  ent:[{r:'PPA',n:1},{r:'ECT1',n:1}]},
   {id:'leyla',   name:'Leyla',    yg:null,  ent:[{r:'Phase Lead',n:1}]},
   {id:'ellen',   name:'Ellen',    yg:null,  ent:[{r:'SENCO',n:3}]},
+  {id:'l_principal', name:'Principal', yg:null, isLeader:true, ent:[], reasons:['Meeting','External Visit','Training','Conference']},
+  {id:'l_dht',       name:'DHT',       yg:null, isLeader:true, ent:[], reasons:['Meeting','External Visit','Training','Conference']},
 ];
 
 const COVER = [
@@ -302,14 +323,17 @@ function sygCls(yg)     { return yg ? 'syg-' + yg : ''; }
 function pipCls(yg)     { return 'pip-' + (yg || ''); }
 function dotCls(yg)     { return 'dot-' + (yg || ''); }
 
+const COUNTED_SESSIONS = new Set(['AM', 'PM']);
+
 function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
-function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid).length; }
+function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid && COUNTED_SESSIONS.has(s.session)).length; }
 function coverByName(name) { return COVER.find(c => c.name.toLowerCase() === (name||'').toLowerCase()); }
 
 // Per-reason usage count for a teacher this week
 function teacherReasonUsed(tid) {
   const used = {};
-  slots().filter(s => s.tid === tid).forEach(s => { used[s.reason] = (used[s.reason]||0)+1; });
+  slots().filter(s => s.tid === tid && COUNTED_SESSIONS.has(s.session))
+    .forEach(s => { used[s.reason] = (used[s.reason]||0)+1; });
   return used;
 }
 
@@ -325,15 +349,16 @@ function firstAvailableReason(tid) {
 function reasonOptions(tid, current) {
   const t = teacher(tid);
   if (!t) return `<option value="Other"${current==='Other'?' selected':''}>Other</option>`;
+  if (t.isLeader) {
+    const opts = [...(t.reasons || []), 'Other'];
+    return opts.map(r => `<option value="${r}"${r===current?' selected':''}>${r}</option>`).join('');
+  }
   const used = teacherReasonUsed(tid);
   const opts = [];
   t.ent.forEach(e => {
     const remaining = e.n - (used[e.r]||0);
-    // Show if capacity remains, OR it's the value already on this slot (don't hide what's selected)
     if (remaining > 0 || e.r === current) {
-      const suffix = remaining <= 0   ? ' ✓'
-                   : e.n > 1          ? ` (${remaining} left)`
-                   : '';
+      const suffix = remaining <= 0 ? ' ✓' : e.n > 1 ? ` (${remaining} left)` : '';
       opts.push(`<option value="${e.r}"${e.r===current?' selected':''}>${e.r}${suffix}</option>`);
     }
   });
@@ -385,9 +410,11 @@ function renderWeekLabel() {
 }
 
 function renderStats() {
-  const total = slots().length, covered = slots().filter(s=>s.cover).length, tbc = total - covered;
+  const coverSlots = slots().filter(s => !s.nocover);
+  const total = coverSlots.length, covered = coverSlots.filter(s=>s.cover).length, tbc = total - covered;
   const pct = total > 0 ? Math.round(covered/total*100) : 100;
   const bar = `<div style="width:${Math.min(pct,100)}%;height:6px;background:${tbc===0?'#22c55e':'#1798d3'};border-radius:3px;transition:width .3s"></div>`;
+  const canCopy = state.weekIdx < WEEKS.length - 1;
   document.getElementById('statsBar').innerHTML = `
     <div class="stat"><div class="stat-dot" style="background:#e2e8f0"></div><span><strong>${total}</strong> sessions out</span></div>
     <div class="stat"><div class="stat-dot" style="background:#22c55e"></div><span><strong>${covered}</strong> covered</span></div>
@@ -395,43 +422,71 @@ function renderStats() {
     <div class="stat" style="flex:1">
       <div style="flex:1;max-width:180px;background:#e2e8f0;border-radius:3px;overflow:hidden">${bar}</div>
       <span style="color:#1e3a8a;font-weight:bold;margin-left:6px">${pct}%</span>
+    </div>
+    <div class="stat" style="margin-left:auto;gap:6px">
+      <button class="action-btn" onclick="copyToNextWeek()" ${canCopy?'':'disabled'}>Copy → next week</button>
+      <button class="action-btn danger" onclick="resetWeek()">Reset week</button>
     </div>`;
 }
 
 function renderStaff() {
-  let html = '';
-  TEACHERS.forEach(t => {
+  const classTeachers = TEACHERS.filter(t => !t.isLeader);
+  const leaders = TEACHERS.filter(t => t.isLeader);
+
+  let html = `<div class="section-label">Teachers</div>`;
+
+  classTeachers.forEach(t => {
     const usedMap = teacherReasonUsed(t.id);
     const totalSlots = teacherUsageCount(t.id);
     const namedTotal = maxEnt(t);
-    const allNamedDone = t.ent.every(e => (usedMap[e.r]||0) >= e.n);
+    const allNamedDone = t.ent.length > 0 && t.ent.every(e => (usedMap[e.r]||0) >= e.n);
     const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
 
     let entItems = '';
     t.ent.forEach(e => {
       const usedN = usedMap[e.r] || 0;
       let pips = '';
-      for (let i = 0; i < e.n; i++)   pips += `<div class="ent-mini ${i < usedN ? 'used' : 'empty'}"></div>`;
+      for (let i = 0; i < e.n; i++)     pips += `<div class="ent-mini ${i < usedN ? 'used' : 'empty'}"></div>`;
       for (let i = e.n; i < usedN; i++) pips += `<div class="ent-mini over"></div>`;
-      entItems += `<span class="chip-ent-item">${e.r}${pips}</span>`;
+      entItems += `<span class="chip-ent-item">${e.r} ${pips}</span>`;
     });
     const extraCount = Math.max(0, totalSlots - namedTotal);
     if (extraCount > 0) {
       let xp = '';
       for (let i = 0; i < extraCount; i++) xp += `<div class="ent-mini over"></div>`;
-      entItems += `<span class="chip-ent-item">+${xp}</span>`;
+      entItems += `<span class="chip-ent-item">extra ${xp}</span>`;
     }
 
     html += `<div class="teacher-chip ${dragging?'dragging':''}"
       draggable="true"
       ondragstart="onTeacherDragStart(event,'${t.id}')"
       ondragend="onDragEnd()">
-      <div class="yg-pip ${pipCls(t.yg)}"></div>
-      <span class="chip-name">${t.name}</span>
-      <div class="chip-ents">${entItems}</div>
-      ${allNamedDone ? `<div class="chip-done" title="All named entitlements scheduled">✓</div>` : ''}
+      <div class="chip-row1">
+        <div class="yg-pip ${pipCls(t.yg)}"></div>
+        <span class="chip-name">${t.name}</span>
+        ${allNamedDone ? `<div class="chip-done" title="All named entitlements scheduled">✓</div>` : ''}
+      </div>
+      ${entItems ? `<div class="chip-row2">${entItems}</div>` : ''}
     </div>`;
   });
+
+  if (leaders.length) {
+    html += `<div class="section-label" style="margin-top:14px">Leadership</div>`;
+    leaders.forEach(t => {
+      const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
+      html += `<div class="teacher-chip ${dragging?'dragging':''}"
+        draggable="true"
+        ondragstart="onTeacherDragStart(event,'${t.id}')"
+        ondragend="onDragEnd()">
+        <div class="chip-row1">
+          <div class="yg-pip" style="background:#94a3b8"></div>
+          <span class="chip-name">${t.name}</span>
+          <span style="font-size:9px;color:#94a3b8;font-style:italic;margin-left:2px">info only</span>
+        </div>
+      </div>`;
+    });
+  }
+
   document.getElementById('staffPanel').innerHTML = html;
 }
 
@@ -480,7 +535,9 @@ function renderGrid() {
       const dt = new Date(w.start); dt.setDate(w.start.getDate()+i);
       const ev = getDayEvent(state.weekIdx, i);
       const evHtml = ev ? `<div class="event-day-header ${ev.type==='inset'?'inset':''}">${ev.type==='bank-holiday'?'🏦':'📋'} ${ev.label}</div>` : '';
-      return `<th>${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${evHtml}</th>`;
+      const hasSlots = (state.weekSlots[state.weekIdx]||[]).some(s => s.day === i);
+      const resetBtn = hasSlots && !ev ? `<button class="day-reset-btn" onclick="resetDay(${i})" title="Clear ${d}">✕</button>` : '';
+      return `<th style="position:relative">${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${evHtml}${resetBtn}</th>`;
     }).join('')}
   </tr></thead><tbody>`;
 
@@ -491,9 +548,7 @@ function renderGrid() {
       if (ev) {
         // Blocked day — show event label, no drop
         const isCls = ev.type === 'inset' ? 'inset' : '';
-        html += `<td class="grid-cell event-blocked ${isCls}">
-          <div class="event-cell-label ${isCls}">${session === 'AM' ? ev.label : ''}</div>
-        </td>`;
+        html += `<td class="grid-cell event-blocked ${isCls}"></td>`;
         return;
       }
 
@@ -513,15 +568,17 @@ function renderGrid() {
         const yg = t?.yg || null;
         const draggingThis = state.dragging?.type === 'slot' && state.dragging.slotId === s.id;
         const cv = coverByName(s.cover);
-        const coverHtml = s.cover
-          ? `<div class="slot-cover-assigned">
-               <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
-               ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button>
-             </div>`
-          : `<div class="slot-cover-zone" data-slot="${s.id}"
-               ondragover="onSlotCoverDragOver(event,${s.id})"
-               ondragleave="onSlotCoverDragLeave(event,${s.id})"
-               ondrop="onSlotCoverDrop(event,${s.id})">+ TBC</div>`;
+        const coverHtml = s.nocover
+          ? '' // leadership/info entries need no cover
+          : s.cover
+            ? `<div class="slot-cover-assigned">
+                 <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
+                 ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button>
+               </div>`
+            : `<div class="slot-cover-zone" data-slot="${s.id}"
+                 ondragover="onSlotCoverDragOver(event,${s.id})"
+                 ondragleave="onSlotCoverDragLeave(event,${s.id})"
+                 ondrop="onSlotCoverDrop(event,${s.id})">+ TBC</div>`;
 
         const noteHtml = s.reason === 'Other'
           ? `<input class="reason-note" type="text" placeholder="specify…" value="${(s.reasonNote||'').replace(/"/g,'&quot;')}"
@@ -529,7 +586,7 @@ function renderGrid() {
                onchange="changeReasonNote(${s.id},this.value)">`
           : '';
 
-        html += `<div class="slot-item ${sygCls(yg)} ${draggingThis?'slot-dragging':''}"
+        html += `<div class="slot-item ${sygCls(yg)} ${s.nocover?'nocover-slot':''} ${draggingThis?'slot-dragging':''}"
           draggable="true"
           ondragstart="onSlotDragStart(event,${s.id})"
           ondragend="onDragEnd()">
@@ -667,14 +724,14 @@ function onCellDrop(e, dayIdx, session) {
   e.preventDefault();
 
   if (d.type === 'teacher') {
-    // Block drops onto event days
     if (getDayEvent(state.weekIdx, dayIdx)) { state.dragging = null; render(); return; }
-    // Prevent: same teacher + same day + same session
     if (slots().find(s => s.tid === d.id && s.day === dayIdx && s.session === session)) {
       state.dragging = null; render(); return;
     }
-    const defaultReason = firstAvailableReason(d.id);
-    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null}]);
+    const t = teacher(d.id);
+    const isLeader = t?.isLeader || false;
+    const defaultReason = isLeader ? (t.reasons?.[0] || 'Meeting') : firstAvailableReason(d.id);
+    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null, nocover:isLeader}]);
   }
 
   if (d.type === 'slot') {
@@ -716,6 +773,27 @@ function changeReasonNote(slotId, note) { const s = slots().find(x => x.id === s
 function changeWeek(dir)       { state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir)); if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = []; render(); }
 function setView(v)            { state.view = v; render(); }
 function setMyName(n)          { state.myName = n; render(); }
+
+function resetDay(dayIdx) {
+  if (!confirm(`Clear all slots for ${DAYS[dayIdx]}? This cannot be undone.`)) return;
+  setSlots(slots().filter(s => s.day !== dayIdx));
+  render();
+}
+function resetWeek() {
+  if (!confirm(`Clear all slots for ${WEEKS[state.weekIdx].label}? This cannot be undone.`)) return;
+  setSlots([]);
+  render();
+}
+function copyToNextWeek() {
+  const nextIdx = state.weekIdx + 1;
+  if (nextIdx >= WEEKS.length) return;
+  if ((state.weekSlots[nextIdx]||[]).length > 0) {
+    if (!confirm('Next week already has entries — replace with a copy of this week?\n(Cover assignments will not be copied.)')) return;
+  }
+  state.weekSlots[nextIdx] = slots().map(s => ({...s, id:state.nextId++, cover:null}));
+  state.weekIdx = nextIdx;
+  render();
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 render();
