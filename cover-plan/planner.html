@@ -170,6 +170,17 @@
     .day-reset-btn { position:absolute; top:4px; right:4px; background:none; border:none; cursor:pointer; color:#cbd5e1; font-size:10px; padding:1px 3px; border-radius:2px; line-height:1; }
     .day-reset-btn:hover { color:#dc2626; background:#fee2e2; }
 
+    /* Whole-school session banners */
+    .session-banner { display:flex; align-items:center; justify-content:center; gap:5px; padding:5px 7px; border-radius:4px; font-size:10.5px; font-weight:bold; margin-bottom:4px; text-align:center; }
+    .cell-note { display:flex; align-items:center; gap:5px; padding:4px 7px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; font-size:10.5px; color:#475569; margin-bottom:4px; }
+    .cell-note .note-del { margin-left:auto; background:none; border:none; cursor:pointer; color:#cbd5e1; font-size:12px; padding:0 1px; border-radius:2px; }
+    .cell-note .note-del:hover { color:#dc2626; }
+    .add-note-btn { display:flex; align-items:center; justify-content:center; gap:4px; width:100%; padding:4px; font-size:10px; color:#cbd5e1; cursor:pointer; border:1.5px dashed transparent; border-radius:4px; background:none; transition:all .12s; }
+    .add-note-btn:hover { color:#94a3b8; border-color:#e2e8f0; }
+    /* Off-allocation session rows get a subtle background */
+    .session-cell.off-alloc { color:#b0bec5; }
+    .grid-cell.off-alloc { background:#fafbfc; }
+
     /* Action buttons */
     .action-btn { padding:3px 10px; border:1px solid #e2e8f0; border-radius:4px; background:white; cursor:pointer; font-size:11px; color:#475569; transition:all .12s; }
     .action-btn:hover:not(:disabled) { border-color:#1798d3; color:#1798d3; }
@@ -224,6 +235,7 @@
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const SESSIONS     = ['Before School','AM','Lunch','PM','After School'];
+const OFF_ALLOC    = new Set(['Before School','Lunch','After School']);
 const SESSION_SHORT= {'Before School':'Before',AM:'AM',Lunch:'Lunch',PM:'PM','After School':'After'};
 const DAYS         = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 const REASONS      = ['PPA','Phase Lead','Leadership','Training','ECT1','ECT2','RA','SENCO','Sports','Illness','Other'];
@@ -235,6 +247,13 @@ const WEEKS = [
   {label:'T5 · Week 3', start:new Date(2026,4,4)},
   {label:'T5 · Week 4', start:new Date(2026,4,11)},
   {label:'T5 · Week 5', start:new Date(2026,4,18)},
+];
+
+// Whole-school recurring events — appear every week, span the full cell
+// day: 0=Mon…4=Fri, colours are background / text
+const WHOLE_SCHOOL = [
+  {day:2, session:'After School', label:'Staff Meeting',       bg:'#1e3a8a', fg:'white'},
+  {day:0, session:'Before School',label:'Early Morning Duty',  bg:'#f0f9ff', fg:'#0369a1'},
 ];
 
 // Keyed by ISO date string (YYYY-MM-DD). type: 'bank-holiday' | 'inset' | 'other'
@@ -313,6 +332,8 @@ const state = {
   nextId: 200,
   view: 'week',
   myName: '',
+  // Per-cell notes for off-allocation sessions: key = 'weekIdx-day-session'
+  cellNotes: {},
 };
 
 function slots()        { return state.weekSlots[state.weekIdx] || []; }
@@ -542,26 +563,43 @@ function renderGrid() {
   </tr></thead><tbody>`;
 
   SESSIONS.forEach(session => {
-    html += `<tr><td class="session-cell">${SESSION_SHORT[session]}</td>`;
+    const isOffAlloc = OFF_ALLOC.has(session);
+    html += `<tr><td class="session-cell${isOffAlloc?' off-alloc':''}">${SESSION_SHORT[session]}</td>`;
     DAYS.forEach((_,dayIdx) => {
       const ev = getDayEvent(state.weekIdx, dayIdx);
       if (ev) {
-        // Blocked day — show event label, no drop
         const isCls = ev.type === 'inset' ? 'inset' : '';
         html += `<td class="grid-cell event-blocked ${isCls}"></td>`;
         return;
       }
 
       const cellSlots = slotMap[dayIdx][session];
-      const hasTBC = cellSlots.some(s => !s.cover);
+      const hasTBC = cellSlots.some(s => !s.cover && !s.nocover);
       let readyCls = '';
       if (isDragTeacher || isDragSlot) readyCls = 'teacher-ready';
       else if (isDragCover && hasTBC)  readyCls = 'cover-ready';
 
-      html += `<td class="grid-cell ${readyCls}"
+      const offAllocCls = isOffAlloc ? 'off-alloc' : '';
+      html += `<td class="grid-cell ${readyCls} ${offAllocCls}"
         ondragover="onCellDragOver(event,${dayIdx},'${session}')"
         ondragleave="onCellDragLeave(event)"
         ondrop="onCellDrop(event,${dayIdx},'${session}')">`;
+
+      // Whole-school banner (e.g. Staff Meeting)
+      const wsEvent = WHOLE_SCHOOL.find(e => e.day === dayIdx && e.session === session);
+      if (wsEvent) {
+        html += `<div class="session-banner" style="background:${wsEvent.bg};color:${wsEvent.fg}">${wsEvent.label}</div>`;
+      }
+
+      // Per-cell notes (user-added)
+      const noteKey = `${state.weekIdx}-${dayIdx}-${session}`;
+      const cellNote = state.cellNotes[noteKey];
+      if (cellNote) {
+        html += `<div class="cell-note">
+          <span style="flex:1">${cellNote}</span>
+          <button class="note-del" onclick="removeCellNote('${noteKey}')">×</button>
+        </div>`;
+      }
 
       cellSlots.forEach(s => {
         const t = teacher(s.tid);
@@ -603,7 +641,13 @@ function renderGrid() {
         </div>`;
       });
 
-      if (cellSlots.length === 0) html += `<div class="empty-hint">＋</div>`;
+      if (cellSlots.length === 0 && !wsEvent && !cellNote) {
+        html += isOffAlloc
+          ? `<button class="add-note-btn" onclick="addCellNote('${noteKey}')">＋ add note</button>`
+          : `<div class="empty-hint">＋</div>`;
+      } else if (isOffAlloc && !cellNote) {
+        html += `<button class="add-note-btn" onclick="addCellNote('${noteKey}')">＋ add note</button>`;
+      }
       html += `</td>`;
     });
     html += `</tr>`;
@@ -773,6 +817,19 @@ function changeReasonNote(slotId, note) { const s = slots().find(x => x.id === s
 function changeWeek(dir)       { state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir)); if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = []; render(); }
 function setView(v)            { state.view = v; render(); }
 function setMyName(n)          { state.myName = n; render(); }
+
+function addCellNote(key) {
+  const existing = state.cellNotes[key] || '';
+  const text = prompt('Add a note for this session:', existing);
+  if (text === null) return; // cancelled
+  if (text.trim()) state.cellNotes[key] = text.trim();
+  else delete state.cellNotes[key];
+  render();
+}
+function removeCellNote(key) {
+  delete state.cellNotes[key];
+  render();
+}
 
 function resetDay(dayIdx) {
   if (!confirm(`Clear all slots for ${DAYS[dayIdx]}? This cannot be undone.`)) return;
