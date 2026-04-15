@@ -451,6 +451,20 @@
       }
     });
 
+    // Deduplicate Sports entries by year group within each cell
+    DAYS.forEach(d => {
+      SESSIONS.forEach(s => {
+        const seen = new Set();
+        grid[d][s] = grid[d][s].filter(e => {
+          if (!isSports(e)) return true;
+          const key = yearGroup(e, staffByName) || (e['Teacher Out'] || '').trim().toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+      });
+    });
+
     const dayDates = DAYS.map((_, i) => addDays(weekStart, i));
 
     return (
