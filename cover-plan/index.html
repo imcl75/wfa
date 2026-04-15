@@ -48,11 +48,11 @@
   // Week grid cards are coloured by year group (pale = EYFS/KS1, medium = KS2)
   const YEAR_COLOURS = {
     'Reception': { bg:'#dbeafe', border:'#93c5fd', label:'#1e40af' },  // pale blue
-    'Y1':        { bg:'#fed7aa', border:'#fdba74', label:'#9a3412' },  // pale orange
+    'Y1':        { bg:'#ffedd5', border:'#fb923c', label:'#c2410c' },  // pale orange
     'Y2':        { bg:'#d1fae5', border:'#6ee7b7', label:'#065f46' },  // pale green
     'Y3':        { bg:'#fce7f3', border:'#f9a8d4', label:'#9d174d' },  // pale pink
     'Y4':        { bg:'#bfdbfe', border:'#60a5fa', label:'#1d4ed8' },  // medium blue
-    'Y5':        { bg:'#ffedd5', border:'#fb923c', label:'#c2410c' },  // medium orange
+    'Y5':        { bg:'#fed7aa', border:'#fdba74', label:'#9a3412' },  // medium orange
     'Y6':        { bg:'#bbf7d0', border:'#4ade80', label:'#15803d' },  // medium green
   };
   const YEAR_ORDER = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6'];
@@ -77,7 +77,7 @@
       const yg = staffByName.get(out.toLowerCase());
       if (yg && YEAR_COLOURS[yg]) return YEAR_COLOURS[yg];
     }
-    return REASON_COLOURS[entry['Reason']] || DEFAULT_COLOUR;
+    return DEFAULT_COLOUR;
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────────
