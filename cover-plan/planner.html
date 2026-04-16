@@ -453,8 +453,11 @@ function buildStaff(rows) {
     const workingDays=r.WorkingDays
       ? r.WorkingDays.split(',').map(d=>parseInt(d.trim())-1).filter(d=>d>=0&&d<=4)
       : null;
-    if (r.YearGroup||isInfoOnly) {
-      const t={id,name:r.Name,yg:r.YearGroup||null,ent,workingDays,isLeader,isInfoOnly};
+    // Normalise YR → Reception so CSS pip/syg classes match
+    const yg = r.YearGroup === 'YR' ? 'Reception' : (r.YearGroup || null);
+    // Left panel: only Class teachers and info-only staff (leadership/phase)
+    if (r.Role === 'Class' || isInfoOnly) {
+      const t={id,name:r.Name,yg,ent,workingDays,isLeader,isInfoOnly};
       if (isLeader) t.reasons=['Meeting','External Visit','Training','Conference'];
       teachers.push(t);
     }
@@ -554,6 +557,13 @@ async function init() {
     WS_SHEET_DEFAULTS=buildSchoolEvents(csvToObjects(wseTxt));
     wsEvents=wsLoad();
     const recurring=buildRecurring(csvToObjects(recTxt));
+    // Restore saved planner state, falling back to recurring slots for current week
+    const saved=stateLoad();
+    if (saved) {
+      state.weekSlots=saved.weekSlots||{};
+      state.cellNotes=saved.cellNotes||{};
+      state.nextId=saved.nextId||200;
+    }
     state.weekIdx=currentWeekIdx();
     if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx]=JSON.parse(JSON.stringify(recurring));
     render();
@@ -564,8 +574,19 @@ async function init() {
   }
 }
 
+// ── State persistence ─────────────────────────────────────────────────────────
+function stateSave() {
+  try { localStorage.setItem('wfa_planner_state', JSON.stringify({
+    weekSlots: state.weekSlots, cellNotes: state.cellNotes, nextId: state.nextId
+  })); } catch(e) {}
+}
+function stateLoad() {
+  try { const s=localStorage.getItem('wfa_planner_state'); return s?JSON.parse(s):null; }
+  catch(e) { return null; }
+}
+
 function slots()        { return state.weekSlots[state.weekIdx] || []; }
-function setSlots(arr)  { state.weekSlots[state.weekIdx] = arr; }
+function setSlots(arr)  { state.weekSlots[state.weekIdx] = arr; stateSave(); }
 function teacher(tid)   { return TEACHERS.find(t => t.id === tid); }
 function rbCls(r)       { return 'rb-' + (REASON_CLS[r] || 'Other'); }
 function sygCls(yg)     { return yg ? 'syg-' + yg : ''; }
@@ -1052,6 +1073,7 @@ function onCellDrop(e, dayIdx, session) {
   }
 
   state.dragging = null;
+  stateSave();
   render();
 }
 
@@ -1072,15 +1094,16 @@ function onSlotCoverDrop(e, slotId) {
   if (!s || s.cover) return;
   s.cover = state.dragging.name;
   state.dragging = null;
+  stateSave();
   render();
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
 function removeSlot(slotId)    { setSlots(slots().filter(s => s.id !== slotId)); render(); }
-function unassignCover(slotId) { const s = slots().find(x => x.id === slotId); if (s) { s.cover = null; render(); } }
-function changeReason(slotId, reason) { const s = slots().find(x => x.id === slotId); if (s) { s.reason = reason; if (reason !== 'Other') s.reasonNote = ''; render(); } }
-function changeReasonNote(slotId, note) { const s = slots().find(x => x.id === slotId); if (s) s.reasonNote = note; }
+function unassignCover(slotId) { const s = slots().find(x => x.id === slotId); if (s) { s.cover = null; stateSave(); render(); } }
+function changeReason(slotId, reason) { const s = slots().find(x => x.id === slotId); if (s) { s.reason = reason; if (reason !== 'Other') s.reasonNote = ''; stateSave(); render(); } }
+function changeReasonNote(slotId, note) { const s = slots().find(x => x.id === slotId); if (s) { s.reasonNote = note; stateSave(); } }
 function changeWeek(dir)       { state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir)); if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = []; render(); }
 function setView(v)            { state.view = v; document.body.classList.toggle('present-mode', v==='present'); render(); }
 function setMyName(n)          { state.myName = n; render(); }
@@ -1091,10 +1114,12 @@ function addCellNote(key) {
   if (text === null) return; // cancelled
   if (text.trim()) state.cellNotes[key] = text.trim();
   else delete state.cellNotes[key];
+  stateSave();
   render();
 }
 function removeCellNote(key) {
   delete state.cellNotes[key];
+  stateSave();
   render();
 }
 
