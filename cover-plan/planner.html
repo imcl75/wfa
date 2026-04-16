@@ -442,9 +442,11 @@ function buildStaff(rows) {
     }
     if (r.CoverRole) {
       cover.push({id:'c_'+id, name:r.Name, role:r.CoverRole,
-        init:r.Initials||r.Name.slice(0,2).toUpperCase(), col:r.Colour||'#94a3b8'});
+        init:r.Initials||r.Name.slice(0,2).toUpperCase(), col:r.Colour||'#94a3b8',
+        order: r.Order !== '' && r.Order !== undefined ? parseInt(r.Order) : Infinity});
     }
   });
+  cover.sort((a,b) => a.order - b.order);
   return {teachers,cover};
 }
 function buildWeeks(rows) {
