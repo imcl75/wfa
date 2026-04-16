@@ -221,6 +221,27 @@
     .ws-open-btn { padding:3px 9px; border:1px solid #e2e8f0; border-radius:4px; background:white; cursor:pointer; font-size:11px; color:#475569; transition:all .12s; }
     .ws-open-btn:hover { border-color:#1798d3; color:#1798d3; }
 
+    /* Edit mode toggle */
+    .edit-toggle-btn { padding:4px 11px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:bold; transition:all .15s; border:1.5px solid #e2e8f0; background:white; color:#475569; }
+    .edit-toggle-btn:hover { border-color:#1798d3; }
+    .edit-toggle-btn.unlocked { background:#1798d3; color:white; border-color:#1798d3; }
+
+    /* Locked state — disable interactive elements */
+    body.edit-locked .teacher-chip { cursor:default; pointer-events:none; }
+    body.edit-locked .cover-chip   { cursor:default; pointer-events:none; }
+    body.edit-locked .slot-item    { cursor:default; }
+    body.edit-locked .slot-item[draggable] { pointer-events:none; }
+    body.edit-locked .slot-del     { display:none; }
+    body.edit-locked .slot-cover-zone { pointer-events:none; }
+    body.edit-locked .slot-cover-assigned .cv-x { display:none; }
+    body.edit-locked .reason-sel   { pointer-events:none; }
+    body.edit-locked .reason-note  { pointer-events:none; }
+    body.edit-locked .add-note-btn { display:none; }
+    body.edit-locked .cell-note .note-del { display:none; }
+    body.edit-locked .action-btn   { display:none; }
+    body.edit-locked .ws-open-btn  { display:none; }
+    body.edit-locked .day-reset-btn { display:none; }
+
     /* Other reason free-text input */
     .reason-note { font-size:10px; border:1px solid #e2e8f0; border-radius:3px; padding:1px 4px; width:68px; color:#374151; background:#fff; margin-left:2px; vertical-align:middle; }
     .reason-note:focus { outline:none; border-color:#1798d3; }
@@ -240,6 +261,7 @@
     <button class="view-tab" id="tab-mine" onclick="setView('mine')">My view</button>
     <button class="view-tab" id="tab-present" onclick="setView('present')" title="Full-grid view for sharing on screen">⛶ Present</button>
     <button class="ws-open-btn" onclick="openWsModal()" title="Manage whole-school events">📅 School events</button>
+    <button class="edit-toggle-btn" id="editToggleBtn" onclick="toggleEditMode()" title="Toggle edit mode"></button>
   </div>
   <div class="week-nav">
     <button id="prevWeek" onclick="changeWeek(-1)">‹</button>
@@ -328,6 +350,22 @@ function wsLoad() {
 }
 function wsSave() { localStorage.setItem('wfa_ws_events', JSON.stringify(wsEvents)); }
 let wsEvents = [];
+
+// ── Edit mode ─────────────────────────────────────────────────────────────────
+let editMode = localStorage.getItem('wfa_edit_mode') === '1';
+function applyEditMode() {
+  document.body.classList.toggle('edit-locked', !editMode);
+  const btn = document.getElementById('editToggleBtn');
+  if (btn) {
+    btn.textContent = editMode ? '🔓 Editing' : '🔒 View only';
+    btn.classList.toggle('unlocked', editMode);
+  }
+}
+function toggleEditMode() {
+  editMode = !editMode;
+  localStorage.setItem('wfa_edit_mode', editMode ? '1' : '0');
+  applyEditMode();
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 const state = {
@@ -601,6 +639,7 @@ function render() {
   document.getElementById('tab-week').classList.toggle('active', state.view === 'week');
   document.getElementById('tab-mine').classList.toggle('active', state.view === 'mine');
   document.getElementById('tab-present').classList.toggle('active', state.view === 'present');
+  applyEditMode();
 }
 
 function renderWeekLabel() {
