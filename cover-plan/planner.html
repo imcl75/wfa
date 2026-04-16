@@ -47,7 +47,7 @@
     .section-label:first-child { margin-top:0; }
 
     /* Teacher chips — two-row (name always visible, ents below) */
-    .teacher-chip { display:flex; flex-direction:column; gap:3px; padding:6px 9px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
+    .teacher-chip { display:flex; flex-direction:column; gap:3px; padding:6px 9px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; touch-action:none; }
     .teacher-chip:hover { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
     .teacher-chip.dragging { opacity:.28; pointer-events:none; }
     .chip-row1 { display:flex; align-items:center; gap:9px; }
@@ -62,7 +62,7 @@
     .ent-mini.over  { background:#dc2626; }
 
     /* Cover chips */
-    .cover-chip { display:flex; align-items:center; gap:7px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; }
+    .cover-chip { display:flex; align-items:center; gap:7px; padding:5px 8px; border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:4px; cursor:grab; user-select:none; transition:all .12s; background:white; touch-action:none; }
     .cover-chip:hover { border-color:#1798d3; box-shadow:0 2px 6px rgba(23,152,211,.15); transform:translateY(-1px); }
     .cover-chip.dragging { opacity:.28; pointer-events:none; }
     .cover-avatar { width:22px; height:22px; border-radius:50%; color:white; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:bold; flex-shrink:0; }
@@ -96,7 +96,7 @@
     .grid-cell.teacher-over .empty-hint,.grid-cell.slot-over .empty-hint { color:#1798d3; border-color:#1798d3; }
 
     /* Slot items */
-    .slot-item { border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:5px; overflow:hidden; font-size:11px; cursor:grab; }
+    .slot-item { border:1.5px solid #e2e8f0; border-radius:5px; margin-bottom:5px; overflow:hidden; font-size:11px; cursor:grab; touch-action:none; }
     .slot-item:active { cursor:grabbing; }
     .slot-item.slot-dragging { opacity:.3; }
     .slot-hd { display:flex; align-items:center; gap:3px; padding:4px 5px; border-bottom:1px solid rgba(0,0,0,.07); }
@@ -230,7 +230,7 @@
     body.edit-locked .teacher-chip { cursor:default; pointer-events:none; }
     body.edit-locked .cover-chip   { cursor:default; pointer-events:none; }
     body.edit-locked .slot-item    { cursor:default; }
-    body.edit-locked .slot-item[draggable] { pointer-events:none; }
+    body.edit-locked .slot-item { pointer-events:none; }
     body.edit-locked .slot-del     { display:none; }
     body.edit-locked .slot-cover-zone { pointer-events:none; }
     body.edit-locked .slot-cover-assigned .cv-x { display:none; }
@@ -790,9 +790,7 @@ function renderStaff() {
     }
 
     html += `<div class="teacher-chip ${dragging?'dragging':''}"
-      draggable="true"
-      ondragstart="onTeacherDragStart(event,'${t.id}')"
-      ondragend="onDragEnd()">
+      onpointerdown="onTeacherPointerDown(event,'${t.id}')">
       <div class="chip-row1">
         <div class="yg-pip ${pipCls(t.yg)}"></div>
         <span class="chip-name">${t.name}</span>
@@ -817,9 +815,7 @@ function renderStaff() {
         entItems += `<span class="chip-ent-item">${e.r} ${pips}</span>`;
       });
       html += `<div class="teacher-chip ${dragging?'dragging':''}"
-        draggable="true"
-        ondragstart="onTeacherDragStart(event,'${t.id}')"
-        ondragend="onDragEnd()">
+        onpointerdown="onTeacherPointerDown(event,'${t.id}')">
         <div class="chip-row1">
           <div class="yg-pip" style="background:#94a3b8"></div>
           <span class="chip-name">${t.name}</span>
@@ -844,9 +840,7 @@ function renderCoverStaff() {
     let pipRow = '';
     for (let i = 0; i < n; i++) pipRow += `<div class="ent-mini used" style="background:${c.col}"></div>`;
     html += `<div class="cover-chip ${dragging?'dragging':''}"
-      draggable="true"
-      ondragstart="onCoverDragStart(event,'${c.id}','${c.name}')"
-      ondragend="onDragEnd()">
+      onpointerdown="onCoverPointerDown(event,'${c.id}','${c.name}')">
       <div class="cover-avatar" style="background:${c.col};color:${contrastColor(c.col)}">${c.init}</div>
       <div style="flex:1;min-width:0">
         <div class="cover-chip-name">${c.name}</div>
@@ -906,9 +900,7 @@ function renderGrid() {
       else if (isDragCover && hasTBC)  readyCls = 'cover-ready';
 
       html += `<td class="grid-cell ${readyCls}"
-        ondragover="onCellDragOver(event,${dayIdx},'${session}')"
-        ondragleave="onCellDragLeave(event)"
-        ondrop="onCellDrop(event,${dayIdx},'${session}')">`;
+        data-day="${dayIdx}" data-session="${session}">`;
 
       // Whole-school banner (e.g. Staff Meeting)
       const wsEventMatches = wsEvents.filter(e => e.day === dayIdx && e.session === session);
@@ -943,10 +935,7 @@ function renderGrid() {
                  <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'};color:${contrastColor(cv?.col||'#94a3b8')}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
                  ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button>
                </div>`
-            : `<div class="slot-cover-zone" data-slot="${s.id}"
-                 ondragover="onSlotCoverDragOver(event,${s.id})"
-                 ondragleave="onSlotCoverDragLeave(event,${s.id})"
-                 ondrop="onSlotCoverDrop(event,${s.id})">+ TBC</div>`;
+            : `<div class="slot-cover-zone" data-slot="${s.id}">+ TBC</div>`;
 
         const noteHtml = s.reason === 'Other'
           ? `<input class="reason-note" type="text" placeholder="specify…" value="${(s.reasonNote||'').replace(/"/g,'&quot;')}"
@@ -955,9 +944,7 @@ function renderGrid() {
           : '';
 
         html += `<div class="slot-item ${sygCls(yg)} ${s.nocover?'nocover-slot':''} ${draggingThis?'slot-dragging':''}"
-          draggable="true"
-          ondragstart="onSlotDragStart(event,${s.id})"
-          ondragend="onDragEnd()">
+          onpointerdown="onSlotPointerDown(event,${s.id})">
           <div class="slot-hd">
             <div class="slot-pip ${pipCls(yg)}"></div>
             <span class="slot-name">${t ? t.name : s.tid}</span>
@@ -1057,88 +1044,137 @@ function renderMyView() {
 }
 
 
-// ── Drag events ───────────────────────────────────────────────────────────────
+// ── Pointer drag ──────────────────────────────────────────────────────────────
+let ptrDrag = null;
 
-function onTeacherDragStart(e, tid) {
-  state.dragging = {type:'teacher', id:tid};
-  e.dataTransfer.effectAllowed = 'copy';
-  setTimeout(render, 0);
+function ptrGhostCreate(label, bg) {
+  ptrGhostRemove();
+  const el = document.createElement('div');
+  el.id = 'drag-ghost';
+  const fg = contrastColor(bg);
+  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;padding:5px 12px;border-radius:5px;font-size:12px;font-weight:bold;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:.92;background:${bg};color:${fg};`;
+  el.textContent = label;
+  document.body.appendChild(el);
+  return el;
 }
-function onCoverDragStart(e, cid, name) {
-  state.dragging = {type:'cover', id:cid, name};
-  e.dataTransfer.effectAllowed = 'copy';
-  setTimeout(render, 0);
+function ptrGhostMove(x, y) {
+  const el = document.getElementById('drag-ghost');
+  if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.transform = 'translate(14px,-18px)'; }
 }
-function onSlotDragStart(e, slotId) {
-  e.stopPropagation();
-  state.dragging = {type:'slot', slotId};
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(render, 0);
+function ptrGhostRemove() { document.getElementById('drag-ghost')?.remove(); }
+
+function ptrCellAt(x, y) {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (el.dataset.day !== undefined && el.dataset.session !== undefined)
+      return { dayIdx: +el.dataset.day, session: el.dataset.session, el };
+  }
+  return null;
 }
-function onDragEnd() {
-  state.dragging = null;
-  render();
+function ptrSlotZoneAt(x, y) {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (el.classList?.contains('slot-cover-zone')) return { slotId: +el.dataset.slot, el };
+  }
+  return null;
 }
 
-// Cell-level
-function onCellDragOver(e, dayIdx, session) {
-  const d = state.dragging;
-  if (!d || d.type === 'cover') return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect = d.type === 'slot' ? 'move' : 'copy';
-  e.currentTarget.classList.add(d.type === 'slot' ? 'slot-over' : 'teacher-over');
+let ptrLastHL = null;
+function ptrHL(el, cls) {
+  if (ptrLastHL) { ptrLastHL.el.classList.remove(ptrLastHL.cls); ptrLastHL = null; }
+  if (el) { el.classList.add(cls); ptrLastHL = { el, cls }; }
 }
-function onCellDragLeave(e) {
-  e.currentTarget.classList.remove('teacher-over','slot-over');
-}
-function onCellDrop(e, dayIdx, session) {
-  e.currentTarget.classList.remove('teacher-over','slot-over');
-  const d = state.dragging;
-  if (!d) return;
-  e.preventDefault();
 
-  if (d.type === 'teacher') {
-    if (getDayEvent(state.weekIdx, dayIdx)) { state.dragging = null; render(); return; }
-    if (slots().find(s => s.tid === d.id && s.day === dayIdx && s.session === session)) {
-      state.dragging = null; render(); return;
+document.addEventListener('pointermove', e => {
+  if (!ptrDrag) return;
+  if (!ptrDrag.active) {
+    const dx = e.clientX - ptrDrag.startX, dy = e.clientY - ptrDrag.startY;
+    if (Math.hypot(dx, dy) < 8) return;
+    ptrDrag.active = true;
+    state.dragging = ptrDrag.info;
+    render();
+  }
+  ptrGhostMove(e.clientX, e.clientY);
+  const d = ptrDrag.info;
+  if (d.type === 'cover') {
+    const zone = ptrSlotZoneAt(e.clientX, e.clientY);
+    ptrHL(zone?.el || null, 'over');
+  } else {
+    const cell = ptrCellAt(e.clientX, e.clientY);
+    ptrHL(cell?.el || null, d.type === 'slot' ? 'slot-over' : 'teacher-over');
+  }
+});
+
+function ptrCommitDrop(x, y) {
+  if (!ptrDrag?.active) return;
+  const d = ptrDrag.info;
+  if (d.type === 'cover') {
+    const zone = ptrSlotZoneAt(x, y);
+    if (zone) {
+      const s = slots().find(x => x.id === zone.slotId);
+      if (s && !s.cover) { s.cover = d.name; stateSave(); }
     }
-    const t = teacher(d.id);
-    if (t?.workingDays && !t.workingDays.includes(dayIdx)) { state.dragging = null; render(); return; }
-    const isLeader = t?.isLeader || false;
-    const defaultReason = isLeader ? (t.reasons?.[0] || 'Meeting') : firstAvailableReason(d.id);
-    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null, nocover:t?.isInfoOnly||false}]);
+  } else {
+    const cell = ptrCellAt(x, y);
+    if (cell) {
+      const { dayIdx, session } = cell;
+      if (d.type === 'teacher') {
+        if (!getDayEvent(state.weekIdx, dayIdx) &&
+            !slots().find(s => s.tid === d.id && s.day === dayIdx && s.session === session)) {
+          const t = teacher(d.id);
+          if (!t?.workingDays || t.workingDays.includes(dayIdx)) {
+            const isLeader = t?.isLeader || false;
+            const defaultReason = isLeader ? (t.reasons?.[0] || 'Meeting') : firstAvailableReason(d.id);
+            setSlots([...slots(), { id: state.nextId++, day: dayIdx, session, tid: d.id, reason: defaultReason, reasonNote: '', cover: null, nocover: t?.isInfoOnly || false }]);
+          }
+        }
+      } else if (d.type === 'slot') {
+        if (!getDayEvent(state.weekIdx, dayIdx)) {
+          const s = slots().find(x => x.id === d.slotId);
+          if (s) { s.day = dayIdx; s.session = session; stateSave(); }
+        }
+      }
+    }
   }
+}
 
-  if (d.type === 'slot') {
-    if (getDayEvent(state.weekIdx, dayIdx)) { state.dragging = null; render(); return; }
-    const s = slots().find(x => x.id === d.slotId);
-    if (s) { s.day = dayIdx; s.session = session; }
-  }
-
+document.addEventListener('pointerup', e => {
+  if (!ptrDrag) return;
+  ptrCommitDrop(e.clientX, e.clientY);
+  ptrGhostRemove();
+  ptrHL(null);
+  ptrDrag = null;
   state.dragging = null;
-  stateSave();
   render();
+});
+
+document.addEventListener('pointercancel', () => {
+  ptrGhostRemove();
+  ptrHL(null);
+  ptrDrag = null;
+  state.dragging = null;
+  render();
+});
+
+function startPtrDrag(e, info, label, bg) {
+  if (document.body.classList.contains('edit-locked')) return;
+  e.preventDefault();
+  ptrDrag = { info, startX: e.clientX, startY: e.clientY, active: false };
+  ptrGhostCreate(label, bg);
+  ptrGhostMove(e.clientX, e.clientY);
 }
 
-// Slot cover zones
-function onSlotCoverDragOver(e, slotId) {
-  if (state.dragging?.type !== 'cover') return;
-  e.preventDefault(); e.stopPropagation();
-  document.querySelector(`[data-slot="${slotId}"]`)?.classList.add('over');
+function onTeacherPointerDown(e, tid) {
+  const t = teacher(tid);
+  startPtrDrag(e, { type: 'teacher', id: tid }, t?.name || tid, ygCol(t?.yg));
 }
-function onSlotCoverDragLeave(e, slotId) {
-  document.querySelector(`[data-slot="${slotId}"]`)?.classList.remove('over');
+function onCoverPointerDown(e, cid, name) {
+  const cv = COVER.find(c => c.id === cid);
+  startPtrDrag(e, { type: 'cover', id: cid, name }, name, cv?.col || '#94a3b8');
 }
-function onSlotCoverDrop(e, slotId) {
-  document.querySelector(`[data-slot="${slotId}"]`)?.classList.remove('over');
-  if (state.dragging?.type !== 'cover') return;
-  e.preventDefault(); e.stopPropagation();
+function onSlotPointerDown(e, slotId) {
+  e.stopPropagation();
   const s = slots().find(x => x.id === slotId);
-  if (!s || s.cover) return;
-  s.cover = state.dragging.name;
-  state.dragging = null;
-  stateSave();
-  render();
+  const t = s ? teacher(s.tid) : null;
+  startPtrDrag(e, { type: 'slot', slotId }, t?.name || '?', ygCol(t?.yg));
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
