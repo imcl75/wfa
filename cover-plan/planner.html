@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cover Planner — Wallscourt Farm Academy</title>
+  <title>Release Schedule — Wallscourt Farm Academy</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,7 +29,7 @@
     .week-nav button { padding:5px 11px; border:1px solid #e2e8f0; border-radius:4px; background:white; cursor:pointer; font-size:15px; color:#475569; line-height:1; }
     .week-nav button:hover { background:#f0f8fd; border-color:#93c5fd; }
     .week-nav button:disabled { opacity:.35; cursor:default; }
-    #weekLabel { font-weight:bold; font-size:13px; color:#1e3a8a; text-align:center; min-width:150px; }
+    #weekLabel { font-family:'Nunito',sans-serif; font-weight:900; font-size:17px; color:#1798d3; text-align:center; min-width:150px; line-height:1.2; }
     #weekLabel small { display:block; font-size:10px; color:#94a3b8; font-weight:normal; margin-top:1px; }
 
     .stats-bar { background:white; border-bottom:1px solid #e8eef4; padding:6px 18px; display:flex; gap:18px; font-size:11.5px; color:#64748b; }
@@ -253,7 +253,7 @@
 <header>
   <img src="logo.png" alt="Wallscourt Farm Academy">
   <div>
-    <div class="header-title">Cover Planner <span class="demo-badge">Prototype</span></div>
+    <div class="header-title">Release Schedule</div>
     <div class="header-sub">Drag teachers into sessions · Drag cover onto TBC slots · Drag slots to move</div>
   </div>
   <div class="view-tabs">
@@ -314,7 +314,7 @@
   </div>
 </div>
 
-<footer>Wallscourt Farm Academy · Cover Planner · Prototype</footer>
+<footer>Wallscourt Farm Academy · Release Schedule</footer>
 
 <script>
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -495,7 +495,7 @@ function buildWeeks(rows) {
   return rows.map(r=>{
     const start=parseDateStr(r.StartDate);
     if (!start||isNaN(start)) return null;
-    return {label:`T${r.Term} · Week ${r.Week}`, shortLabel:r.Label, term:+r.Term, week:+r.Week, start};
+    return {label:`Term ${r.Term}  Week ${r.Week}`, shortLabel:r.Label, term:+r.Term, week:+r.Week, start};
   }).filter(Boolean);
 }
 function buildEvents(rows) {
