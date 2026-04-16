@@ -805,11 +805,13 @@ function renderStaff() {
     leaders.forEach(t => {
       const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
       const usedMap = teacherReasonUsed(t.id);
+      const allNamedDone = t.ent.length > 0 && t.ent.every(e => (usedMap[e.r]||0) >= e.n);
       let entItems = '';
       t.ent.forEach(e => {
         const usedN = usedMap[e.r]||0;
         let pips = '';
         for (let i=0;i<e.n;i++) pips+=`<div class="ent-mini ${i<usedN?'used':'empty'}"></div>`;
+        for (let i=e.n;i<usedN;i++) pips+=`<div class="ent-mini over"></div>`;
         entItems += `<span class="chip-ent-item">${e.r} ${pips}</span>`;
       });
       html += `<div class="teacher-chip ${dragging?'dragging':''}"
@@ -819,7 +821,7 @@ function renderStaff() {
         <div class="chip-row1">
           <div class="yg-pip" style="background:#94a3b8"></div>
           <span class="chip-name">${t.name}</span>
-          <span style="font-size:9px;color:#94a3b8;font-style:italic;margin-left:2px">info only</span>
+          ${allNamedDone ? `<div class="chip-done" title="All named entitlements scheduled">✓</div>` : ''}
         </div>
         ${entItems ? `<div class="chip-row2">${entItems}</div>` : ''}
       </div>`;
