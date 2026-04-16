@@ -332,7 +332,7 @@ const BLOCKING_TYPES   = new Set(['Half Term','Christmas','Easter','Summer Holid
 
 // ── Sheet config ──────────────────────────────────────────────────────────────
 const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
-const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&headers=0&sheet=`;
+const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
 
 // ── Mutable data (populated by init) ─────────────────────────────────────────
 let WEEKS    = [];
@@ -399,8 +399,26 @@ function parseCSV(text) {
 function csvToObjects(text) {
   const rows=parseCSV(text);
   if (rows.length<2) return [];
-  const headers=rows[0];
-  return rows.slice(1).map(r=>{
+  const firstRow=rows[0];
+
+  // Detect gviz combined format: first row has cells like "ColumnName Value"
+  // or "ColumnName " (header + space + data value merged into one cell).
+  // Signature: every cell matches /^[A-Za-z]\w*( .*)?$/ AND at least one has a value.
+  const gvizRe=/^([A-Za-z]\w*)( .*)?$/;
+  const isGviz = firstRow.every(h=>gvizRe.test(h))
+    && firstRow.some(h=>{ const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
+
+  let headers, dataRows;
+  if (isGviz) {
+    headers  = firstRow.map(h=>h.match(gvizRe)[1]);
+    const firstData = firstRow.map(h=>{ const m=h.match(gvizRe); return m&&m[2]?m[2].trim():''; });
+    dataRows = [firstData, ...rows.slice(1)];
+  } else {
+    headers  = firstRow;
+    dataRows = rows.slice(1);
+  }
+
+  return dataRows.map(r=>{
     const obj={};
     headers.forEach((h,i)=>obj[h]=(r[i]||'').trim());
     return obj;
