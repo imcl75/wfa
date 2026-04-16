@@ -1051,13 +1051,13 @@ function ptrGhostCreate(sourceEl) {
   ptrGhostRemove();
   const el = sourceEl.cloneNode(true);
   el.id = 'drag-ghost';
-  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;opacity:.85;box-shadow:0 6px 20px rgba(0,0,0,.25);width:${sourceEl.offsetWidth}px;margin:0;`;
+  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;opacity:.85;box-shadow:0 6px 20px rgba(0,0,0,.25);width:${sourceEl.offsetWidth}px;margin:0;top:0;left:0;will-change:transform;`;
   document.body.appendChild(el);
   return el;
 }
 function ptrGhostMove(x, y) {
   const el = document.getElementById('drag-ghost');
-  if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.transform = 'translate(14px,-18px)'; }
+  if (el) el.style.transform = `translate(${x+14}px,${y-18}px)`;
 }
 function ptrGhostRemove() { document.getElementById('drag-ghost')?.remove(); }
 
@@ -1087,6 +1087,7 @@ document.addEventListener('pointermove', e => {
     const dx = e.clientX - ptrDrag.startX, dy = e.clientY - ptrDrag.startY;
     if (Math.hypot(dx, dy) < 8) return;
     ptrDrag.active = true;
+    ptrGhostCreate(ptrDrag.sourceEl);
     state.dragging = ptrDrag.info;
     render();
   }
@@ -1154,10 +1155,9 @@ document.addEventListener('pointercancel', () => {
 
 function startPtrDrag(e, info) {
   if (document.body.classList.contains('edit-locked')) return;
+  if (e.target.closest('button, select, input')) return;
   e.preventDefault();
-  ptrDrag = { info, startX: e.clientX, startY: e.clientY, active: false };
-  ptrGhostCreate(e.currentTarget);
-  ptrGhostMove(e.clientX, e.clientY);
+  ptrDrag = { info, sourceEl: e.currentTarget, startX: e.clientX, startY: e.clientY, active: false };
 }
 
 function onTeacherPointerDown(e, tid) {
