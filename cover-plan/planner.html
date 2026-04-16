@@ -292,117 +292,205 @@
   </div>
 </div>
 
-<footer>Wallscourt Farm Academy · Cover Planner · Prototype — not connected to live data</footer>
+<footer>Wallscourt Farm Academy · Cover Planner · Prototype</footer>
 
 <script>
-// ── Data ──────────────────────────────────────────────────────────────────────
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-const SESSIONS     = ['Before School','AM','Lunch','PM','After School'];
-const OFF_ALLOC    = new Set(['Before School','Lunch','After School']);
-const SESSION_SHORT= {'Before School':'Before School',AM:'AM',Lunch:'Lunch',PM:'PM','After School':'After School'};
-const DAYS         = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-const REASONS      = ['PPA','Phase Lead','Leadership','Training','ECT1','ECT2','RA','SENCO','Sports','Illness','Other'];
-const REASON_CLS   = {'PPA':'PPA','Phase Lead':'Phase','Leadership':'Leadership','Training':'Training','ECT1':'ECT1','ECT2':'ECT2','RA':'RA','SENCO':'SENCO','Sports':'Sports','Illness':'Illness','Other':'Other'};
+const SESSIONS      = ['Before School','AM','Lunch','PM','After School'];
+const OFF_ALLOC     = new Set(['Before School','Lunch','After School']);
+const SESSION_SHORT = {'Before School':'Before School',AM:'AM',Lunch:'Lunch',PM:'PM','After School':'After School'};
+const DAYS          = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const DAY_IDX       = {Monday:0,Tuesday:1,Wednesday:2,Thursday:3,Friday:4};
+const REASONS       = ['PPA','Phase Lead','Leadership','Training','ECT','ECT1','ECT2','RA','SENCO','Sports','Illness','Other'];
+const REASON_CLS    = {'PPA':'PPA','Phase Lead':'Phase','Leadership':'Leadership','Training':'Training',
+                       'ECT':'ECT1','ECT1':'ECT1','ECT2':'ECT2','RA':'RA','SENCO':'SENCO','Sports':'Sports','Illness':'Illness','Other':'Other'};
+const COUNTED_SESSIONS = new Set(['AM','PM']);
+const BLOCKING_TYPES   = new Set(['Half Term','Christmas','Easter','Summer Holiday','INSET','CLF Conference','Bank Holiday']);
 
-const WEEKS = [
-  {label:'T5 · Week 1', start:new Date(2026,3,20)},
-  {label:'T5 · Week 2', start:new Date(2026,3,27)},
-  {label:'T5 · Week 3', start:new Date(2026,4,4)},
-  {label:'T5 · Week 4', start:new Date(2026,4,11)},
-  {label:'T5 · Week 5', start:new Date(2026,4,18)},
-];
+// ── Sheet config ──────────────────────────────────────────────────────────────
+const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
+const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
 
-// Whole-school recurring events — managed via the School Events modal, persisted to localStorage
-const WS_DEFAULTS = [
-  {day:2, session:'After School', label:'Staff Meeting',      bg:'#1e3a8a'},
-  {day:0, session:'Before School',label:'Early Morning Duty', bg:'#0369a1'},
-];
+// ── Mutable data (populated by init) ─────────────────────────────────────────
+let WEEKS    = [];
+let TEACHERS = [];
+let COVER    = [];
+let EVENTS      = {};   // YYYY-MM-DD → {label,type:'bank-holiday'|'inset'}  — blocking
+let INFO_EVENTS = {};   // YYYY-MM-DD → [{label,type}]                       — informational banners
+
+// ── Whole-school events (localStorage-backed; defaults loaded from sheet) ─────
+let WS_SHEET_DEFAULTS = [];
 function wsLoad() {
-  try { const s = localStorage.getItem('wfa_ws_events'); return s ? JSON.parse(s) : WS_DEFAULTS; }
-  catch(e) { return WS_DEFAULTS; }
+  try { const s = localStorage.getItem('wfa_ws_events'); return s ? JSON.parse(s) : WS_SHEET_DEFAULTS; }
+  catch(e) { return WS_SHEET_DEFAULTS; }
 }
 function wsSave() { localStorage.setItem('wfa_ws_events', JSON.stringify(wsEvents)); }
-let wsEvents = wsLoad();
-
-// Keyed by ISO date string (YYYY-MM-DD). type: 'bank-holiday' | 'inset' | 'other'
-const EVENTS = {
-  '2026-04-17': {label:'Good Friday',    type:'bank-holiday'},
-  '2026-05-04': {label:'May Bank Holiday', type:'bank-holiday'},
-  '2026-05-22': {label:'Inset Day',      type:'inset'},
-};
-
-const TEACHERS = [
-  {id:'jess',    name:'Jess',     yg:'Y1',  ent:[{r:'PPA',n:1}]},
-  {id:'sarahm',  name:'Sarah M',  yg:'Y2',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}]},
-  {id:'clarek',  name:'Clare K',  yg:'Y3',  ent:[{r:'PPA',n:1}]},
-  {id:'innes',   name:'Innes',    yg:'Y4',  ent:[{r:'PPA',n:1},{r:'RA',n:1}]},
-  {id:'eloise',  name:'Eloise',   yg:'Y5',  ent:[{r:'PPA',n:1}]},
-  {id:'ellie',   name:'Ellie',    yg:'Y5',  ent:[{r:'PPA',n:1}]},
-  {id:'jon',     name:'Jon',      yg:'Y6',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}]},
-  {id:'reuben',  name:'Reuben',   yg:'Y3',  ent:[{r:'PPA',n:1},{r:'Phase Lead',n:1}]},
-  {id:'sally',   name:'Sally',    yg:'Y6',  ent:[{r:'PPA',n:1}]},
-  {id:'laura',   name:'Laura',    yg:'Y2',  ent:[{r:'PPA',n:1}]},
-  {id:'lutzm',   name:'Lutz Mae', yg:'Y3',  ent:[{r:'PPA',n:1}]},
-  {id:'william', name:'William',  yg:'Y4',  ent:[{r:'PPA',n:1}]},
-  {id:'jamie',   name:'Jamie',    yg:null,  ent:[{r:'PPA',n:1},{r:'ECT1',n:1}]},
-  {id:'leyla',   name:'Leyla',    yg:null,  ent:[{r:'Phase Lead',n:1}]},
-  {id:'ellen',   name:'Ellen',    yg:null,  ent:[{r:'SENCO',n:3}]},
-  {id:'l_principal', name:'Principal', yg:null, isLeader:true, ent:[], reasons:['Meeting','External Visit','Training','Conference']},
-  {id:'l_dht',       name:'DHT',       yg:null, isLeader:true, ent:[], reasons:['Meeting','External Visit','Training','Conference']},
-];
-
-const COVER = [
-  {id:'c_ellen',    name:'Ellen',     role:'Cover Teacher',    init:'EL', col:'#1798d3'},
-  {id:'c_theresa',  name:'Theresa',   role:'Teaching Partner', init:'TH', col:'#7c3aed'},
-  {id:'c_chelsea',  name:'Chelsea',   role:'Teaching Partner', init:'CH', col:'#0891b2'},
-  {id:'c_catherine',name:'Catherine', role:'Teaching Partner', init:'CA', col:'#059669'},
-  {id:'c_kerry',    name:'Kerry',     role:'Teaching Partner', init:'KE', col:'#d97706'},
-  {id:'c_sam',      name:'Sam',       role:'Teaching Partner', init:'SA', col:'#dc2626'},
-  {id:'c_alasdair', name:'Alasdair',  role:'Teaching Partner', init:'AL', col:'#7c2d12'},
-  {id:'c_hettie',   name:'Hettie',    role:'Teaching Partner', init:'HE', col:'#be185d'},
-  {id:'c_leyla',    name:'Leyla',     role:'Cover',            init:'LE', col:'#0f766e'},
-  {id:'c_lutzm',    name:'Lutz Mae',  role:'Class Teacher',    init:'LM', col:'#4338ca'},
-  {id:'c_absports', name:'AB Sports', role:'External',         init:'AB', col:'#166534'},
-  {id:'c_supply',   name:'Supply',    role:'Supply (Jono)',     init:'SU', col:'#92400e'},
-];
-
-const WEEK1_SLOTS = [
-  {id:1,  day:0,session:'AM', tid:'leyla',   reason:'Phase Lead',cover:null},
-  {id:2,  day:0,session:'PM', tid:'jamie',   reason:'ECT1',      cover:'Theresa'},
-  {id:3,  day:1,session:'AM', tid:'jess',    reason:'PPA',       cover:'Leyla'},
-  {id:4,  day:1,session:'AM', tid:'sarahm',  reason:'PPA',       cover:'Laura'},
-  {id:5,  day:1,session:'PM', tid:'innes',   reason:'RA',        cover:null},
-  {id:6,  day:1,session:'PM', tid:'clarek',  reason:'PPA',       cover:'Lutz Mae'},
-  {id:7,  day:1,session:'PM', tid:'laura',   reason:'PPA',       cover:null},
-  {id:8,  day:1,session:'PM', tid:'jon',     reason:'Phase Lead',cover:'Sam'},
-  {id:9,  day:2,session:'AM', tid:'lutzm',   reason:'PPA',       cover:null},
-  {id:10, day:2,session:'AM', tid:'ellen',   reason:'SENCO',     cover:null},
-  {id:11, day:2,session:'PM', tid:'ellen',   reason:'SENCO',     cover:null},
-  {id:12, day:3,session:'AM', tid:'innes',   reason:'PPA',       cover:null},
-  {id:13, day:3,session:'AM', tid:'william', reason:'PPA',       cover:'Supply'},
-  {id:14, day:3,session:'PM', tid:'eloise',  reason:'PPA',       cover:'AB Sports'},
-  {id:15, day:3,session:'PM', tid:'ellie',   reason:'PPA',       cover:'AB Sports'},
-  {id:16, day:3,session:'PM', tid:'sarahm',  reason:'Phase Lead',cover:null},
-  {id:17, day:3,session:'PM', tid:'reuben',  reason:'Phase Lead',cover:null},
-  {id:18, day:3,session:'PM', tid:'jon',     reason:'PPA',       cover:null},
-  {id:19, day:3,session:'PM', tid:'sally',   reason:'PPA',       cover:null},
-  {id:20, day:4,session:'AM', tid:'reuben',  reason:'PPA',       cover:null},
-  {id:21, day:4,session:'AM', tid:'jamie',   reason:'PPA',       cover:'Theresa'},
-  {id:22, day:4,session:'PM', tid:'ellen',   reason:'SENCO',     cover:null},
-];
+let wsEvents = [];
 
 // ── State ─────────────────────────────────────────────────────────────────────
-
 const state = {
-  weekIdx: 0,
-  weekSlots: {0: JSON.parse(JSON.stringify(WEEK1_SLOTS))},
-  dragging: null,  // {type:'teacher'|'cover'|'slot', id, name, slotId?}
-  nextId: 200,
-  view: 'week',
-  myName: '',
-  // Per-cell notes for off-allocation sessions: key = 'weekIdx-day-session'
+  weekIdx:   0,
+  weekSlots: {},
+  dragging:  null,
+  nextId:    200,
+  view:      'week',
+  myName:    '',
   cellNotes: {},
 };
+
+// ── CSV / Sheet helpers ───────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = []; let inQ=false, cur='', cells=[];
+  for (let i=0; i<text.length; i++) {
+    const c=text[i];
+    if (c==='"') { inQ=!inQ; }
+    else if (c===',' && !inQ) { cells.push(cur.trim()); cur=''; }
+    else if ((c==='\n'||c==='\r') && !inQ) {
+      cells.push(cur.trim()); cur='';
+      if (cells.some(x=>x)) rows.push(cells);
+      cells=[];
+      if (c==='\r' && text[i+1]==='\n') i++;
+    } else cur+=c;
+  }
+  cells.push(cur.trim());
+  if (cells.some(x=>x)) rows.push(cells);
+  return rows;
+}
+function csvToObjects(text) {
+  const rows=parseCSV(text);
+  if (rows.length<2) return [];
+  const headers=rows[0];
+  return rows.slice(1).map(r=>{
+    const obj={};
+    headers.forEach((h,i)=>obj[h]=(r[i]||'').trim());
+    return obj;
+  });
+}
+function parseDateStr(str) {
+  if (!str) return null;
+  const p=str.split('/');
+  if (p.length!==3) return null;
+  const [d,m,y]=p.map(Number);
+  return new Date(y<100?2000+y:y, m-1, d);
+}
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// ── Data builders ─────────────────────────────────────────────────────────────
+function buildStaff(rows) {
+  const teachers=[], cover=[];
+  rows.forEach(r=>{
+    if (!r.Name) return;
+    const id=r.Name.toLowerCase().replace(/[^a-z0-9]+/g,'_');
+    const isLeader=['Principal','Vice Principal','Assistant Principal'].includes(r.Role);
+    const isPhase=r.Role==='Phase';
+    const isInfoOnly=isLeader||isPhase;
+    const ent=[];
+    for (let i=1;i<=4;i++) {
+      const nm=r[`Ent${i}`], n=parseInt(r[`Ent${i}Sessions`])||0;
+      const freq=(r[`Ent${i}Freq`]||'weekly').toLowerCase();
+      if (nm&&n>0) ent.push({r:nm,n,freq});
+    }
+    const workingDays=r.WorkingDays
+      ? r.WorkingDays.split(',').map(d=>parseInt(d.trim())-1).filter(d=>d>=0&&d<=4)
+      : null;
+    if (r.YearGroup||isInfoOnly) {
+      const t={id,name:r.Name,yg:r.YearGroup||null,ent,workingDays,isLeader,isInfoOnly};
+      if (isLeader) t.reasons=['Meeting','External Visit','Training','Conference'];
+      teachers.push(t);
+    }
+    if (r.CoverRole) {
+      cover.push({id:'c_'+id, name:r.Name, role:r.CoverRole,
+        init:r.Initials||r.Name.slice(0,2).toUpperCase(), col:r.Colour||'#94a3b8'});
+    }
+  });
+  return {teachers,cover};
+}
+function buildWeeks(rows) {
+  return rows.map(r=>{
+    const start=parseDateStr(r.StartDate);
+    if (!start||isNaN(start)) return null;
+    return {label:`T${r.Term} · Week ${r.Week}`, shortLabel:r.Label, term:+r.Term, week:+r.Week, start};
+  }).filter(Boolean);
+}
+function buildEvents(rows) {
+  const blocking={}, info={};
+  rows.forEach(r=>{
+    if (!r.StartDate) return;
+    const start=parseDateStr(r.StartDate), end=parseDateStr(r.EndDate||r.StartDate);
+    if (!start||!end) return;
+    const isBlock=BLOCKING_TYPES.has(r.Type);
+    const btype=(r.Type==='INSET'||r.Type==='CLF Conference')?'inset':'bank-holiday';
+    const cur=new Date(start);
+    while (cur<=end) {
+      const k=dateKey(cur);
+      if (isBlock) {
+        blocking[k]={label:r.Label||r.Type, type:btype};
+      } else {
+        if (!info[k]) info[k]=[];
+        const lbl=r.Type+(r.Label&&r.Label!==r.Type?' · '+r.Label:'');
+        info[k].push({label:lbl, type:r.Type});
+      }
+      cur.setDate(cur.getDate()+1);
+    }
+  });
+  return {blocking,info};
+}
+function buildSchoolEvents(rows) {
+  return rows.map(r=>({
+    day:DAY_IDX[r.Day]??0, session:r.Session, label:r.Label, bg:r.Colour||'#1e3a8a'
+  })).filter(e=>e.label);
+}
+function buildRecurring(rows) {
+  const result=[]; let id=1;
+  rows.forEach(r=>{
+    if (!r.Teacher||!r.Day||!r.Session) return;
+    const t=TEACHERS.find(t=>t.name===r.Teacher);
+    if (!t) return;
+    const dayIdx=DAY_IDX[r.Day];
+    if (dayIdx===undefined) return;
+    result.push({id:id++, day:dayIdx, session:r.Session, tid:t.id,
+      reason:r.Reason||'Other', reasonNote:'', cover:null, nocover:t.isInfoOnly||false});
+  });
+  return result;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+function currentWeekIdx() {
+  const today=new Date(); today.setHours(0,0,0,0);
+  for (let i=0;i<WEEKS.length;i++) {
+    const end=new Date(WEEKS[i].start); end.setDate(end.getDate()+4);
+    if (today<=end) return i;
+  }
+  return Math.max(0,WEEKS.length-1);
+}
+async function init() {
+  document.getElementById('centerPane').innerHTML=
+    '<div style="padding:60px;text-align:center;color:#94a3b8;font-size:14px">Loading from Google Sheets…</div>';
+  try {
+    const get=tab=>fetch(SHEET_BASE+encodeURIComponent(tab)).then(r=>{if(!r.ok)throw new Error(tab);return r.text();});
+    const [staffTxt,termsTxt,eventsTxt,wseTxt,recTxt]=await Promise.all([
+      get('Staff'),get('Terms'),get('Events'),get('SchoolEvents'),get('Recurring')
+    ]);
+    const {teachers,cover}=buildStaff(csvToObjects(staffTxt));
+    TEACHERS=teachers; COVER=cover;
+    WEEKS=buildWeeks(csvToObjects(termsTxt));
+    const {blocking,info}=buildEvents(csvToObjects(eventsTxt));
+    EVENTS=blocking; INFO_EVENTS=info;
+    WS_SHEET_DEFAULTS=buildSchoolEvents(csvToObjects(wseTxt));
+    wsEvents=wsLoad();
+    const recurring=buildRecurring(csvToObjects(recTxt));
+    state.weekIdx=currentWeekIdx();
+    if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx]=JSON.parse(JSON.stringify(recurring));
+    render();
+  } catch(err) {
+    document.getElementById('centerPane').innerHTML=
+      `<div style="padding:40px;text-align:center;color:#dc2626;font-size:14px">⚠ Could not load sheet data: ${err.message}<br><small style="color:#94a3b8">Check the sheet is published (File → Share → Publish to web)</small></div>`;
+    console.error(err);
+  }
+}
 
 function slots()        { return state.weekSlots[state.weekIdx] || []; }
 function setSlots(arr)  { state.weekSlots[state.weekIdx] = arr; }
@@ -412,17 +500,23 @@ function sygCls(yg)     { return yg ? 'syg-' + yg : ''; }
 function pipCls(yg)     { return 'pip-' + (yg || ''); }
 function dotCls(yg)     { return 'dot-' + (yg || ''); }
 
-const COUNTED_SESSIONS = new Set(['AM', 'PM']);
-
 function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
 function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid && COUNTED_SESSIONS.has(s.session)).length; }
 function coverByName(name) { return COVER.find(c => c.name.toLowerCase() === (name||'').toLowerCase()); }
 
-// Per-reason usage count for a teacher this week
+// Per-reason usage count for a teacher this week (fortnightly ents also check previous week)
 function teacherReasonUsed(tid) {
   const used = {};
   slots().filter(s => s.tid === tid && COUNTED_SESSIONS.has(s.session))
     .forEach(s => { used[s.reason] = (used[s.reason]||0)+1; });
+  const t = teacher(tid);
+  if (t && state.weekIdx > 0) {
+    const prev = state.weekSlots[state.weekIdx-1] || [];
+    t.ent.filter(e => e.freq === 'fortnightly').forEach(e => {
+      const n = prev.filter(s => s.tid===tid && s.reason===e.r && COUNTED_SESSIONS.has(s.session)).length;
+      if (n > 0) used[e.r] = (used[e.r]||0) + n;
+    });
+  }
   return used;
 }
 
@@ -472,9 +566,15 @@ function fmtDay(dayIdx, weekStart) {
 
 function getDayEvent(weekIdx, dayIdx) {
   const w = WEEKS[weekIdx];
+  if (!w) return null;
   const d = new Date(w.start); d.setDate(w.start.getDate() + dayIdx);
-  const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  return EVENTS[key] || null;
+  return EVENTS[dateKey(d)] || null;
+}
+function getDayInfoEvents(weekIdx, dayIdx) {
+  const w = WEEKS[weekIdx];
+  if (!w) return [];
+  const d = new Date(w.start); d.setDate(w.start.getDate() + dayIdx);
+  return INFO_EVENTS[dateKey(d)] || [];
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -492,6 +592,7 @@ function render() {
 
 function renderWeekLabel() {
   const w = WEEKS[state.weekIdx];
+  if (!w) { document.getElementById('weekLabel').innerHTML = '—'; return; }
   const end = new Date(w.start); end.setDate(w.start.getDate() + 4);
   const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
   document.getElementById('weekLabel').innerHTML = `<div>${w.label}</div><small>${fmt(w.start)} – ${fmt(end)}</small>`;
@@ -520,8 +621,8 @@ function renderStats() {
 }
 
 function renderStaff() {
-  const classTeachers = TEACHERS.filter(t => !t.isLeader);
-  const leaders = TEACHERS.filter(t => t.isLeader);
+  const classTeachers = TEACHERS.filter(t => !t.isInfoOnly);
+  const leaders = TEACHERS.filter(t => t.isInfoOnly);
 
   let html = `<div class="section-label">Teachers</div>`;
 
@@ -561,9 +662,17 @@ function renderStaff() {
   });
 
   if (leaders.length) {
-    html += `<div class="section-label" style="margin-top:14px">Leadership</div>`;
+    html += `<div class="section-label" style="margin-top:14px">Leadership &amp; Phase</div>`;
     leaders.forEach(t => {
       const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
+      const usedMap = teacherReasonUsed(t.id);
+      let entItems = '';
+      t.ent.forEach(e => {
+        const usedN = usedMap[e.r]||0;
+        let pips = '';
+        for (let i=0;i<e.n;i++) pips+=`<div class="ent-mini ${i<usedN?'used':'empty'}"></div>`;
+        entItems += `<span class="chip-ent-item">${e.r} ${pips}</span>`;
+      });
       html += `<div class="teacher-chip ${dragging?'dragging':''}"
         draggable="true"
         ondragstart="onTeacherDragStart(event,'${t.id}')"
@@ -573,6 +682,7 @@ function renderStaff() {
           <span class="chip-name">${t.name}</span>
           <span style="font-size:9px;color:#94a3b8;font-style:italic;margin-left:2px">info only</span>
         </div>
+        ${entItems ? `<div class="chip-row2">${entItems}</div>` : ''}
       </div>`;
     });
   }
@@ -624,10 +734,12 @@ function renderGrid() {
     ${DAYS.map((d,i) => {
       const dt = new Date(w.start); dt.setDate(w.start.getDate()+i);
       const ev = getDayEvent(state.weekIdx, i);
+      const infoEvs = getDayInfoEvents(state.weekIdx, i);
       const evHtml = ev ? `<div class="event-day-header ${ev.type==='inset'?'inset':''}">${ev.type==='bank-holiday'?'🏦':'📋'} ${ev.label}</div>` : '';
+      const infoHtml = infoEvs.map(e=>`<div class="event-day-header" style="color:#7c3aed">📌 ${e.label}</div>`).join('');
       const hasSlots = (state.weekSlots[state.weekIdx]||[]).some(s => s.day === i);
       const resetBtn = hasSlots && !ev ? `<button class="day-reset-btn" onclick="resetDay(${i})" title="Clear ${d}">✕</button>` : '';
-      return `<th style="position:relative">${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${evHtml}${resetBtn}</th>`;
+      return `<th style="position:relative">${d.slice(0,3)}<br><span style="font-size:10px;font-weight:normal;opacity:.7">${dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</span>${evHtml}${infoHtml}${resetBtn}</th>`;
     }).join('')}
   </tr></thead><tbody>`;
 
@@ -843,9 +955,10 @@ function onCellDrop(e, dayIdx, session) {
       state.dragging = null; render(); return;
     }
     const t = teacher(d.id);
-    const isLeader = t?.isLeader || false;
+    if (t?.workingDays && !t.workingDays.includes(dayIdx)) { state.dragging = null; render(); return; }
+    const isLeader = t?.isInfoOnly || false;
     const defaultReason = isLeader ? (t.reasons?.[0] || 'Meeting') : firstAvailableReason(d.id);
-    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null, nocover:isLeader}]);
+    setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null, nocover:t?.isInfoOnly||false}]);
   }
 
   if (d.type === 'slot') {
@@ -972,8 +1085,8 @@ function removeWsEvent(i) {
   render();
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-render();
+// ── Boot ─────────────────────────────────────────────────────────────────────
+init();
 </script>
 </body>
 </html>
