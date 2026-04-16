@@ -631,6 +631,8 @@ function rbCls(r)       { return 'rb-' + (REASON_CLS[r] || 'Other'); }
 function sygCls(yg)     { return yg ? 'syg-' + yg : ''; }
 function pipCls(yg)     { return 'pip-' + (yg || ''); }
 function dotCls(yg)     { return 'dot-' + (yg || ''); }
+const YG_COLOURS = {Reception:'#93c5fd',Y1:'#fb923c',Y2:'#6ee7b7',Y3:'#f9a8d4',Y4:'#60a5fa',Y5:'#fdba74',Y6:'#4ade80'};
+function ygCol(yg)      { return YG_COLOURS[yg] || '#e2e8f0'; }
 
 function maxEnt(t) { return t.ent.reduce((s,e) => s + e.n, 0); }
 function teacherUsageCount(tid) { return slots().filter(s => s.tid === tid && COUNTED_SESSIONS.has(s.session)).length; }
@@ -937,7 +939,7 @@ function renderGrid() {
         const coverHtml = s.nocover
           ? '' // leadership/info entries need no cover
           : s.cover
-            ? `<div class="slot-cover-assigned">
+            ? `<div class="slot-cover-assigned" style="background:${ygCol(yg)};color:${contrastColor(ygCol(yg))};border-color:${ygCol(yg)}">
                  <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'};color:${contrastColor(cv?.col||'#94a3b8')}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
                  ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button>
                </div>`
