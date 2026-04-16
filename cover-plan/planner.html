@@ -1221,9 +1221,9 @@ function copyToNextWeek() {
   const nextIdx = state.weekIdx + 1;
   if (nextIdx >= WEEKS.length) return;
   if ((state.weekSlots[nextIdx]||[]).length > 0) {
-    if (!confirm('Next week already has entries — replace with a copy of this week?\n(Cover assignments will not be copied.)')) return;
+    if (!confirm('Next week already has entries — replace with a copy of this week?')) return;
   }
-  state.weekSlots[nextIdx] = slots().map(s => ({...s, id:state.nextId++, cover:null}));
+  state.weekSlots[nextIdx] = slots().map(s => ({...s, id:state.nextId++}));
   state.weekIdx = nextIdx;
   render();
 }
