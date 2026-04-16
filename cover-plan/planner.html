@@ -528,15 +528,27 @@ function buildSchoolEvents(rows) {
   })).filter(e=>e.label);
 }
 function buildRecurring(rows) {
+  const YG_CODES = new Set(['Reception','YR','Y1','Y2','Y3','Y4','Y5','Y6']);
   const result=[]; let id=1;
   rows.forEach(r=>{
     if (!r.Teacher||!r.Day||!r.Session) return;
-    const t=TEACHERS.find(t=>t.name===r.Teacher);
-    if (!t) return;
     const dayIdx=DAY_IDX[r.Day];
     if (dayIdx===undefined) return;
+    const reason=r.Reason||'Other';
+    // Year group shorthand — expand to all class teachers in that group
+    if (YG_CODES.has(r.Teacher)) {
+      const yg = r.Teacher==='YR' ? 'Reception' : r.Teacher;
+      TEACHERS.filter(t=>t.yg===yg && t.role==='Class').forEach(t=>{
+        result.push({id:id++, day:dayIdx, session:r.Session, tid:t.id,
+          reason, reasonNote:'', cover:null, nocover:false});
+      });
+      return;
+    }
+    // Individual teacher by name
+    const t=TEACHERS.find(t=>t.name===r.Teacher);
+    if (!t) return;
     result.push({id:id++, day:dayIdx, session:r.Session, tid:t.id,
-      reason:r.Reason||'Other', reasonNote:'', cover:null, nocover:t.isInfoOnly||false});
+      reason, reasonNote:'', cover:null, nocover:t.isInfoOnly||false});
   });
   return result;
 }
