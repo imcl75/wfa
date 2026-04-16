@@ -442,8 +442,8 @@ function buildStaff(rows) {
     if (!r.Name) return;
     const id=r.Name.toLowerCase().replace(/[^a-z0-9]+/g,'_');
     const isLeader=['Principal','Vice Principal','Assistant Principal'].includes(r.Role);
-    const isPhase=r.Role==='Phase';
-    const isInfoOnly=isLeader||isPhase;
+    const isInfoOnly=r.Role!=='Class' && ['Principal','Vice Principal','Assistant Principal',
+      'Phase','Phase Lead','SENCO'].includes(r.Role);
     const ent=[];
     for (let i=1;i<=4;i++) {
       const nm=r[`Ent${i}`], n=parseInt(r[`Ent${i}Sessions`])||0;
@@ -455,8 +455,9 @@ function buildStaff(rows) {
       : null;
     // Normalise YR → Reception so CSS pip/syg classes match
     const yg = r.YearGroup === 'YR' ? 'Reception' : (r.YearGroup || null);
-    // Left panel: only Class teachers and info-only staff (leadership/phase)
-    if (r.Role === 'Class' || isInfoOnly) {
+    // Left panel: Class teachers + non-class staff who have scheduled time (Phase, SENCO, SLT)
+    const LEFT_ROLES = new Set(['Class','Phase','Phase Lead','SENCO','Principal','Vice Principal','Assistant Principal']);
+    if (LEFT_ROLES.has(r.Role)) {
       const t={id,name:r.Name,yg,ent,workingDays,isLeader,isInfoOnly};
       if (isLeader) t.reasons=['Meeting','External Visit','Training','Conference'];
       teachers.push(t);
