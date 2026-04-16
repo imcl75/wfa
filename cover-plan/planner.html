@@ -407,8 +407,11 @@ function csvToObjects(text) {
   // or "ColumnName " (header + space + data value merged into one cell).
   // Signature: every cell matches /^[A-Za-z]\w*( .*)?$/ AND at least one has a value.
   const gvizRe=/^([A-Za-z]\w*)( .*)?$/;
-  const isGviz = firstRow.every(h=>gvizRe.test(h))
-    && firstRow.some(h=>{ const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
+  const everyPass = firstRow.every(h=>gvizRe.test(h));
+  const somePass  = firstRow.some(h=>{ const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
+  const failedCells = firstRow.filter(h=>!gvizRe.test(h));
+  console.log('[csv] firstRow len:', firstRow.length, 'every:', everyPass, 'some:', somePass, 'failed:', failedCells);
+  const isGviz = everyPass && somePass;
 
   let headers, dataRows;
   if (isGviz) {
