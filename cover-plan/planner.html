@@ -406,16 +406,16 @@ function csvToObjects(text) {
   // Detect gviz combined format: first row has cells like "ColumnName Value"
   // or "ColumnName " (header + space + data value merged into one cell).
   // Signature: every cell matches /^[A-Za-z]\w*( .*)?$/ AND at least one has a value.
+  // Detect gviz combined format: "ColumnName Value" in first row.
+  // Empty cells (blank trailing columns) are ignored in the check.
   const gvizRe=/^([A-Za-z]\w*)( .*)?$/;
-  const everyPass = firstRow.every(h=>gvizRe.test(h));
-  const somePass  = firstRow.some(h=>{ const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
-  const failedCells = firstRow.filter(h=>!gvizRe.test(h));
-  console.log('[csv] firstRow len:', firstRow.length, 'every:', everyPass, 'some:', somePass, 'failed:', failedCells);
-  const isGviz = everyPass && somePass;
+  const nonEmpty = firstRow.filter(h=>h.length>0);
+  const isGviz = nonEmpty.every(h=>gvizRe.test(h))
+    && nonEmpty.some(h=>{ const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
 
   let headers, dataRows;
   if (isGviz) {
-    headers  = firstRow.map(h=>h.match(gvizRe)[1]);
+    headers  = firstRow.map(h=>{ const m=h.match(gvizRe); return m?m[1]:h; });
     const firstData = firstRow.map(h=>{ const m=h.match(gvizRe); return m&&m[2]?m[2].trim():''; });
     dataRows = [firstData, ...rows.slice(1)];
   } else {
@@ -425,7 +425,7 @@ function csvToObjects(text) {
 
   return dataRows.map(r=>{
     const obj={};
-    headers.forEach((h,i)=>obj[h]=(r[i]||'').trim());
+    headers.forEach((h,i)=>{ if(h) obj[h]=(r[i]||'').trim(); });
     return obj;
   });
 }
@@ -575,25 +575,14 @@ async function init() {
     const [staffTxt,termsTxt,eventsTxt,wseTxt,recTxt]=await Promise.all([
       get('Staff'),get('Terms'),get('Events'),get('SchoolEvents'),get('Recurring')
     ]);
-    const staffRows=csvToObjects(staffTxt);
-    console.log('[init] Staff charCode[0]:', staffTxt.charCodeAt(0), '(65279=BOM, 34=quote)');
-    console.log('[init] Staff raw (first 200 chars):', JSON.stringify(staffTxt.slice(0,200)));
-    console.log('[init] Staff rows parsed:', staffRows.length, staffRows[0]);
-    const {teachers,cover}=buildStaff(staffRows);
-    console.log('[init] TEACHERS:', teachers.length, 'COVER:', cover.length);
+    const {teachers,cover}=buildStaff(csvToObjects(staffTxt));
     TEACHERS=teachers; COVER=cover;
-    const termRows=csvToObjects(termsTxt);
-    console.log('[init] Terms rows:', termRows.length, termRows[0]);
-    WEEKS=buildWeeks(termRows);
-    console.log('[init] WEEKS:', WEEKS.length);
+    WEEKS=buildWeeks(csvToObjects(termsTxt));
     const {blocking,info,sessionInfo}=buildEvents(csvToObjects(eventsTxt));
     EVENTS=blocking; INFO_EVENTS=info; SESSION_INFO_EVENTS=sessionInfo;
     WS_SHEET_DEFAULTS=buildSchoolEvents(csvToObjects(wseTxt));
     wsEvents=wsLoad();
-    const recRows=csvToObjects(recTxt);
-    console.log('[init] Recurring rows:', recRows.length, recRows);
-    RECURRING_SLOTS=buildRecurring(recRows);
-    console.log('[init] RECURRING_SLOTS:', RECURRING_SLOTS.length, RECURRING_SLOTS);
+    RECURRING_SLOTS=buildRecurring(csvToObjects(recTxt));
     // Restore saved planner state, falling back to recurring slots for current week
     const saved=stateLoad();
     if (saved) {
