@@ -1100,7 +1100,7 @@ function onCellDrop(e, dayIdx, session) {
     }
     const t = teacher(d.id);
     if (t?.workingDays && !t.workingDays.includes(dayIdx)) { state.dragging = null; render(); return; }
-    const isLeader = t?.isInfoOnly || false;
+    const isLeader = t?.isLeader || false;
     const defaultReason = isLeader ? (t.reasons?.[0] || 'Meeting') : firstAvailableReason(d.id);
     setSlots([...slots(), {id:state.nextId++, day:dayIdx, session, tid:d.id, reason:defaultReason, reasonNote:'', cover:null, nocover:t?.isInfoOnly||false}]);
   }
