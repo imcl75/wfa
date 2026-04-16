@@ -316,8 +316,9 @@ const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?t
 let WEEKS    = [];
 let TEACHERS = [];
 let COVER    = [];
-let EVENTS      = {};   // YYYY-MM-DD → {label,type:'bank-holiday'|'inset'}  — blocking
-let INFO_EVENTS = {};   // YYYY-MM-DD → [{label,type}]                       — informational banners
+let EVENTS             = {};  // YYYY-MM-DD → {label,type:'bank-holiday'|'inset'}  — blocking
+let INFO_EVENTS        = {};  // YYYY-MM-DD → [{label,type}]                       — day header banners
+let SESSION_INFO_EVENTS= {};  // 'YYYY-MM-DD|Session' → [{label,type}]             — cell banners
 
 // ── Whole-school events (localStorage-backed; defaults loaded from sheet) ─────
 let WS_SHEET_DEFAULTS = [];
@@ -416,7 +417,7 @@ function buildWeeks(rows) {
   }).filter(Boolean);
 }
 function buildEvents(rows) {
-  const blocking={}, info={};
+  const blocking={}, info={}, sessionInfo={};
   rows.forEach(r=>{
     if (!r.StartDate) return;
     const start=parseDateStr(r.StartDate), end=parseDateStr(r.EndDate||r.StartDate);
@@ -429,14 +430,20 @@ function buildEvents(rows) {
       if (isBlock) {
         blocking[k]={label:r.Label||r.Type, type:btype};
       } else {
-        if (!info[k]) info[k]=[];
         const lbl=r.Type+(r.Label&&r.Label!==r.Type?' · '+r.Label:'');
-        info[k].push({label:lbl, type:r.Type});
+        if (r.Session) {
+          const sk=`${k}|${r.Session}`;
+          if (!sessionInfo[sk]) sessionInfo[sk]=[];
+          sessionInfo[sk].push({label:r.Label||r.Type, type:r.Type, bg:r.Colour||'#1e3a8a'});
+        } else {
+          if (!info[k]) info[k]=[];
+          info[k].push({label:lbl, type:r.Type});
+        }
       }
       cur.setDate(cur.getDate()+1);
     }
   });
-  return {blocking,info};
+  return {blocking,info,sessionInfo};
 }
 function buildSchoolEvents(rows) {
   return rows.map(r=>({
@@ -477,8 +484,8 @@ async function init() {
     const {teachers,cover}=buildStaff(csvToObjects(staffTxt));
     TEACHERS=teachers; COVER=cover;
     WEEKS=buildWeeks(csvToObjects(termsTxt));
-    const {blocking,info}=buildEvents(csvToObjects(eventsTxt));
-    EVENTS=blocking; INFO_EVENTS=info;
+    const {blocking,info,sessionInfo}=buildEvents(csvToObjects(eventsTxt));
+    EVENTS=blocking; INFO_EVENTS=info; SESSION_INFO_EVENTS=sessionInfo;
     WS_SHEET_DEFAULTS=buildSchoolEvents(csvToObjects(wseTxt));
     wsEvents=wsLoad();
     const recurring=buildRecurring(csvToObjects(recTxt));
@@ -575,6 +582,12 @@ function getDayInfoEvents(weekIdx, dayIdx) {
   if (!w) return [];
   const d = new Date(w.start); d.setDate(w.start.getDate() + dayIdx);
   return INFO_EVENTS[dateKey(d)] || [];
+}
+function getSessionInfoEvents(weekIdx, dayIdx, session) {
+  const w = WEEKS[weekIdx];
+  if (!w) return [];
+  const d = new Date(w.start); d.setDate(w.start.getDate() + dayIdx);
+  return SESSION_INFO_EVENTS[`${dateKey(d)}|${session}`] || [];
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
@@ -772,6 +785,11 @@ function renderGrid() {
       if (wsEvent) {
         html += `<div class="session-banner" style="background:${wsEvent.bg};color:white">${wsEvent.label}</div>`;
       }
+
+      // Session-specific info events (e.g. FLC After School on a specific date)
+      getSessionInfoEvents(state.weekIdx, dayIdx, session).forEach(e => {
+        html += `<div class="session-banner" style="background:#7c3aed;color:white">📌 ${e.label}</div>`;
+      });
 
       // Per-cell notes (user-added)
       const noteKey = `${state.weekIdx}-${dayIdx}-${session}`;
