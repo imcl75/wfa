@@ -714,7 +714,7 @@ function renderStaff() {
   });
 
   if (leaders.length) {
-    html += `<div class="section-label" style="margin-top:14px">Leadership &amp; Phase</div>`;
+    html += `<div class="section-label" style="margin-top:14px">Non-Class Based</div>`;
     leaders.forEach(t => {
       const dragging = state.dragging?.type === 'teacher' && state.dragging.id === t.id;
       const usedMap = teacherReasonUsed(t.id);
