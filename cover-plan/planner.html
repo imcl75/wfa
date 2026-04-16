@@ -333,6 +333,7 @@ const BLOCKING_TYPES   = new Set(['Half Term','Christmas','Easter','Summer Holid
 // ── Sheet config ──────────────────────────────────────────────────────────────
 const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
 const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
+const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbx6CThsZIBj9pxc0noGkgUMaCHTKgUBASm5-wQCIQ6JELoQ4abIctjlpEGPyE_jrlzR/exec';
 
 // ── Mutable data (populated by init) ─────────────────────────────────────────
 let WEEKS    = [];
@@ -597,7 +598,7 @@ async function init() {
     wsEvents=wsLoad();
     RECURRING_SLOTS=buildRecurring(csvToObjects(recTxt));
     // Restore saved planner state, falling back to recurring slots for current week
-    const saved=stateLoad();
+    const saved=await stateLoad();
     if (saved) {
       state.weekSlots=saved.weekSlots||{};
       state.cellNotes=saved.cellNotes||{};
@@ -615,12 +616,17 @@ async function init() {
 
 // ── State persistence ─────────────────────────────────────────────────────────
 function stateSave() {
-  try { localStorage.setItem('wfa_planner_state', JSON.stringify({
-    weekSlots: state.weekSlots, cellNotes: state.cellNotes, nextId: state.nextId
-  })); } catch(e) {}
+  const json = JSON.stringify({ weekSlots: state.weekSlots, cellNotes: state.cellNotes, nextId: state.nextId });
+  try { localStorage.setItem('wfa_planner_state', json); } catch(e) {}
+  fetch(SYNC_URL, { method:'POST', body:json }).catch(()=>{});
 }
-function stateLoad() {
-  try { const s=localStorage.getItem('wfa_planner_state'); return s?JSON.parse(s):null; }
+async function stateLoad() {
+  try {
+    const res = await fetch(SYNC_URL);
+    const remote = await res.json();
+    if (remote) { localStorage.setItem('wfa_planner_state', JSON.stringify(remote)); return remote; }
+  } catch(e) {}
+  try { const s = localStorage.getItem('wfa_planner_state'); return s ? JSON.parse(s) : null; }
   catch(e) { return null; }
 }
 
