@@ -1047,13 +1047,11 @@ function renderMyView() {
 // ── Pointer drag ──────────────────────────────────────────────────────────────
 let ptrDrag = null;
 
-function ptrGhostCreate(label, bg) {
+function ptrGhostCreate(sourceEl) {
   ptrGhostRemove();
-  const el = document.createElement('div');
+  const el = sourceEl.cloneNode(true);
   el.id = 'drag-ghost';
-  const fg = contrastColor(bg);
-  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;padding:5px 12px;border-radius:5px;font-size:12px;font-weight:bold;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);opacity:.92;background:${bg};color:${fg};`;
-  el.textContent = label;
+  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;opacity:.85;box-shadow:0 6px 20px rgba(0,0,0,.25);width:${sourceEl.offsetWidth}px;margin:0;`;
   document.body.appendChild(el);
   return el;
 }
@@ -1154,27 +1152,23 @@ document.addEventListener('pointercancel', () => {
   render();
 });
 
-function startPtrDrag(e, info, label, bg) {
+function startPtrDrag(e, info) {
   if (document.body.classList.contains('edit-locked')) return;
   e.preventDefault();
   ptrDrag = { info, startX: e.clientX, startY: e.clientY, active: false };
-  ptrGhostCreate(label, bg);
+  ptrGhostCreate(e.currentTarget);
   ptrGhostMove(e.clientX, e.clientY);
 }
 
 function onTeacherPointerDown(e, tid) {
-  const t = teacher(tid);
-  startPtrDrag(e, { type: 'teacher', id: tid }, t?.name || tid, ygCol(t?.yg));
+  startPtrDrag(e, { type: 'teacher', id: tid });
 }
 function onCoverPointerDown(e, cid, name) {
-  const cv = COVER.find(c => c.id === cid);
-  startPtrDrag(e, { type: 'cover', id: cid, name }, name, cv?.col || '#94a3b8');
+  startPtrDrag(e, { type: 'cover', id: cid, name });
 }
 function onSlotPointerDown(e, slotId) {
   e.stopPropagation();
-  const s = slots().find(x => x.id === slotId);
-  const t = s ? teacher(s.tid) : null;
-  startPtrDrag(e, { type: 'slot', slotId }, t?.name || '?', ygCol(t?.yg));
+  startPtrDrag(e, { type: 'slot', slotId });
 }
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
