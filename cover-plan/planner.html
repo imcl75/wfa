@@ -788,7 +788,7 @@ function renderGrid() {
 
       // Session-specific info events (e.g. FLC After School on a specific date)
       getSessionInfoEvents(state.weekIdx, dayIdx, session).forEach(e => {
-        html += `<div class="session-banner" style="background:#7c3aed;color:white">📌 ${e.label}</div>`;
+        html += `<div class="session-banner" style="background:#7c3aed;color:white">${e.label}</div>`;
       });
 
       // Per-cell notes (user-added)
