@@ -379,6 +379,19 @@ const state = {
   cellNotes: {},
 };
 
+// ── Colour helpers ────────────────────────────────────────────────────────────
+function contrastColor(hex) {
+  // Returns '#000000' or '#ffffff' — whichever is more readable on the given background.
+  // Uses WCAG relative luminance formula.
+  const c = hex.replace('#','');
+  const r = parseInt(c.slice(0,2),16)/255;
+  const g = parseInt(c.slice(2,4),16)/255;
+  const b = parseInt(c.slice(4,6),16)/255;
+  const toLinear = x => x<=0.04045 ? x/12.92 : Math.pow((x+0.055)/1.055,2.4);
+  const L = 0.2126*toLinear(r) + 0.7152*toLinear(g) + 0.0722*toLinear(b);
+  return L > 0.179 ? '#000000' : '#ffffff';
+}
+
 // ── CSV / Sheet helpers ───────────────────────────────────────────────────────
 function parseCSV(text) {
   const rows = []; let inQ=false, cur='', cells=[];
@@ -830,7 +843,7 @@ function renderCoverStaff() {
       draggable="true"
       ondragstart="onCoverDragStart(event,'${c.id}','${c.name}')"
       ondragend="onDragEnd()">
-      <div class="cover-avatar" style="background:${c.col}">${c.init}</div>
+      <div class="cover-avatar" style="background:${c.col};color:${contrastColor(c.col)}">${c.init}</div>
       <div style="flex:1;min-width:0">
         <div class="cover-chip-name">${c.name}</div>
         <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
@@ -896,12 +909,12 @@ function renderGrid() {
       // Whole-school banner (e.g. Staff Meeting)
       const wsEvent = wsEvents.find(e => e.day === dayIdx && e.session === session);
       if (wsEvent) {
-        html += `<div class="session-banner" style="background:${wsEvent.bg};color:white">${wsEvent.label}</div>`;
+        html += `<div class="session-banner" style="background:${wsEvent.bg};color:${contrastColor(wsEvent.bg)}">${wsEvent.label}</div>`;
       }
 
       // Session-specific info events (e.g. FLC After School on a specific date)
       getSessionInfoEvents(state.weekIdx, dayIdx, session).forEach(e => {
-        html += `<div class="session-banner" style="background:#7c3aed;color:white">${e.label}</div>`;
+        html += `<div class="session-banner" style="background:#7c3aed;color:${contrastColor('#7c3aed')}">${e.label}</div>`;
       });
 
       // Per-cell notes (user-added)
@@ -923,7 +936,7 @@ function renderGrid() {
           ? '' // leadership/info entries need no cover
           : s.cover
             ? `<div class="slot-cover-assigned">
-                 <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
+                 <div class="cv-mini-avatar" style="background:${cv?.col||'#94a3b8'};color:${contrastColor(cv?.col||'#94a3b8')}">${cv?.init||s.cover.slice(0,2).toUpperCase()}</div>
                  ${s.cover}<button class="cv-x" onclick="unassignCover(${s.id})">×</button>
                </div>`
             : `<div class="slot-cover-zone" data-slot="${s.id}"
