@@ -1021,7 +1021,7 @@ function renderMyView() {
           <div class="my-entry-detail">
             <div class="my-entry-when">${DAYS[s.day]} · ${s.session}</div>
             <div class="my-entry-info"><span class="reason-sel ${rbCls(s.reason)}" style="padding:1px 5px;border-radius:3px;font-size:11px">${s.reason}</span></div>
-            <div class="my-entry-cover">${s.cover ? `Covered by: <strong>${s.cover}</strong>` : `<span style="color:#c00;font-style:italic">Cover TBC</span>`}</div>
+            <div class="my-entry-cover">${s.cover ? `Covered by: <strong>${s.cover}</strong>` : s.nocover ? `` : `<span style="color:#c00;font-style:italic">Cover TBC</span>`}</div>
           </div>
         </div>`;
       });
