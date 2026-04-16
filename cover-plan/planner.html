@@ -586,7 +586,7 @@ async function init() {
       state.nextId=saved.nextId||200;
     }
     state.weekIdx=currentWeekIdx();
-    if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx]=JSON.parse(JSON.stringify(recurring));
+    if (!state.weekSlots[state.weekIdx] || state.weekSlots[state.weekIdx].length===0) state.weekSlots[state.weekIdx]=JSON.parse(JSON.stringify(recurring));
     render();
   } catch(err) {
     document.getElementById('centerPane').innerHTML=
