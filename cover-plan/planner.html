@@ -447,6 +447,13 @@ function buildStaff(rows) {
     }
   });
   cover.sort((a,b) => a.order - b.order);
+  const YG_ORDER = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6'];
+  teachers.sort((a,b) => {
+    if (a.isInfoOnly && !b.isInfoOnly) return 1;
+    if (!a.isInfoOnly && b.isInfoOnly) return -1;
+    return (YG_ORDER.indexOf(a.yg) === -1 ? 99 : YG_ORDER.indexOf(a.yg))
+         - (YG_ORDER.indexOf(b.yg) === -1 ? 99 : YG_ORDER.indexOf(b.yg));
+  });
   return {teachers,cover};
 }
 function buildWeeks(rows) {
