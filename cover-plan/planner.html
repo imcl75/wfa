@@ -907,10 +907,10 @@ function renderGrid() {
         ondrop="onCellDrop(event,${dayIdx},'${session}')">`;
 
       // Whole-school banner (e.g. Staff Meeting)
-      const wsEvent = wsEvents.find(e => e.day === dayIdx && e.session === session);
-      if (wsEvent) {
+      const wsEventMatches = wsEvents.filter(e => e.day === dayIdx && e.session === session);
+      wsEventMatches.forEach(wsEvent => {
         html += `<div class="session-banner" style="background:${wsEvent.bg};color:${contrastColor(wsEvent.bg)}">${wsEvent.label}</div>`;
-      }
+      });
 
       // Session-specific info events (e.g. FLC After School on a specific date)
       getSessionInfoEvents(state.weekIdx, dayIdx, session).forEach(e => {
@@ -967,7 +967,7 @@ function renderGrid() {
         </div>`;
       });
 
-      if (cellSlots.length === 0 && !wsEvent && !cellNote) {
+      if (cellSlots.length === 0 && wsEventMatches.length === 0 && !cellNote) {
         html += isOffAlloc
           ? `<button class="add-note-btn" onclick="addCellNote('${noteKey}')">＋ add note</button>`
           : `<div class="empty-hint">＋</div>`;
