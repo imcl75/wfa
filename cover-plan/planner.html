@@ -398,6 +398,7 @@ function parseCSV(text) {
   return rows;
 }
 function csvToObjects(text) {
+  text = text.replace(/^\ufeff/, ''); // strip UTF-8 BOM if present
   const rows=parseCSV(text);
   if (rows.length<2) return [];
   const firstRow=rows[0];
@@ -572,7 +573,8 @@ async function init() {
       get('Staff'),get('Terms'),get('Events'),get('SchoolEvents'),get('Recurring')
     ]);
     const staffRows=csvToObjects(staffTxt);
-    console.log('[init] Staff raw (first 200 chars):', staffTxt.slice(0,200));
+    console.log('[init] Staff charCode[0]:', staffTxt.charCodeAt(0), '(65279=BOM, 34=quote)');
+    console.log('[init] Staff raw (first 200 chars):', JSON.stringify(staffTxt.slice(0,200)));
     console.log('[init] Staff rows parsed:', staffRows.length, staffRows[0]);
     const {teachers,cover}=buildStaff(staffRows);
     console.log('[init] TEACHERS:', teachers.length, 'COVER:', cover.length);
