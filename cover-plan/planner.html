@@ -571,14 +571,24 @@ async function init() {
     const [staffTxt,termsTxt,eventsTxt,wseTxt,recTxt]=await Promise.all([
       get('Staff'),get('Terms'),get('Events'),get('SchoolEvents'),get('Recurring')
     ]);
-    const {teachers,cover}=buildStaff(csvToObjects(staffTxt));
+    const staffRows=csvToObjects(staffTxt);
+    console.log('[init] Staff raw (first 200 chars):', staffTxt.slice(0,200));
+    console.log('[init] Staff rows parsed:', staffRows.length, staffRows[0]);
+    const {teachers,cover}=buildStaff(staffRows);
+    console.log('[init] TEACHERS:', teachers.length, 'COVER:', cover.length);
     TEACHERS=teachers; COVER=cover;
-    WEEKS=buildWeeks(csvToObjects(termsTxt));
+    const termRows=csvToObjects(termsTxt);
+    console.log('[init] Terms rows:', termRows.length, termRows[0]);
+    WEEKS=buildWeeks(termRows);
+    console.log('[init] WEEKS:', WEEKS.length);
     const {blocking,info,sessionInfo}=buildEvents(csvToObjects(eventsTxt));
     EVENTS=blocking; INFO_EVENTS=info; SESSION_INFO_EVENTS=sessionInfo;
     WS_SHEET_DEFAULTS=buildSchoolEvents(csvToObjects(wseTxt));
     wsEvents=wsLoad();
-    RECURRING_SLOTS=buildRecurring(csvToObjects(recTxt));
+    const recRows=csvToObjects(recTxt);
+    console.log('[init] Recurring rows:', recRows.length, recRows);
+    RECURRING_SLOTS=buildRecurring(recRows);
+    console.log('[init] RECURRING_SLOTS:', RECURRING_SLOTS.length, RECURRING_SLOTS);
     // Restore saved planner state, falling back to recurring slots for current week
     const saved=stateLoad();
     if (saved) {
