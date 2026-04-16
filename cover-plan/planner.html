@@ -341,6 +341,7 @@ let COVER    = [];
 let EVENTS             = {};  // YYYY-MM-DD → {label,type:'bank-holiday'|'inset'}  — blocking
 let INFO_EVENTS        = {};  // YYYY-MM-DD → [{label,type}]                       — day header banners
 let SESSION_INFO_EVENTS= {};  // 'YYYY-MM-DD|Session' → [{label,type}]             — cell banners
+let RECURRING_SLOTS  = [];   // master copy of recurring, used to seed new weeks
 
 // ── Whole-school events (localStorage-backed; defaults loaded from sheet) ─────
 let WS_SHEET_DEFAULTS = [];
@@ -577,7 +578,7 @@ async function init() {
     EVENTS=blocking; INFO_EVENTS=info; SESSION_INFO_EVENTS=sessionInfo;
     WS_SHEET_DEFAULTS=buildSchoolEvents(csvToObjects(wseTxt));
     wsEvents=wsLoad();
-    const recurring=buildRecurring(csvToObjects(recTxt));
+    RECURRING_SLOTS=buildRecurring(csvToObjects(recTxt));
     // Restore saved planner state, falling back to recurring slots for current week
     const saved=stateLoad();
     if (saved) {
@@ -586,7 +587,7 @@ async function init() {
       state.nextId=saved.nextId||200;
     }
     state.weekIdx=currentWeekIdx();
-    if (!state.weekSlots[state.weekIdx] || state.weekSlots[state.weekIdx].length===0) state.weekSlots[state.weekIdx]=JSON.parse(JSON.stringify(recurring));
+    if (!state.weekSlots[state.weekIdx] || state.weekSlots[state.weekIdx].length===0) state.weekSlots[state.weekIdx]=JSON.parse(JSON.stringify(RECURRING_SLOTS));
     render();
   } catch(err) {
     document.getElementById('centerPane').innerHTML=
@@ -1125,7 +1126,12 @@ function removeSlot(slotId)    { setSlots(slots().filter(s => s.id !== slotId));
 function unassignCover(slotId) { const s = slots().find(x => x.id === slotId); if (s) { s.cover = null; stateSave(); render(); } }
 function changeReason(slotId, reason) { const s = slots().find(x => x.id === slotId); if (s) { s.reason = reason; if (reason !== 'Other') s.reasonNote = ''; stateSave(); render(); } }
 function changeReasonNote(slotId, note) { const s = slots().find(x => x.id === slotId); if (s) { s.reasonNote = note; stateSave(); } }
-function changeWeek(dir)       { state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir)); if (!state.weekSlots[state.weekIdx]) state.weekSlots[state.weekIdx] = []; render(); }
+function changeWeek(dir) {
+  state.weekIdx = Math.max(0, Math.min(WEEKS.length-1, state.weekIdx+dir));
+  if (!state.weekSlots[state.weekIdx] || state.weekSlots[state.weekIdx].length===0)
+    state.weekSlots[state.weekIdx] = JSON.parse(JSON.stringify(RECURRING_SLOTS));
+  render();
+}
 function setView(v)            { state.view = v; document.body.classList.toggle('present-mode', v==='present'); render(); }
 function setMyName(n)          { state.myName = n; render(); }
 
@@ -1150,8 +1156,8 @@ function resetDay(dayIdx) {
   render();
 }
 function resetWeek() {
-  if (!confirm(`Clear all slots for ${WEEKS[state.weekIdx].label}? This cannot be undone.`)) return;
-  setSlots([]);
+  if (!confirm(`Reset ${WEEKS[state.weekIdx].label} to recurring slots only? This cannot be undone.`)) return;
+  setSlots(JSON.parse(JSON.stringify(RECURRING_SLOTS)));
   render();
 }
 function copyToNextWeek() {
