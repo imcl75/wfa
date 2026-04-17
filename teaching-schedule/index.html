@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Y4 Teaching Schedule · WFA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f1f5f9; min-height: 100vh; }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .app-header {
+      background: white; border-bottom: 2px solid #1798d3;
+      padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 0 rgba(15,23,42,.04);
+    }
+    .app-header img { height: 40px; }
+    .app-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; color: #1798d3; line-height: 1.2; }
+    .app-subtitle { font-size: 11px; color: #94a3b8; }
+    .header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .icon-btn { background: none; border: 1.5px solid #e2e8f0; border-radius: 5px; cursor: pointer; font-size: 16px; color: #64748b; padding: 5px 9px; line-height: 1; }
+    .icon-btn:hover { border-color: #1798d3; color: #1798d3; background: #f0f8fd; }
+    @media (max-width: 720px) {
+      .app-header { padding: 10px 12px; gap: 10px; }
+      .app-header img { height: 34px; }
+      .app-title { font-size: 16px; }
+      .app-subtitle { font-size: 10px; }
+    }
+
+    /* ── Week / day bar ──────────────────────────────────────────── */
+    .top-bar {
+      background: white; border-bottom: 1px solid #e2e8f0;
+      padding: 6px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      position: sticky; top: 62px; z-index: 199; box-shadow: 0 1px 0 rgba(15,23,42,.03);
+    }
+    .nav-btn { background: #f0f8fd; border: 1.5px solid #bae0f5; border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: #1798d3; line-height: 1; }
+    .nav-btn:hover { background: #dbeafe; }
+    .nav-btn:disabled { opacity: .35; cursor: default; }
+    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 14px; color: #1798d3; min-width: 200px; text-align: center; }
+    .action-btn { background: white; border: 1.5px solid #cbd5e1; border-radius: 5px; padding: 5px 11px; font-size: 12px; cursor: pointer; color: #475569; }
+    .action-btn:hover { background: #f8fafc; border-color: #94a3b8; }
+    .action-btn.danger { color: #dc2626; border-color: #fca5a5; }
+    .action-btn.danger:hover { background: #fef2f2; }
+    .sheet-status { font-size: 10px; color: #94a3b8; }
+    .sheet-status.ok { color: #22c55e; }
+    .sheet-status.err { color: #f97316; }
+    .sep { color: #e2e8f0; }
+    @media (max-width: 720px) {
+      .top-bar { top: 58px; padding: 8px 12px; }
+      .week-label { min-width: 100%; order: -1; text-align: left; }
+      .action-btn { padding: 5px 9px; }
+      .sheet-status { width: 100%; }
+    }
+
+    /* ── Day tabs ────────────────────────────────────────────────── */
+    .view-tabs {
+      background: white; border-bottom: 2px solid #e2e8f0;
+      padding: 0 16px; display: flex; gap: 2px; flex-wrap: wrap;
+      position: sticky; top: 107px; z-index: 198; box-shadow: 0 1px 0 rgba(15,23,42,.03);
+    }
+    .view-tab {
+      padding: 9px 16px 8px; cursor: pointer;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+      color: #94a3b8; border-bottom: 3px solid transparent; margin-bottom: -2px;
+      transition: color .12s, background .12s; white-space: nowrap; flex-shrink: 0;
+    }
+    .view-tab:hover { color: #1798d3; background: #f8fafc; }
+    .view-tab.active { color: #1798d3; border-bottom-color: #1798d3; }
+    .view-tab-name { font-size: 9px; font-weight: 600; color: #94a3b8; display: block; line-height: 1.2; }
+    .view-tab.active .view-tab-name { color: #1798d3; }
+    @media (max-width: 720px) {
+      .view-tabs { top: 128px; padding: 0 12px; }
+      .view-tab { padding: 8px 12px 7px; font-size: 12px; }
+    }
+
+    /* ── Body ────────────────────────────────────────────────────── */
+    .app-body { display: flex; min-height: calc(100vh - 160px); align-items: stretch; }
+
+    .view-cell {
+      vertical-align: top; padding: 8px; border-right: 1px solid #e2e8f0;
+      border-bottom: 2px solid #d1d5db; min-height: 78px; background: white;
+    }
+    .view-cell:last-child { border-right: none; }
+    .day-hd { width: 140px; }
+    .day-hd-name { font-size: 13px; color: #1e293b; }
+    .day-hd-date { font-size: 10px; font-weight: 600; color: #94a3b8; }
+    .day-hd.today .day-hd-name { color: #1798d3; }
+    .day-hd.today .day-hd-date { color: #1798d3; }
+    .time-col { width: 120px; }
+    .slot-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 13px; color: #1798d3; display: block; }
+    .slot-time { font-size: 9px; color: #94a3b8; font-weight: 600; }
+    .view-bar {
+      height: 18px; border-radius: 4px; margin-bottom: 6px; padding: 0 6px;
+      display: flex; align-items: center; font-size: 10px; font-weight: 700; color: #1e293b;
+      border: 1px solid rgba(0,0,0,.08);
+    }
+    .split-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .split-half { border-radius: 4px; padding: 5px 6px; font-size: 13px; font-weight: 700; min-height: 38px; }
+    .split-half.drop-over-half { outline: 2px dashed #1798d3; outline-offset: -2px; background: #dbeafe !important; }
+    @media (max-width: 960px) {
+      .app-body { flex-direction: column; }
+      .subjects-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 180px; }
+    }
+
+    /* ── Subjects sidebar ────────────────────────────────────────── */
+    .subjects-sidebar {
+      width: 152px; flex-shrink: 0; background: white;
+      border-right: 1px solid #e2e8f0; padding: 10px 7px;
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .sidebar-hd {
+      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px;
+      color: #94a3b8; text-transform: uppercase; letter-spacing: .05em;
+      padding: 0 4px 8px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .subj-group { margin-bottom: 6px; }
+    .subj-group-label { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #cbd5e1; padding: 0 5px 2px; }
+    .subj-chip {
+      display: flex; align-items: center; gap: 5px; padding: 5px 6px;
+      border-radius: 5px; margin-bottom: 2px; cursor: grab;
+      user-select: none; touch-action: none; border: 1px solid rgba(0,0,0,.07);
+      transition: filter .1s, transform .1s, box-shadow .1s;
+    }
+    .subj-chip:hover { filter: brightness(.95); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(15,23,42,.06); }
+    .subj-chip.dragging { opacity: .2; }
+    .subj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .subj-name { font-size: 11px; font-weight: 700; color: #1e293b; line-height: 1.25; }
+
+    /* ── Grid area ───────────────────────────────────────────────── */
+    .grid-area { flex: 1; min-width: 0; padding: 12px; overflow-x: auto; }
+
+    .sched-table { width: 100%; border-collapse: collapse; min-width: 560px; background: white; table-layout: fixed; }
+
+    /* Header row */
+    .sched-table th {
+      padding: 8px 10px; text-align: center; background: #f8fafc;
+      border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0;
+      font-family: 'Nunito', sans-serif; font-weight: 900;
+    }
+    .sched-table th:last-child { border-right: none; }
+    .sched-table th.time-hd { width: 90px; border-right: 2px solid #d1d5db; }
+    .staff-hd-name { font-size: 13px; color: #1e293b; }
+    .staff-hd-role { font-size: 10px; font-weight: 600; color: #94a3b8; }
+    .staff-hd-colour { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
+    /* Fixed rows */
+    .sched-table .fixed-row td {
+      background: #f8fafc; padding: 7px 14px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .sched-table .fixed-row td.time-cell {
+      font-size: 9.5px; color: #94a3b8; font-weight: 700;
+      border-right: 2px solid #d1d5db; white-space: nowrap;
+      padding: 7px 10px;
+    }
+    .sched-table .fixed-row td.span-cell {
+      border-right: none;
+    }
+    .fixed-label { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: #64748b; }
+    .fixed-sub { font-size: 9.5px; color: #94a3b8; }
+
+    /* FAB row highlight */
+    .sched-table .fixed-row.fab-row td { background: #f0f8fd; }
+    .sched-table .fixed-row.fab-row .fixed-label { color: #1798d3; }
+
+    /* Session rows */
+    .sched-table .session-row td.time-cell {
+      font-size: 9.5px; color: #64748b; font-weight: 700;
+      border-right: 2px solid #d1d5db; padding: 10px 10px;
+      background: #f8fafc; vertical-align: top; white-space: nowrap;
+      border-bottom: 2px solid #d1d5db;
+    }
+    .session-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 13px; color: #1798d3; display: block; }
+    .session-time { font-size: 9px; color: #94a3b8; font-weight: 600; }
+
+    .sched-table .session-row td.view-cell {
+      vertical-align: top; padding: 5px; border-right: 1px solid #e2e8f0;
+      border-bottom: 2px solid #d1d5db; min-height: 90px;
+      transition: background .1s;
+    }
+    .sched-table .session-row td.view-cell:last-child { border-right: none; }
+    .sched-table .session-row td.view-cell.drop-over {
+      background: #dbeafe !important; outline: 2px dashed #1798d3; outline-offset: -3px;
+    }
+    .drop-hint { font-size: 10px; color: #d1d5db; padding: 6px 4px; text-align: center; }
+
+    /* ── Cell chips ──────────────────────────────────────────────── */
+    .cell-chip {
+      border-radius: 7px; margin-bottom: 3px; overflow: hidden;
+      border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
+    }
+    .chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
+    .chip-colour { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .chip-name { font-size: 15px; font-weight: 800; flex: 1; line-height: 1.25; color: #1e293b; font-family: 'Nunito', sans-serif; }
+.chip-handle {
+      cursor: grab; font-size: 10px; color: rgba(0,0,0,.18); padding: 0 2px;
+      line-height: 1; flex-shrink: 0; user-select: none; touch-action: none;
+    }
+    .chip-handle:hover { color: rgba(0,0,0,.45); }
+    .cell-chip.dragging { opacity: .3; }
+    .chip-del {
+      background: none; border: none; cursor: pointer;
+      font-size: 13px; color: rgba(0,0,0,.25); padding: 0 1px; line-height: 1; flex-shrink: 0;
+    }
+    .chip-del:hover { color: #dc2626; }
+    .chip-split {
+      background: none; border: none; cursor: pointer;
+      font-size: 11px; color: rgba(0,0,0,.15); padding: 0 2px; line-height: 1; flex-shrink: 0;
+    }
+    .chip-split:hover { color: #1798d3; }
+    .chip-note-wrap {
+      padding: 3px 7px 4px; border-top: 1px solid rgba(0,0,0,.06);
+      background: rgba(255,255,255,.55);
+    }
+    .chip-note-toggle {
+      display: block; background: none; border: none; cursor: pointer;
+      font-size: 13px; font-weight: 800; color: rgba(0,0,0,.2); line-height: 1;
+      padding: 0; font-family: 'Nunito', sans-serif;
+    }
+    .chip-note-toggle:hover { color: #1798d3; }
+    .chip-note-toggle.has-note { display: none; }
+    .chip-note {
+      width: 100%; border: none; outline: none; background: transparent;
+      font-size: 11px; color: #334155; font-family: 'Nunito', sans-serif; font-weight: 600;
+      padding: 0; resize: none; line-height: 1.35; min-height: 15px;
+    }
+    .chip-note::placeholder { color: #cbd5e1; font-style: italic; }
+    .chip-note.hidden { display: none; }
+    .cell-chip:hover { box-shadow: 0 3px 8px rgba(15,23,42,.08); }
+
+    /* ── Drag ghost ──────────────────────────────────────────────── */
+    #drag-ghost {
+      position: fixed; z-index: 9999; pointer-events: none;
+      top: 0; left: 0; will-change: transform;
+      background: white; border-radius: 5px; padding: 5px 9px;
+      box-shadow: 0 6px 20px rgba(0,0,0,.28); opacity: .92;
+      font-size: 11px; font-weight: 700; display: flex; align-items: center;
+      gap: 5px; white-space: nowrap; border: 1px solid rgba(0,0,0,.1);
+    }
+
+    /* ── Modals ──────────────────────────────────────────────────── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); z-index: 1000;
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: white; border-radius: 10px; padding: 24px;
+      width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .modal h3 { font-family: 'Nunito', sans-serif; font-weight: 900; color: #1798d3; font-size: 17px; margin-bottom: 4px; }
+    .modal-hint { font-size: 11px; color: #94a3b8; margin-bottom: 16px; }
+    .staff-modal-row { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+    .staff-modal-row:last-of-type { border-bottom: none; }
+    .smr-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .smr-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: white; flex-shrink: 0; font-family: 'Nunito', sans-serif; }
+    .smr-role { font-size: 11px; color: #64748b; font-weight: 700; }
+    .smr-fields { display: flex; gap: 8px; align-items: center; }
+    .smr-fields input { flex: 1; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 10px; font-size: 13px; font-family: Arial, sans-serif; }
+    .smr-fields input:focus { outline: none; border-color: #1798d3; }
+    .colour-picker { display: flex; gap: 6px; flex-wrap: wrap; }
+    .colour-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: transform .1s; }
+    .colour-swatch:hover { transform: scale(1.15); }
+    .colour-swatch.selected { border-color: #1e293b; }
+    .modal-footer { display: flex; gap: 8px; margin-top: 18px; }
+    .modal-save { flex: 1; background: #1798d3; color: white; border: none; border-radius: 6px; padding: 11px; font-size: 14px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; }
+    .modal-save:hover { background: #1480b8; }
+    .modal-cancel { background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; padding: 11px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; }
+    .modal-cancel:hover { background: #e2e8f0; }
+    @media (max-width: 720px) {
+      .modal { padding: 18px; }
+      .smr-fields { flex-direction: column; align-items: stretch; }
+      .modal-footer { flex-direction: column; }
+      .modal-cancel { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <img src="logo.png" alt="Wallscourt Farm Academy">
+  <div>
+    <div class="app-title">Y4 Teaching Schedule</div>
+    <div class="app-subtitle">Wallscourt Farm Academy</div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" onclick="openStaffModal()" title="Edit staff names">⚙</button>
+  </div>
+</div>
+
+<div class="top-bar">
+  <button class="nav-btn" id="btnPrev" onclick="changeWeek(-1)">‹</button>
+  <div class="week-label" id="weekLabel">–</div>
+  <button class="nav-btn" id="btnNext" onclick="changeWeek(1)">›</button>
+  <button class="action-btn" onclick="goToday()">This week</button>
+  <span class="sep">|</span>
+  <button class="action-btn" onclick="copyWeekToNext()">Copy week → next week</button>
+  <button class="action-btn" onclick="copyMasterToStaff()">Copy master → staff views</button>
+  <button class="action-btn" onclick="openSubjectModal()">Subject settings</button>
+  <button class="action-btn danger" onclick="clearActiveView()">Clear view</button>
+  <span class="sheet-status" id="sheetStatus">Loading…</span>
+</div>
+
+<div class="view-tabs" id="viewTabs"></div>
+
+<div class="app-body">
+  <div class="subjects-sidebar" id="subjectsSidebar">
+    <div class="sidebar-hd">Subjects</div>
+    <div id="subjectList"></div>
+  </div>
+  <div class="grid-area">
+    <table class="sched-table" id="schedTable">
+      <thead id="schedHead"></thead>
+      <tbody id="schedBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="modal-bg" id="subjectModal">
+  <div class="modal">
+    <h3>Edit Subjects</h3>
+    <p class="modal-hint">Adjust subject names and colours used in the schedule.</p>
+    <div id="subjectModalRows"></div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeSubjectModal()">Cancel</button>
+      <button class="modal-save" onclick="saveSubjectModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff settings modal -->
+<div class="modal-bg" id="staffModal">
+  <div class="modal">
+    <h3>Edit Staff Names</h3>
+    <p class="modal-hint">Set the names for your Y4 team. These are saved locally on this device.</p>
+    <div id="staffModalRows"></div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeStaffModal()">Cancel</button>
+      <button class="modal-save" onclick="saveStaffModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Drag ghost -->
+<div id="drag-ghost" style="display:none"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
+const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
+const SYNC_URL   = ''; // Paste Apps Script web app URL here after deployment
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri'];
+const VIEWS = ['master','tp','lp'];
+
+const ROWS = [
+  { type:'fixed',   id:'reg-am', label:'Morning Reg',      time:'08:45–09:00' },
+  { type:'session', id:'s1',     label:'Session 1',         time:'09:00–10:45' },
+  { type:'fixed',   id:'fab',    label:'Fresh Air Break',   time:'10:45–11:00', cls:'fab-row' },
+  { type:'session', id:'s2',     label:'Session 2',         time:'11:00–12:00' },
+  { type:'fixed',   id:'lunch',  label:'Lunch',             time:'12:00–13:10', cls:'fab-row' },
+  { type:'fixed',   id:'reg-pm', label:'PM Registration',   time:'13:10–13:20' },
+  { type:'session', id:'s3',     label:'Session 3',         time:'13:20–15:00' },
+  { type:'fixed',   id:'story',  label:'Story Time',        time:'15:00–15:15' },
+  { type:'fixed',   id:'home',   label:'Home Time',         time:'15:15' },
+  { type:'session', id:'after',  label:'After School',      time:'' },
+];
+
+const SUBJECT_GROUPS = [
+  { label: 'Enquiry', subjects: [
+    { name:'Writer',             col:'#0055ff' },
+    { name:'Historian',          col:'#2979ff' },
+    { name:'Geographer',         col:'#2979ff' },
+    { name:'Scientist',          col:'#2979ff' },
+    { name:'Computer Scientist',  col:'#2979ff' },
+  ]},
+  { label: 'Maths', subjects: [
+    { name:'Mathematician',      col:'#f7d000' },
+    { name:'Arithmetic',         col:'#ffe44d' },
+    { name:'Timestables',        col:'#ffe44d' },
+    { name:'Timestables Check',  col:'#ffe44d' },
+  ]},
+  { label: 'Reading', subjects: [
+    { name:'Reader',           col:'#e34234' },
+    { name:'Library / DALOR',  col:'#e34234' },
+  ]},
+  { label: 'Writing Skills', subjects: [
+    { name:'Speller',      col:'#93c5fd' },
+    { name:'ETIW',         col:'#93c5fd' },
+    { name:'Handwriting',  col:'#93c5fd' },
+  ]},
+  { label: 'Gatherings', subjects: [
+    { name:'Gathering',             col:'#1798d3' },
+    { name:'Celebration Gathering', col:'#1798d3' },
+    { name:'Home Zone Gathering',   col:'#1798d3' },
+    { name:'Singing Gathering',     col:'#1798d3' },
+    { name:'KS2 Gathering',        col:'#1798d3' },
+    { name:'Citizen',               col:'#1798d3' },
+  ]},
+  { label: 'Uncategorised', subjects: [
+    { name:'Artist',   col:'#7c3aed' },
+    { name:'Musician', col:'#c4b5fd' },
+    { name:'Designer', col:'#7c3aed' },
+    { name:'Linguist', col:'#fb923c' },
+    { name:'Athlete',  col:'#dc2626' },
+    { name:'Other',    col:'#64748b' },
+  ]},
+];
+
+// Flat lookup: name → col
+const SUBJECT_COL = {};
+SUBJECT_GROUPS.forEach(g => g.subjects.forEach(s => { SUBJECT_COL[s.name] = s.col; }));
+
+const STAFF_COLOURS = ['#1798d3','#f97316','#22c55e','#8b5cf6'];
+const COLOUR_PALETTE = ['#1798d3','#f97316','#22c55e','#8b5cf6','#ec4899','#0f766e','#dc2626','#92400e','#64748b'];
+const DEFAULT_STAFF = [
+  { id:'t1', name:'Teacher 1', role:'Class Teacher',    col:'#1798d3' },
+  { id:'t2', name:'Teacher 2', role:'Class Teacher',    col:'#f97316' },
+  { id:'tp', name:'Emma J',   role:'Teaching Partner', col:'#22c55e' },
+  { id:'lp', name:'Emma C',   role:'Learning Partner', col:'#8b5cf6' },
+];
+
+// ── State ───────────────────────────────────────────────────────────────────
+let STAFF  = loadStaff();
+let SUBJECTS = loadSubjects();
+let WEEKS  = [];
+
+let state = {
+  weekIdx:   0,
+  activeView: 'master',
+  schedule:  {}, // weekKey → view → day → sessionId → [{ subject, note, split }]
+  afterSchoolEvents: {}, // 'YYYY-MM-DD' → [{ label, type, bg }]
+};
+
+// ── Persistence ─────────────────────────────────────────────────────────────
+function loadStaff() {
+  try { return JSON.parse(localStorage.getItem('wfa_ts_staff')) || DEFAULT_STAFF.map(s => ({...s})); }
+  catch { return DEFAULT_STAFF.map(s => ({...s})); }
+}
+
+function loadSubjects() {
+  try { return JSON.parse(localStorage.getItem('wfa_ts_subjects')) || SUBJECT_GROUPS.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })); }
+  catch { return SUBJECT_GROUPS.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })); }
+}
+
+function saveStaffLocal() {
+  localStorage.setItem('wfa_ts_staff', JSON.stringify(STAFF));
+}
+
+function saveSubjectsLocal() {
+  localStorage.setItem('wfa_ts_subjects', JSON.stringify(SUBJECTS));
+}
+
+function schedKey() {
+  if (WEEKS.length && WEEKS[state.weekIdx]) return WEEKS[state.weekIdx].key;
+  const d = weekMonday();
+  return dateKey(d);
+}
+
+function ensureWeek(weekKey) {
+  if (!state.schedule[weekKey]) state.schedule[weekKey] = {};
+  if (!state.schedule[weekKey].master) state.schedule[weekKey].master = {};
+  if (!state.schedule[weekKey].tp) state.schedule[weekKey].tp = {};
+  if (!state.schedule[weekKey].lp) state.schedule[weekKey].lp = {};
+  return state.schedule[weekKey];
+}
+
+function ensureDay(weekKey, view, day) {
+  const wk = ensureWeek(weekKey);
+  if (!wk[view][day]) wk[view][day] = { s1:[], s2:[], s3:[], after:[] };
+  return wk[view][day];
+}
+
+function getSlot(weekKey, view, day, session) {
+  const dayObj = ensureDay(weekKey, view, day);
+  if (!dayObj[session]) dayObj[session] = [];
+  return dayObj[session];
+}
+
+function persistLocal() {
+  try { localStorage.setItem('wfa_ts_schedule', JSON.stringify(state.schedule)); } catch {}
+}
+
+function loadLocal() {
+  try {
+    const s = localStorage.getItem('wfa_ts_schedule');
+    if (s) state.schedule = JSON.parse(s);
+  } catch {}
+}
+
+async function syncSave() {
+  if (!SYNC_URL) return;
+  const body = JSON.stringify({ action:'save', weekKey: schedKey(), data: state.schedule[schedKey()] || {} });
+  fetch(SYNC_URL, { method:'POST', body }).catch(() => {});
+}
+
+async function syncLoad(weekKey) {
+  if (!SYNC_URL) return;
+  try {
+    const res = await fetch(`${SYNC_URL}?action=load&weekKey=${encodeURIComponent(weekKey)}`);
+    if (!res.ok) return;
+    const json = await res.json();
+    if (json && json.data) {
+      state.schedule[weekKey] = json.data;
+      renderGrid();
+      persistLocal();
+    }
+  } catch {}
+}
+
+// ── Sheet loading ────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = []; let inQ=false, cur='', cells=[];
+  for (let i=0; i<text.length; i++) {
+    const c=text[i];
+    if (c==='"') { inQ=!inQ; }
+    else if (c===',' && !inQ) { cells.push(cur.trim()); cur=''; }
+    else if ((c==='\n'||c==='\r') && !inQ) {
+      cells.push(cur.trim()); cur='';
+      if (cells.some(x=>x)) rows.push(cells);
+      cells=[];
+      if (c==='\r' && text[i+1]==='\n') i++;
+    } else cur+=c;
+  }
+  cells.push(cur.trim());
+  if (cells.some(x=>x)) rows.push(cells);
+  return rows;
+}
+
+function csvToObjects(text) {
+  text = text.replace(/^\ufeff/,'');
+  const rows = parseCSV(text);
+  if (rows.length < 2) return [];
+  const hdRow = rows[0];
+  const gvizRe = /^([A-Za-z]\w*)( .*)?$/;
+  const nonEmpty = hdRow.filter(h => h.length > 0);
+  const isGviz = nonEmpty.every(h => gvizRe.test(h)) && nonEmpty.some(h => { const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
+  let headers, dataRows;
+  if (isGviz) {
+    headers  = hdRow.map(h => { const m=h.match(gvizRe); return m?m[1]:h; });
+    const firstData = hdRow.map(h => { const m=h.match(gvizRe); return m&&m[2]?m[2].trim():''; });
+    dataRows = [firstData, ...rows.slice(1)];
+  } else {
+    headers = hdRow; dataRows = rows.slice(1);
+  }
+  return dataRows.map(r => {
+    const obj = {};
+    headers.forEach((h,i) => { if (h) obj[h]=(r[i]||'').trim(); });
+    return obj;
+  });
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('/');
+  if (p.length !== 3) return null;
+  const [d,m,y] = p.map(Number);
+  return new Date(y < 100 ? 2000+y : y, m-1, d);
+}
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function buildWeeks(rows) {
+  return rows
+    .filter(r => r.StartDate && r.Term && r.Week)
+    .map(r => {
+      const start = parseDate(r.StartDate.trim());
+      if (!start || isNaN(start)) return null;
+      const term = String(r.Term).trim();
+      const week = String(r.Week).trim();
+      return { start, term, week, key:`T${term}W${week}`, label:`Term ${term} · Week ${week}` };
+    })
+    .filter(Boolean)
+    .sort((a,b) => a.start - b.start);
+}
+
+// ── Week helpers ─────────────────────────────────────────────────────────────
+function currentWeekIdx() {
+  if (!WEEKS.length) return 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i=0; i<WEEKS.length; i++) {
+    const end = new Date(WEEKS[i].start); end.setDate(end.getDate()+6);
+    if (today >= WEEKS[i].start && today <= end) return i;
+  }
+  for (let i=0; i<WEEKS.length; i++) { if (WEEKS[i].start > today) return i; }
+  return WEEKS.length - 1;
+}
+
+function weekMonday() {
+  if (WEEKS.length && WEEKS[state.weekIdx]) return new Date(WEEKS[state.weekIdx].start);
+  const d = new Date(); d.setHours(0,0,0,0);
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day===0?-6:1-day) + state.weekIdx*7);
+  return d;
+}
+
+function weekLabel() {
+  const fmt = x => x.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  if (WEEKS.length && WEEKS[state.weekIdx]) {
+    const w = WEEKS[state.weekIdx];
+    const end = new Date(w.start); end.setDate(w.start.getDate()+4);
+    return `${w.label} · ${fmt(w.start)} – ${fmt(end)}`;
+  }
+  const d = weekMonday(), end = new Date(d); end.setDate(d.getDate()+4);
+  return `${fmt(d)} – ${fmt(end)}`;
+}
+
+function dayDate(di) {
+  const d = weekMonday(); d.setDate(d.getDate()+di);
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+
+function isToday(di) {
+  const d = weekMonday(); d.setDate(d.getDate()+di);
+  const t = new Date(); t.setHours(0,0,0,0);
+  return d.getTime()===t.getTime();
+}
+
+function todayDayIdx() {
+  const t = new Date(); t.setHours(0,0,0,0);
+  const mon = weekMonday();
+  const diff = Math.round((t - mon) / 86400000);
+  return (diff >= 0 && diff <= 4) ? diff : -1;
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function changeWeek(dir) {
+  state.weekIdx = Math.max(0, Math.min((WEEKS.length||52)-1, state.weekIdx + dir));
+  document.getElementById('btnPrev').disabled = state.weekIdx === 0;
+  document.getElementById('btnNext').disabled = WEEKS.length && state.weekIdx === WEEKS.length-1;
+  document.getElementById('weekLabel').textContent = weekLabel();
+  renderViewTabs();
+  renderGrid();
+  syncLoad(schedKey());
+}
+
+function goToday() {
+  if (WEEKS.length) state.weekIdx = currentWeekIdx();
+  document.getElementById('btnPrev').disabled = state.weekIdx === 0;
+  document.getElementById('btnNext').disabled = state.weekIdx === WEEKS.length-1;
+  document.getElementById('weekLabel').textContent = weekLabel();
+  renderViewTabs();
+  renderGrid();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function setDay(idx) {
+  state.activeDay = idx;
+  renderViewTabs();
+  renderGrid();
+}
+
+// ── Render: day tabs ─────────────────────────────────────────────────────────
+function renderViewTabs() {
+  const el = document.getElementById('viewTabs');
+  el.innerHTML = VIEWS.map(v => {
+    let label, name = '';
+    if (v === 'master') {
+      label = 'Learning Schedule';
+    } else {
+      const staffMember = STAFF.find(s => s.id === v);
+      label = staffMember ? staffMember.name : v.toUpperCase();
+    }
+    const cls = `view-tab${state.activeView === v ? ' active' : ''}`;
+    return `<div class="${cls}" onclick="setView('${v}')">${escHtml(label)}</div>`;
+  }).join('');
+}
+
+// ── Render: subjects sidebar ─────────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('subjectList');
+  el.innerHTML = SUBJECTS.map(g => `
+    <div class="subj-group">
+      <div class="subj-group-label">${g.label}</div>
+      ${g.subjects.map(s => `
+        <div class="subj-chip"
+          style="background:${s.col}50"
+          data-subject="${escHtml(s.name)}"
+          data-col="${s.col}">
+          <span class="subj-dot" style="background:${s.col}"></span>
+          <span class="subj-name">${escHtml(s.name)}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+
+  el.querySelectorAll('.subj-chip').forEach(chip => {
+    chip.addEventListener('pointerdown', onSubjectPointerDown);
+  });
+}
+
+// ── Render: grid ─────────────────────────────────────────────────────────────
+function renderGrid() {
+  renderHead();
+  renderBody();
+}
+
+function renderHead() {
+  const el = document.getElementById('schedHead');
+  el.innerHTML = `<tr>
+    <th class="time-hd"></th>
+    ${DAYS.map((d, i) => `<th class="day-hd${isToday(i) ? ' today' : ''}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span></th>`).join('')}
+  </tr>`;
+}
+
+function renderBody() {
+  const el = document.getElementById('schedBody');
+  const wk  = schedKey();
+  const view = state.activeView;
+  let html = '';
+
+  ROWS.forEach(row => {
+    if (row.type === 'fixed') {
+      html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
+        <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
+        <td class="view-cell" colspan="5"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>
+      </tr>`;
+    } else {
+      html += `<tr class="session-row">
+        <td class="time-cell">
+          <span class="session-label">${row.label}</span>
+          ${row.time ? `<span class="session-time">${row.time}</span>` : ''}
+        </td>
+        ${DAYS.map((d, di) => {
+          const day = d.toLowerCase();
+          const items = getSlot(wk, view, day, row.id);
+          // After-school: show sheet events as read-only chips
+          let afterEvents = '';
+          if (row.id === 'after') {
+            const mon = weekMonday();
+            const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + di);
+            const dk = dateKey(cellDate);
+            const evts = state.afterSchoolEvents[dk] || [];
+            afterEvents = evts.map(ev => `<div class="cell-chip" style="background:${ev.bg}25"><div class="chip-top"><span class="chip-colour" style="background:${ev.bg}"></span><span class="chip-name" style="color:${ev.bg}">${escHtml(ev.label)}</span></div></div>`).join('');
+          }
+          return `<td class="view-cell" data-day="${day}" data-session="${row.id}">
+            ${afterEvents}
+            ${items.length === 0 && !afterEvents ? '<div class="drop-hint">drop here</div>' : ''}
+            ${items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('')}
+          </td>`;
+        }).join('')}
+      </tr>`;
+    }
+  });
+
+  el.innerHTML = html;
+
+  el.querySelectorAll('.item-note').forEach(input => {
+    input.addEventListener('blur', onNoteBlur);
+    input.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); input.blur(); } });
+  });
+  el.querySelectorAll('.chip-handle').forEach(h => {
+    h.addEventListener('pointerdown', onChipPointerDown);
+  });
+}
+
+function renderItem(item, wk, view, day, session, idx) {
+  const col = SUBJECT_COL[item.subject] || '#64748b';
+  const light = col + '50';
+  if (item.split) {
+    const colL = SUBJECT_COL[item.subjectLeft] || '#64748b';
+    const colR = SUBJECT_COL[item.subjectRight] || '#64748b';
+    return `<div class="cell-chip" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+      <div class="split-wrap">
+        <div class="split-half" style="background:${colL}50"><span class="chip-colour" style="background:${colL};display:inline-block;margin-right:3px"></span><span style="font-size:13px;font-weight:800;font-family:'Nunito',sans-serif">${escHtml(item.subjectLeft || '')}</span><textarea class="item-note chip-note" rows="1" data-side="left" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.noteLeft || '')}</textarea></div>
+        <div class="split-half" style="background:${colR}50"><span class="chip-colour" style="background:${colR};display:inline-block;margin-right:3px"></span><span style="font-size:13px;font-weight:800;font-family:'Nunito',sans-serif">${escHtml(item.subjectRight || '')}</span><textarea class="item-note chip-note" rows="1" data-side="right" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.noteRight || '')}</textarea></div>
+      </div>
+      <div style="display:flex;align-items:center;padding:0 5px 3px">
+        <button class="chip-split" title="Unsplit" onclick="unsplitItem(this)">↔</button>
+        <span style="flex:1"></span>
+        <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="cell-chip" style="background:${light}" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+    <div class="chip-top">
+      <span class="chip-handle" title="Drag to reorder">≡</span>
+      <span class="chip-colour" style="background:${col}"></span>
+      <span class="chip-name">${escHtml(item.subject)}</span>
+      <button class="chip-split" title="Split into two groups" onclick="splitItem(this)">⇔</button>
+      <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
+    </div>
+    <div class="chip-note-wrap">
+      <button class="chip-note-toggle${item.note ? ' has-note' : ''}" onclick="this.style.display='none';this.nextElementSibling.classList.remove('hidden');this.nextElementSibling.focus();return false">+</button>
+      <textarea class="item-note chip-note${item.note ? '' : ' hidden'}" rows="1" placeholder="Note…" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.note||'')}</textarea>
+    </div>
+  </div>`;
+}
+
+// ── Chip actions ─────────────────────────────────────────────────────────────
+function removeItem(btn) {
+  const { wk, view, day, session, idx } = btn.dataset;
+  const slot = getSlot(wk, view, day, session);
+  slot.splice(Number(idx), 1);
+  persistLocal(); syncSave();
+  renderGrid();
+}
+
+function splitItem(btn) {
+  const chip = btn.closest('.cell-chip');
+  const { wk, view, day, session, idx } = chip.dataset;
+  const slot = getSlot(wk, view, day, session);
+  const item = slot[Number(idx)];
+  if (!item || item.split) return;
+  item.split = true;
+  item.subjectLeft = item.subject;
+  item.subjectRight = '';
+  item.noteLeft = item.note || '';
+  item.noteRight = '';
+  delete item.subject;
+  delete item.note;
+  persistLocal(); syncSave();
+  renderGrid();
+}
+
+function unsplitItem(btn) {
+  const chip = btn.closest('.cell-chip');
+  const { wk, view, day, session, idx } = chip.dataset;
+  const slot = getSlot(wk, view, day, session);
+  const item = slot[Number(idx)];
+  if (!item || !item.split) return;
+  item.subject = item.subjectLeft || item.subjectRight || 'Other';
+  item.note = item.noteLeft || item.noteRight || '';
+  delete item.split;
+  delete item.subjectLeft;
+  delete item.subjectRight;
+  delete item.noteLeft;
+  delete item.noteRight;
+  persistLocal(); syncSave();
+  renderGrid();
+}
+
+function onNoteBlur(e) {
+  const { wk, view, day, session, idx, side } = e.target.dataset;
+  const slot = getSlot(wk, view, day, session);
+  if (slot[Number(idx)]) {
+    if (slot[Number(idx)].split && side) {
+      slot[Number(idx)][side === 'left' ? 'noteLeft' : 'noteRight'] = e.target.value;
+    } else {
+      slot[Number(idx)].note = e.target.value;
+    }
+    persistLocal(); syncSave();
+  }
+}
+
+// ── Drag and drop ────────────────────────────────────────────────────────────
+let drag = null; // { subject, col, sourceType, sourceChip, sourceData }
+// sourceType: 'sidebar' (new from sidebar) or 'cell' (existing chip being reordered)
+
+const ghost = document.getElementById('drag-ghost');
+
+function onSubjectPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  const chip = e.currentTarget;
+  const subject = chip.dataset.subject;
+  const col = chip.dataset.col;
+
+  drag = { subject, col, sourceType: 'sidebar', sourceChip: chip, sourceData: null };
+  chip.classList.add('dragging');
+  chip.setPointerCapture(e.pointerId);
+
+  ghost.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block"></span>${escHtml(subject)}`;
+  ghost.style.display = 'flex';
+  moveGhost(e.clientX, e.clientY);
+
+  chip.addEventListener('pointermove', onDragMove);
+  chip.addEventListener('pointerup', onDragEnd);
+  chip.addEventListener('pointercancel', onDragCancel);
+}
+
+function onChipPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  const handle = e.target.closest('.chip-handle');
+  if (!handle) return;
+  e.preventDefault();
+  const chipEl = handle.closest('.cell-chip');
+  if (!chipEl) return;
+
+  const { wk, view, day, session, idx } = chipEl.dataset;
+  const slot = getSlot(wk, view, day, session);
+  const item = slot[Number(idx)];
+  if (!item) return;
+
+  const col = SUBJECT_COL[item.subject] || '#64748b';
+  drag = {
+    subject: item.subject, col, sourceType: 'cell', sourceChip: chipEl,
+    sourceData: { wk, view, day, session, idx: Number(idx), item: JSON.parse(JSON.stringify(item)) }
+  };
+  chipEl.classList.add('dragging');
+  handle.setPointerCapture(e.pointerId);
+
+  ghost.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;display:inline-block"></span>${escHtml(item.subject)}`;
+  ghost.style.display = 'flex';
+  moveGhost(e.clientX, e.clientY);
+
+  handle.addEventListener('pointermove', onDragMove);
+  handle.addEventListener('pointerup', onDragEnd);
+  handle.addEventListener('pointercancel', onDragCancel);
+}
+
+function onDragMove(e) {
+  if (!drag) return;
+  moveGhost(e.clientX, e.clientY);
+  highlightCellAt(e.clientX, e.clientY);
+}
+
+function onDragEnd(e) {
+  if (!drag) return;
+  const target = dropTargetAt(e.clientX, e.clientY);
+  if (target) {
+    const wk = schedKey();
+
+    // Dropping onto a split half
+    if (target.splitTarget) {
+      const slot = getSlot(wk, state.activeView, target.day, target.session);
+      const item = slot[target.splitTarget.idx];
+      if (item && item.split) {
+        if (drag.sourceType === 'cell') {
+          // If dragging from the other half of same split, clear that side first
+          const sd = drag.sourceData;
+          if (sd.day === target.day && sd.session === target.session && sd.idx === target.splitTarget.idx) {
+            // Moving within same split chip — just swap sides
+            const movingSubject = sd.item.subject || '';
+            const movingNote = sd.item.note || '';
+            if (target.splitTarget.side === 'right') {
+              item.subjectRight = movingSubject; item.noteRight = movingNote;
+            } else {
+              item.subjectLeft = movingSubject; item.noteLeft = movingNote;
+            }
+            persistLocal(); syncSave(); endDrag(); renderGrid(); return;
+          }
+          const srcSlot = getSlot(sd.wk, sd.view, sd.day, sd.session);
+          srcSlot.splice(sd.idx, 1);
+        }
+        if (target.splitTarget.side === 'right') {
+          item.subjectRight = drag.subject; item.noteRight = '';
+        } else {
+          item.subjectLeft = drag.subject; item.noteLeft = '';
+        }
+      }
+      persistLocal(); syncSave(); endDrag(); renderGrid(); return;
+    }
+
+    const { day, session, insertIdx } = target;
+    const slot = getSlot(wk, state.activeView, day, session);
+
+    if (drag.sourceType === 'cell') {
+      const sd = drag.sourceData;
+      const srcSlot = (sd.wk === wk && sd.view === state.activeView && sd.day === day && sd.session === session)
+        ? slot : getSlot(sd.wk, sd.view, sd.day, sd.session);
+      srcSlot.splice(sd.idx, 1);
+      let insertAt = insertIdx;
+      if (srcSlot === slot && sd.idx < insertAt) insertAt--;
+      if (insertAt < 0) insertAt = slot.length;
+      slot.splice(insertAt, 0, drag.sourceData.item);
+    } else {
+      const insertAt = insertIdx < 0 ? slot.length : Math.min(insertIdx, slot.length);
+      slot.splice(insertAt, 0, { subject: drag.subject, note: '' });
+    }
+    persistLocal(); syncSave();
+  }
+  endDrag();
+  renderGrid();
+}
+
+function onDragCancel() { endDrag(); }
+
+function endDrag() {
+  if (!drag) return;
+  drag.sourceChip.classList.remove('dragging');
+  const el = drag.sourceType === 'cell'
+    ? drag.sourceChip.querySelector('.chip-handle') || drag.sourceChip
+    : drag.sourceChip;
+  el.removeEventListener('pointermove', onDragMove);
+  el.removeEventListener('pointerup', onDragEnd);
+  el.removeEventListener('pointercancel', onDragCancel);
+  ghost.style.display = 'none';
+  clearDropHighlights();
+  drag = null;
+}
+
+function moveGhost(x, y) {
+  ghost.style.transform = `translate(${x+14}px,${y+10}px)`;
+}
+
+function dropTargetAt(x, y) {
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  ghost.style.display = 'flex';
+  if (!el) return null;
+
+  // Check if dropping onto a split half
+  const half = el.closest('.split-half');
+  if (half) {
+    const chip = half.closest('.cell-chip');
+    if (chip) {
+      const side = half.previousElementSibling ? 'right' : 'left';
+      return { day: chip.dataset.day, session: chip.dataset.session, insertIdx: -1, splitTarget: { idx: Number(chip.dataset.idx), side } };
+    }
+  }
+
+  const cell = el.closest('.view-cell');
+  if (!cell || !cell.dataset.day) return null;
+  const chips = [...cell.querySelectorAll('.cell-chip:not(.dragging)')];
+  let insertIdx = chips.length;
+  for (let i = 0; i < chips.length; i++) {
+    const rect = chips[i].getBoundingClientRect();
+    if (y < rect.top + rect.height / 2) { insertIdx = i; break; }
+  }
+  return { day: cell.dataset.day, session: cell.dataset.session, insertIdx };
+}
+
+function highlightCellAt(x, y) {
+  clearDropHighlights();
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  ghost.style.display = 'flex';
+  if (!el) return;
+  const half = el.closest('.split-half');
+  if (half) { half.classList.add('drop-over-half'); return; }
+  const cell = el.closest('.view-cell');
+  if (cell) cell.classList.add('drop-over');
+}
+
+function clearDropHighlights() {
+  document.querySelectorAll('.view-cell.drop-over').forEach(c => c.classList.remove('drop-over'));
+  document.querySelectorAll('.split-half.drop-over-half').forEach(c => c.classList.remove('drop-over-half'));
+}
+
+function onCellEnter(e) { /* handled in highlightCellAt */ }
+function onCellLeave(e) { e.currentTarget.classList.remove('drop-over'); }
+
+// ── Copy / clear helpers ─────────────────────────────────────────────────────
+function copyWeekToNext() {
+  const wk = schedKey();
+  const idx = state.weekIdx;
+  if (!WEEKS[idx + 1]) { alert('No next week available.'); return; }
+  state.schedule[WEEKS[idx + 1].key] = JSON.parse(JSON.stringify(state.schedule[wk] || {}));
+  persistLocal(); syncSave();
+  alert(`${wk} copied to next week.`);
+}
+
+function copyMasterToStaff() {
+  const wk = schedKey();
+  const weekData = state.schedule[wk];
+  if (!weekData || !weekData.master) { alert('No master view data to copy.'); return; }
+  const master = JSON.parse(JSON.stringify(weekData.master));
+  VIEWS.filter(v => v !== 'master').forEach(v => {
+    if (!state.schedule[wk]) state.schedule[wk] = {};
+    state.schedule[wk][v] = JSON.parse(JSON.stringify(master));
+  });
+  persistLocal(); syncSave();
+  renderGrid();
+  alert('Master copied to all staff views.');
+}
+
+function clearActiveView() {
+  if (!confirm(`Clear the ${state.activeView.toUpperCase()} view for this week?`)) return;
+  const wk = schedKey();
+  if (state.schedule[wk]) delete state.schedule[wk][state.activeView];
+  persistLocal(); syncSave();
+  renderGrid();
+}
+
+// ── Staff modal ──────────────────────────────────────────────────────────────
+function openSubjectModal() {
+  const el = document.getElementById('subjectModalRows');
+  el.innerHTML = SUBJECTS.map((g, gi) => `
+    <div class="staff-modal-row">
+      <div class="smr-top">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#1e293b">${g.label}</div>
+        </div>
+      </div>
+      ${g.subjects.map((s, si) => `
+        <div class="smr-fields" style="margin-bottom:8px">
+          <input id="subj-name-${gi}-${si}" value="${escHtml(s.name)}" placeholder="Subject name">
+          <input type="color" id="subj-col-${gi}-${si}" value="${s.col}" style="width:44px;padding:0;border:none;background:none">
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+  document.getElementById('subjectModal').classList.add('open');
+}
+
+function saveSubjectModal() {
+  SUBJECTS.forEach((g, gi) => {
+    g.subjects.forEach((s, si) => {
+      const nameEl = document.getElementById(`subj-name-${gi}-${si}`);
+      const colEl = document.getElementById(`subj-col-${gi}-${si}`);
+      if (nameEl) s.name = nameEl.value.trim() || s.name;
+      if (colEl) s.col = colEl.value;
+    });
+  });
+  for (const key of Object.keys(SUBJECT_COL)) delete SUBJECT_COL[key];
+  SUBJECTS.forEach(g => g.subjects.forEach(s => { SUBJECT_COL[s.name] = s.col; }));
+  saveSubjectsLocal();
+  closeSubjectModal();
+  renderSidebar();
+  renderGrid();
+}
+
+function closeSubjectModal() {
+  document.getElementById('subjectModal').classList.remove('open');
+}
+
+// ── Staff modal ────────────────────────────────────────────────────────────
+function openStaffModal() {
+  const el = document.getElementById('staffModalRows');
+  el.innerHTML = STAFF.map((s, i) => `
+    <div class="staff-modal-row">
+      <div class="smr-top">
+        <div class="smr-avatar" style="background:${s.col}">${s.name.charAt(0).toUpperCase()}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#1e293b">${escHtml(s.role)}</div>
+        </div>
+      </div>
+      <div class="smr-fields">
+        <input id="staff-name-${i}" value="${escHtml(s.name)}" placeholder="Name">
+        <div class="colour-picker">
+          ${COLOUR_PALETTE.map(c => `<div class="colour-swatch${c===s.col?' selected':''}" style="background:${c}" data-staff="${i}" data-col="${c}" onclick="selectStaffColour(${i},'${c}')"></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById('staffModal').classList.add('open');
+}
+
+let staffColourPicks = {};
+
+function selectStaffColour(idx, col) {
+  if (!staffColourPicks[idx]) staffColourPicks[idx] = STAFF[idx].col;
+  staffColourPicks[idx] = col;
+  const row = document.querySelectorAll('.staff-modal-row')[idx];
+  row.querySelectorAll('.colour-swatch').forEach(s => {
+    s.classList.toggle('selected', s.dataset.col === col);
+  });
+  row.querySelector('.smr-avatar').style.background = col;
+}
+
+function closeStaffModal() {
+  staffColourPicks = {};
+  document.getElementById('staffModal').classList.remove('open');
+}
+
+function saveStaffModal() {
+  STAFF.forEach((s, i) => {
+    const nameEl = document.getElementById(`staff-name-${i}`);
+    if (nameEl) s.name = nameEl.value.trim() || s.name;
+    if (staffColourPicks[i]) s.col = staffColourPicks[i];
+  });
+  saveStaffLocal();
+  staffColourPicks = {};
+  closeStaffModal();
+  renderGrid();
+}
+
+// ── Utility ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function setView(view) {
+  state.activeView = view;
+  renderViewTabs();
+  renderGrid();
+}
+
+// ── After-school events from sheet ──────────────────────────────────────────
+function buildAfterSchoolEvents(rows) {
+  const events = {};
+  rows.forEach(r => {
+    if (!r.StartDate || !r.Session) return;
+    const start = parseDate(r.StartDate.trim());
+    if (!start || isNaN(start)) return;
+    const session = String(r.Session).trim();
+    if (session !== 'After School') return;
+    const end = parseDate((r.EndDate || r.StartDate).trim()) || start;
+    const cur = new Date(start);
+    while (cur <= end) {
+      const k = dateKey(cur);
+      if (!events[k]) events[k] = [];
+      events[k].push({ label: r.Label || r.Type, type: r.Type, bg: r.Colour || '#1e3a8a' });
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return events;
+}
+
+// ── Data migration ──────────────────────────────────────────────────────────
+function migrateScheduleKeys() {
+  // Convert old date-based keys (e.g. "2026-04-12") to T1W2 format
+  // Old keys were created by toISOString() which uses UTC, so UK dates shift by ~1hr
+  const weekMap = {};
+  WEEKS.forEach(w => {
+    weekMap[dateKey(w.start)] = w.key;
+    // Also map UTC version (midnight BST = 11pm UTC previous day)
+    const utcKey = w.start.toISOString().slice(0, 10);
+    weekMap[utcKey] = w.key;
+  });
+  let migrated = false;
+  for (const oldKey of Object.keys(state.schedule)) {
+    const newKey = weekMap[oldKey];
+    if (newKey && newKey !== oldKey && !state.schedule[newKey]) {
+      state.schedule[newKey] = state.schedule[oldKey];
+      delete state.schedule[oldKey];
+      migrated = true;
+    }
+  }
+  if (migrated) persistLocal();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  loadLocal();
+
+  document.getElementById('weekLabel').textContent = '…';
+  renderSidebar();
+  renderViewTabs();
+  renderGrid();
+
+  try {
+    const [termsText, eventsText] = await Promise.all([
+      fetch(SHEET_BASE + encodeURIComponent('Terms')).then(r => { if (!r.ok) throw new Error('Terms tab not found'); return r.text(); }),
+      fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => '')
+    ]);
+    WEEKS = buildWeeks(csvToObjects(termsText));
+    if (eventsText) state.afterSchoolEvents = buildAfterSchoolEvents(csvToObjects(eventsText));
+    migrateScheduleKeys();
+    state.weekIdx = currentWeekIdx();
+    document.getElementById('btnPrev').disabled = state.weekIdx === 0;
+    document.getElementById('btnNext').disabled = state.weekIdx === WEEKS.length-1;
+    document.getElementById('weekLabel').textContent = weekLabel();
+    document.getElementById('sheetStatus').textContent = '● Sheet connected';
+    document.getElementById('sheetStatus').className = 'sheet-status ok';
+  } catch (err) {
+    document.getElementById('weekLabel').textContent = weekLabel();
+    document.getElementById('sheetStatus').textContent = '● Sheet offline – using local';
+    document.getElementById('sheetStatus').className = 'sheet-status err';
+  }
+
+  renderGrid();
+  await syncLoad(schedKey());
+}
+
+init();
+</script>
+</body>
+</html>
