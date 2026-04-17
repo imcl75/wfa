@@ -220,9 +220,7 @@ function buildStaff(rows) {
       const name = r.Name.trim();
       const init = (r.Initials || '').trim() || mkInitials(name);
       const id   = name.toLowerCase().replace(/[^a-z0-9]+/g,'_');
-      let col    = (r.Colour || '').trim();
-      if (!col || !col.startsWith('#')) col = PALETTE[i % PALETTE.length];
-      if (colourById[id]) col = colourById[id]; // preserve local colour override
+      let col    = colourById[id] || PALETTE[i % PALETTE.length];
       return { id, name, init, col };
     });
 }
