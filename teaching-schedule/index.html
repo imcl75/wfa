@@ -737,7 +737,9 @@ function renderBody() {
             const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + di);
             const dk = dateKey(cellDate);
             const evts = state.afterSchoolEvents[dk] || [];
-            afterEvents = evts.map(ev => `<div class="cell-chip" style="background:${ev.bg}25"><div class="chip-top"><span class="chip-colour" style="background:${ev.bg}"></span><span class="chip-name" style="color:${ev.bg}">${escHtml(ev.label)}</span></div></div>`).join('');
+            const recurring = recurringAfterSchool.filter(r => r.dayIdx === di);
+            const allEvts = [...recurring.map(r => ({ label: r.label, bg: r.bg })), ...evts.map(e => ({ label: e.label, bg: e.bg }))];
+            afterEvents = allEvts.map(ev => `<div class="cell-chip" style="background:${ev.bg}25"><div class="chip-top"><span class="chip-colour" style="background:${ev.bg}"></span><span class="chip-name" style="color:${ev.bg}">${escHtml(ev.label)}</span></div></div>`).join('');
           }
           return `<td class="view-cell" data-day="${day}" data-session="${row.id}">
             ${afterEvents}
@@ -1174,6 +1176,9 @@ function setView(view) {
 }
 
 // ── After-school events from sheet ──────────────────────────────────────────
+const DAY_NAME_MAP = {'monday':0,'tuesday':1,'wednesday':2,'thursday':3,'friday':4,'saturday':5,'sunday':6};
+let recurringAfterSchool = []; // [{dayIdx, label, bg}]
+
 function buildAfterSchoolEvents(rows) {
   const events = {};
   rows.forEach(r => {
@@ -1192,6 +1197,17 @@ function buildAfterSchoolEvents(rows) {
     }
   });
   return events;
+}
+
+function buildRecurringAfterSchool(rows) {
+  return rows
+    .filter(r => r.Session && String(r.Session).trim() === 'After School' && r.Day)
+    .map(r => ({
+      dayIdx: DAY_NAME_MAP[String(r.Day).trim().toLowerCase()],
+      label: r.Label,
+      bg: r.Colour || '#1e3a8a'
+    }))
+    .filter(r => r.dayIdx !== undefined && r.label);
 }
 
 // ── Data migration ──────────────────────────────────────────────────────────
@@ -1227,12 +1243,14 @@ async function init() {
   renderGrid();
 
   try {
-    const [termsText, eventsText] = await Promise.all([
+    const [termsText, eventsText, schoolEventsText] = await Promise.all([
       fetch(SHEET_BASE + encodeURIComponent('Terms')).then(r => { if (!r.ok) throw new Error('Terms tab not found'); return r.text(); }),
-      fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => '')
+      fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(SHEET_BASE + encodeURIComponent('SchoolEvents')).then(r => r.ok ? r.text() : '').catch(() => '')
     ]);
     WEEKS = buildWeeks(csvToObjects(termsText));
     if (eventsText) state.afterSchoolEvents = buildAfterSchoolEvents(csvToObjects(eventsText));
+    if (schoolEventsText) recurringAfterSchool = buildRecurringAfterSchool(csvToObjects(schoolEventsText));
     migrateScheduleKeys();
     state.weekIdx = currentWeekIdx();
     document.getElementById('btnPrev').disabled = state.weekIdx === 0;
