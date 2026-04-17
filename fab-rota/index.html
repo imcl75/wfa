@@ -159,36 +159,55 @@ let state        = { weekIdx: 0, slots: {} };
 let isDragging   = false;
 
 // ── CSV / Sheet helpers ───────────────────────────────────────────────────────
-function csvToObjects(csv) {
-  const lines = csv.trim().split('\n');
-  if (lines.length < 2) return [];
-  function parseRow(r) {
-    const cells = []; let cur = '', inQ = false;
-    for (let i = 0; i < r.length; i++) {
-      const c = r[i];
-      if (c === '"') { if (inQ && r[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
-      else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
-      else cur += c;
-    }
-    cells.push(cur.trim());
-    return cells;
+function parseCSV(text) {
+  const rows = []; let inQ=false, cur='', cells=[];
+  for (let i=0; i<text.length; i++) {
+    const c=text[i];
+    if (c==='"') { inQ=!inQ; }
+    else if (c===',' && !inQ) { cells.push(cur.trim()); cur=''; }
+    else if ((c==='\n'||c==='\r') && !inQ) {
+      cells.push(cur.trim()); cur='';
+      if (cells.some(x=>x)) rows.push(cells);
+      cells=[];
+      if (c==='\r' && text[i+1]==='\n') i++;
+    } else cur+=c;
   }
-  const headers = parseRow(lines[0]);
-  return lines.slice(1).map(line => {
-    const vals = parseRow(line);
+  cells.push(cur.trim());
+  if (cells.some(x=>x)) rows.push(cells);
+  return rows;
+}
+
+function csvToObjects(text) {
+  text = text.replace(/^\ufeff/, '');
+  const rows = parseCSV(text);
+  if (rows.length < 2) return [];
+  const firstRow = rows[0];
+  const gvizRe = /^([A-Za-z]\w*)( .*)?$/;
+  const nonEmpty = firstRow.filter(h => h.length > 0);
+  const isGviz = nonEmpty.every(h => gvizRe.test(h))
+    && nonEmpty.some(h => { const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
+  let headers, dataRows;
+  if (isGviz) {
+    headers  = firstRow.map(h => { const m=h.match(gvizRe); return m?m[1]:h; });
+    const firstData = firstRow.map(h => { const m=h.match(gvizRe); return m&&m[2]?m[2].trim():''; });
+    dataRows = [firstData, ...rows.slice(1)];
+  } else {
+    headers  = firstRow;
+    dataRows = rows.slice(1);
+  }
+  return dataRows.map(r => {
     const obj = {};
-    headers.forEach((h, i) => { if (h) obj[h] = vals[i] !== undefined ? vals[i] : ''; });
+    headers.forEach((h,i) => { if (h) obj[h]=(r[i]||'').trim(); });
     return obj;
-  }).filter(o => Object.values(o).some(v => v));
+  });
 }
 
 function parseDate(s) {
   if (!s) return null;
-  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
-  m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
-  return null;
+  const p = s.split('/');
+  if (p.length !== 3) return null;
+  const [d,m,y] = p.map(Number);
+  return new Date(y < 100 ? 2000+y : y, m-1, d);
 }
 
 function buildStaff(rows) {
