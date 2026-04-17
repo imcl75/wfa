@@ -475,7 +475,7 @@ function chipHtml(gid, zi, di, sid) {
   if (!s) return '';
   return `<div class="assign-chip" style="background:${s.col}22;border:1.5px solid ${s.col}55">
     <div class="a-avatar" style="background:${s.col};color:${contrastColor(s.col)}">${s.init}</div>
-    <span class="a-name" style="color:${s.col}">${s.name}</span>
+    <span class="a-name" style="color:#1e293b">${s.name}</span>
     <button class="a-del" onclick="removeFromSlot('${gid}',${zi},${di},'${sid}')">×</button>
   </div>`;
 }
