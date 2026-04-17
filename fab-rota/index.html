@@ -123,7 +123,8 @@
     <p class="modal-hint">Click a colour dot to cycle colours. Initials auto-fill but can be overridden.</p>
     <div id="modalRows"></div>
     <div class="modal-add">
-      <input id="newName" placeholder="Full name" onkeydown="if(event.key==='Enter')addStaff()">
+      <input id="newName" placeholder="Name" oninput="autoInitials()" onkeydown="if(event.key==='Enter')addStaff()">
+      <input id="newInit" placeholder="Initials" maxlength="3" style="width:64px;flex:none;text-align:center;font-weight:bold;text-transform:uppercase;border:1px solid #e2e8f0;border-radius:4px;padding:7px 8px;font-size:13px">
       <button onclick="addStaff()">Add</button>
     </div>
     <button class="modal-done" onclick="closeModal()">Done</button>
@@ -381,11 +382,17 @@ function cycleCol(i) {
   STAFF[i].col = PALETTE[(PALETTE.indexOf(STAFF[i].col)+1) % PALETTE.length];
   renderModal();
 }
+function autoInitials() {
+  const name = document.getElementById('newName').value.trim();
+  document.getElementById('newInit').value = mkInitials(name);
+}
 function addStaff() {
   const name = document.getElementById('newName').value.trim();
   if (!name) return;
-  STAFF.push({ id: name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Date.now(), name, init: mkInitials(name), col: PALETTE[STAFF.length % PALETTE.length] });
+  const init = (document.getElementById('newInit').value.trim() || mkInitials(name)).toUpperCase().slice(0,3);
+  STAFF.push({ id: name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Date.now(), name, init, col: PALETTE[STAFF.length % PALETTE.length] });
   document.getElementById('newName').value = '';
+  document.getElementById('newInit').value = '';
   renderModal();
 }
 
