@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Fresh Air Break Rota · WFA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f1f5f9; min-height: 100vh; }
+
+    /* ── Header ── */
+    .app-header { background: white; border-bottom: 2px solid #1798d3; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+    .app-header img { height: 40px; }
+    .app-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; color: #1798d3; line-height: 1.2; }
+    .app-subtitle { font-size: 11px; color: #94a3b8; }
+
+    /* ── Week bar ── */
+    .week-bar { background: white; border-bottom: 1px solid #e2e8f0; padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .nav-btn { background: #f0f8fd; border: 1.5px solid #bae0f5; border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: #1798d3; line-height: 1; }
+    .nav-btn:hover { background: #dbeafe; }
+    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 15px; color: #1798d3; min-width: 190px; text-align: center; }
+    .action-btn { background: white; border: 1.5px solid #cbd5e1; border-radius: 5px; padding: 5px 11px; font-size: 12px; cursor: pointer; color: #475569; }
+    .action-btn:hover { background: #f8fafc; border-color: #94a3b8; }
+    .action-btn.danger { color: #dc2626; border-color: #fca5a5; }
+    .action-btn.danger:hover { background: #fef2f2; }
+    .action-btn.primary { background: #1798d3; color: white; border-color: #1798d3; margin-left: auto; }
+    .action-btn.primary:hover { background: #1480b8; }
+
+    /* ── Layout ── */
+    .app-body { display: flex; gap: 10px; padding: 10px; max-width: 1100px; margin: 0 auto; align-items: flex-start; }
+
+    /* ── Staff panel ── */
+    .staff-panel { width: 155px; flex-shrink: 0; }
+    .panel-box { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.07); padding: 10px; }
+    .panel-hd { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 13px; color: #1798d3; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .staff-chip { display: flex; align-items: center; gap: 6px; padding: 5px 7px; border: 1.5px solid #e2e8f0; border-radius: 5px; margin-bottom: 4px; cursor: grab; user-select: none; touch-action: none; background: white; transition: border-color .1s; }
+    .staff-chip:hover { border-color: #93c5fd; }
+    .staff-chip.dragging { opacity: .25; }
+    .s-avatar { width: 24px; height: 24px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 8px; font-weight: bold; flex-shrink: 0; }
+    .s-name { font-size: 11px; font-weight: bold; color: #1e293b; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .s-count { font-size: 10px; font-weight: bold; color: #94a3b8; flex-shrink: 0; }
+    .edit-staff-btn { width: 100%; padding: 5px; border: 1.5px dashed #cbd5e1; border-radius: 5px; background: none; cursor: pointer; font-size: 11px; color: #94a3b8; margin-top: 6px; }
+    .edit-staff-btn:hover { border-color: #1798d3; color: #1798d3; }
+
+    /* ── Grid ── */
+    .grid-area { flex: 1; min-width: 0; }
+    .group-block { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.07); margin-bottom: 10px; overflow: hidden; }
+    .group-hd { background: #1798d3; color: white; padding: 9px 14px; display: flex; align-items: center; gap: 10px; }
+    .group-hd-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 14px; }
+    .group-hd-time { font-size: 11px; opacity: .85; }
+    .group-hd-years { font-size: 11px; background: rgba(255,255,255,.2); border-radius: 10px; padding: 1px 9px; margin-left: auto; }
+
+    .rota-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .rota-table th { padding: 7px 6px; text-align: center; font-size: 12px; font-weight: 900; font-family: 'Nunito', sans-serif; color: #1798d3; border-bottom: 2px solid #d1d5db; border-right: 1px solid #e2e8f0; background: #f8fafc; }
+    .rota-table th.today { background: #1798d3; color: white; }
+    .rota-table th:first-child { width: 115px; text-align: left; padding-left: 12px; font-family: Arial, sans-serif; font-size: 11px; font-weight: bold; color: #64748b; border-right: 2px solid #d1d5db; }
+    .rota-table td { border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 5px; vertical-align: middle; height: 52px; }
+    .rota-table td:first-child { font-weight: bold; font-size: 11px; color: #1e293b; padding: 8px 12px; border-right: 2px solid #d1d5db; background: #f8fafc; }
+    .rota-table td.drop-ready { background: #f0f8fd; }
+    .rota-table td.drop-over { background: #dbeafe; outline: 2px dashed #1798d3; outline-offset: -2px; }
+
+    /* ── Assigned chip ── */
+    .assign-chip { display: flex; align-items: center; gap: 5px; padding: 4px 6px; border-radius: 4px; }
+    .a-avatar { width: 18px; height: 18px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 7px; font-weight: bold; flex-shrink: 0; }
+    .a-name { font-size: 11px; font-weight: bold; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .a-del { background: none; border: none; cursor: pointer; font-size: 13px; color: #cbd5e1; padding: 0 1px; line-height: 1; flex-shrink: 0; }
+    .a-del:hover { color: #dc2626; }
+    .empty-hint { display: flex; align-items: center; justify-content: center; height: 100%; color: #e2e8f0; font-size: 18px; }
+
+    /* ── Ghost ── */
+    #drag-ghost { position: fixed; z-index: 9999; pointer-events: none; opacity: .85; box-shadow: 0 6px 20px rgba(0,0,0,.25); top: 0; left: 0; will-change: transform; border-radius: 5px; background: white; }
+
+    /* ── Modal ── */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-bg.open { display: flex; }
+    .modal { background: white; border-radius: 10px; padding: 24px; width: 90%; max-width: 460px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+    .modal h3 { font-family: 'Nunito', sans-serif; font-weight: 900; color: #1798d3; font-size: 16px; margin-bottom: 4px; }
+    .modal-hint { font-size: 11px; color: #94a3b8; margin-bottom: 14px; }
+    .modal-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f1f5f9; }
+    .modal-row input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 5px 8px; font-size: 13px; }
+    .modal-row input.nm { flex: 1; }
+    .modal-row input.init { width: 42px; text-align: center; font-weight: bold; text-transform: uppercase; }
+    .colour-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; flex-shrink: 0; border: 2px solid transparent; transition: border-color .1s; }
+    .colour-dot:hover { border-color: #1e293b; }
+    .del-btn { background: none; border: none; cursor: pointer; color: #cbd5e1; font-size: 16px; line-height: 1; }
+    .del-btn:hover { color: #dc2626; }
+    .modal-add { display: flex; gap: 8px; margin-top: 14px; }
+    .modal-add input { flex: 1; border: 1px solid #e2e8f0; border-radius: 4px; padding: 7px 10px; font-size: 13px; }
+    .modal-add button { background: #1798d3; color: white; border: none; border-radius: 5px; padding: 7px 16px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .modal-done { width: 100%; margin-top: 14px; background: #f1f5f9; color: #64748b; border: none; border-radius: 5px; padding: 9px; font-size: 13px; font-weight: bold; cursor: pointer; }
+    .modal-done:hover { background: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <img src="logo.png" alt="Wallscourt Farm Academy">
+  <div>
+    <div class="app-title">Fresh Air Break Rota</div>
+    <div class="app-subtitle">Wallscourt Farm Academy</div>
+  </div>
+</div>
+
+<div class="week-bar">
+  <button class="nav-btn" onclick="changeWeek(-1)">‹</button>
+  <div class="week-label" id="weekLabel">–</div>
+  <button class="nav-btn" onclick="changeWeek(1)">›</button>
+  <button class="action-btn" onclick="goToday()">This week</button>
+  <button class="action-btn" onclick="copyToNext()">Copy → next week</button>
+  <button class="action-btn danger" onclick="resetWeek()">Reset week</button>
+</div>
+
+<div class="app-body">
+  <div class="staff-panel">
+    <div class="panel-box">
+      <div class="panel-hd">Staff</div>
+      <div id="staffList"></div>
+      <button class="edit-staff-btn" onclick="openModal()">＋ Edit staff list</button>
+    </div>
+  </div>
+  <div class="grid-area" id="gridArea"></div>
+</div>
+
+<!-- Staff modal -->
+<div class="modal-bg" id="staffModal">
+  <div class="modal">
+    <h3>Staff List</h3>
+    <p class="modal-hint">Click a colour dot to cycle through colours. Initials auto-fill but can be edited.</p>
+    <div id="modalRows"></div>
+    <div class="modal-add">
+      <input id="newName" placeholder="Full name" onkeydown="if(event.key==='Enter')addStaff()">
+      <button onclick="addStaff()">Add</button>
+    </div>
+    <button class="modal-done" onclick="closeModal()">Done</button>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const ZONES  = ['MUGA', 'Garden Room (+Bell)', 'Hard Standing', 'Trim Trail'];
+const DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const GROUPS = [
+  {id:'lower', label:'Lower School', years:'Y1 · Y2 · Y3', time:'10:30 – 10:45'},
+  {id:'upper', label:'Upper School', years:'Y4 · Y5 · Y6', time:'10:45 – 11:00'},
+];
+const PALETTE = ['#1798d3','#e879f9','#f97316','#22c55e','#eab308','#ef4444','#8b5cf6','#06b6d4','#84cc16','#f43f5e','#10b981','#6366f1','#ec4899','#14b8a6','#a855f7','#f59e0b','#64748b','#0a0101'];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let STAFF = [];
+let state = { weekOffset: 0, slots: {} };
+let isDragging = false;
+
+// ── Week helpers ──────────────────────────────────────────────────────────────
+function currentMonday() {
+  const d = new Date(); d.setHours(0,0,0,0);
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  return d;
+}
+function weekMonday() {
+  const d = currentMonday(); d.setDate(d.getDate() + state.weekOffset * 7); return d;
+}
+function weekLabel() {
+  const d = weekMonday(), end = new Date(d); end.setDate(d.getDate() + 4);
+  const fmt = x => x.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+  return `${fmt(d)} – ${fmt(end)}`;
+}
+function isToday(dayIdx) {
+  const d = weekMonday(); d.setDate(d.getDate() + dayIdx);
+  const t = new Date(); t.setHours(0,0,0,0);
+  return d.getTime() === t.getTime();
+}
+
+// ── Slot helpers ──────────────────────────────────────────────────────────────
+function emptyWeek() {
+  const w = {};
+  GROUPS.forEach(g => { w[g.id] = ZONES.map(() => Array(5).fill(null)); });
+  return w;
+}
+function getWeek() {
+  if (!state.slots[state.weekOffset]) state.slots[state.weekOffset] = emptyWeek();
+  return state.slots[state.weekOffset];
+}
+function getSlot(gid, zi, di)        { return getWeek()[gid][zi][di]; }
+function setSlot(gid, zi, di, sid)   { getWeek()[gid][zi][di] = sid; save(); }
+function clearSlot(gid, zi, di)      { setSlot(gid, zi, di, null); render(); }
+
+// ── Persistence ───────────────────────────────────────────────────────────────
+function save() {
+  localStorage.setItem('wfa_fab_state', JSON.stringify(state));
+  localStorage.setItem('wfa_fab_staff', JSON.stringify(STAFF));
+}
+function loadAll() {
+  try { const s = localStorage.getItem('wfa_fab_state'); if (s) { const p = JSON.parse(s); state.slots = p.slots || {}; } } catch(e) {}
+  try { const s = localStorage.getItem('wfa_fab_staff'); if (s) STAFF = JSON.parse(s); } catch(e) {}
+}
+
+// ── Staff helpers ─────────────────────────────────────────────────────────────
+function staffById(id) { return STAFF.find(s => s.id === id); }
+function mkInitials(name) {
+  const p = name.trim().split(/\s+/);
+  return p.length === 1 ? name.slice(0,2).toUpperCase() : (p[0][0] + p[p.length-1][0]).toUpperCase();
+}
+function contrastColor(hex) {
+  if (!hex || hex.length < 7) return '#fff';
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.55 ? '#1a1a1a' : '#ffffff';
+}
+function staffAssignCount(sid) {
+  let n = 0;
+  const w = getWeek();
+  GROUPS.forEach(g => w[g.id].forEach(z => z.forEach(s => { if (s === sid) n++; })));
+  return n;
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function changeWeek(dir) { state.weekOffset += dir; render(); }
+function goToday()       { state.weekOffset = 0; render(); }
+
+function copyToNext() {
+  const next = state.weekOffset + 1;
+  const nxt = state.slots[next];
+  const hasData = nxt && GROUPS.some(g => nxt[g.id]?.some(z => z.some(x => x)));
+  if (hasData && !confirm('Next week already has assignments — replace with a copy of this week?')) return;
+  const cur = getWeek();
+  state.slots[next] = { lower: cur.lower.map(z=>[...z]), upper: cur.upper.map(z=>[...z]) };
+  state.weekOffset = next;
+  save(); render();
+}
+
+function resetWeek() {
+  if (!confirm('Clear all assignments for this week?')) return;
+  state.slots[state.weekOffset] = emptyWeek();
+  save(); render();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render() {
+  document.getElementById('weekLabel').textContent = weekLabel();
+  renderStaff();
+  renderGrid();
+}
+
+function renderStaff() {
+  const el = document.getElementById('staffList');
+  if (!STAFF.length) {
+    el.innerHTML = '<div style="font-size:11px;color:#94a3b8;padding:4px 0">No staff yet.</div>';
+    return;
+  }
+  const draggingId = ptrDrag?.info?.staffId;
+  el.innerHTML = STAFF.map(s => {
+    const n = staffAssignCount(s.id);
+    return `<div class="staff-chip${draggingId===s.id?' dragging':''}" onpointerdown="onStaffDown(event,'${s.id}')">
+      <div class="s-avatar" style="background:${s.col};color:${contrastColor(s.col)}">${s.init}</div>
+      <span class="s-name">${s.name}</span>
+      ${n > 0 ? `<span class="s-count">${n}×</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderGrid() {
+  const el = document.getElementById('gridArea');
+  let html = '';
+  GROUPS.forEach(g => {
+    html += `<div class="group-block">
+      <div class="group-hd">
+        <span class="group-hd-title">${g.label}</span>
+        <span class="group-hd-time">${g.time}</span>
+        <span class="group-hd-years">${g.years}</span>
+      </div>
+      <table class="rota-table">
+        <thead><tr>
+          <th></th>
+          ${DAYS.map((d,i)=>`<th class="${isToday(i)?'today':''}">${d.slice(0,3)}<br><span style="font-size:9px;font-weight:normal;opacity:.7">${dayDate(i)}</span></th>`).join('')}
+        </tr></thead>
+        <tbody>`;
+    ZONES.forEach((zone, zi) => {
+      html += `<tr><td>${zone}</td>`;
+      DAYS.forEach((_, di) => {
+        const sid  = getSlot(g.id, zi, di);
+        const s    = sid ? staffById(sid) : null;
+        const over = isDragging ? 'drop-ready' : '';
+        html += `<td class="${over}" data-gid="${g.id}" data-zi="${zi}" data-di="${di}">`;
+        if (s) {
+          html += `<div class="assign-chip" style="background:${s.col}22;border:1.5px solid ${s.col}55">
+            <div class="a-avatar" style="background:${s.col};color:${contrastColor(s.col)}">${s.init}</div>
+            <span class="a-name" style="color:${s.col}">${s.name}</span>
+            <button class="a-del" onclick="clearSlot('${g.id}',${zi},${di})">×</button>
+          </div>`;
+        } else {
+          html += `<div class="empty-hint">＋</div>`;
+        }
+        html += `</td>`;
+      });
+      html += `</tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  el.innerHTML = html;
+}
+
+function dayDate(dayIdx) {
+  const d = weekMonday(); d.setDate(d.getDate() + dayIdx);
+  return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+function openModal() {
+  renderModal();
+  document.getElementById('staffModal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('staffModal').classList.remove('open');
+  save(); render();
+}
+function renderModal() {
+  document.getElementById('modalRows').innerHTML = STAFF.length
+    ? STAFF.map((s,i) => `
+      <div class="modal-row">
+        <div class="s-avatar" style="background:${s.col};color:${contrastColor(s.col)};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;flex-shrink:0">${s.init}</div>
+        <input class="nm" value="${s.name}" onchange="STAFF[${i}].name=this.value;STAFF[${i}].init=mkInitials(this.value);renderModal()">
+        <input class="init" value="${s.init}" maxlength="3" onchange="STAFF[${i}].init=this.value.toUpperCase();renderModal()">
+        <div class="colour-dot" style="background:${s.col}" title="Click to change colour" onclick="cycleCol(${i})"></div>
+        <button class="del-btn" onclick="STAFF.splice(${i},1);renderModal()">×</button>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:#94a3b8;padding:6px 0">No staff added yet.</div>';
+}
+function cycleCol(i) {
+  STAFF[i].col = PALETTE[(PALETTE.indexOf(STAFF[i].col)+1) % PALETTE.length];
+  renderModal();
+}
+function addStaff() {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) return;
+  STAFF.push({ id: name.toLowerCase().replace(/[^a-z0-9]+/g,'_')+'_'+Date.now(), name, init: mkInitials(name), col: PALETTE[STAFF.length % PALETTE.length] });
+  document.getElementById('newName').value = '';
+  renderModal();
+}
+
+// ── Pointer drag ──────────────────────────────────────────────────────────────
+let ptrDrag = null;
+
+function ptrCellAt(x, y) {
+  for (const el of document.elementsFromPoint(x, y)) {
+    if (el.dataset.gid && el.dataset.zi !== undefined && el.dataset.di !== undefined)
+      return { gid: el.dataset.gid, zi: +el.dataset.zi, di: +el.dataset.di, el };
+  }
+  return null;
+}
+
+let ptrLastHL = null;
+function ptrHL(el) {
+  if (ptrLastHL) { ptrLastHL.classList.remove('drop-over'); ptrLastHL = null; }
+  if (el) { el.classList.add('drop-over'); ptrLastHL = el; }
+}
+
+function ptrGhostCreate(src) {
+  document.getElementById('drag-ghost')?.remove();
+  const el = src.cloneNode(true);
+  el.id = 'drag-ghost';
+  el.style.cssText = `position:fixed;z-index:9999;pointer-events:none;opacity:.85;box-shadow:0 6px 20px rgba(0,0,0,.25);width:${src.offsetWidth}px;margin:0;top:0;left:0;will-change:transform;border-radius:5px;`;
+  document.body.appendChild(el);
+}
+function ptrGhostMove(x, y) {
+  const el = document.getElementById('drag-ghost');
+  if (el) el.style.transform = `translate(${x+14}px,${y-18}px)`;
+}
+function ptrGhostRemove() { document.getElementById('drag-ghost')?.remove(); }
+
+document.addEventListener('pointermove', e => {
+  if (!ptrDrag) return;
+  if (!ptrDrag.active) {
+    if (Math.hypot(e.clientX-ptrDrag.startX, e.clientY-ptrDrag.startY) < 8) return;
+    ptrDrag.active = true;
+    isDragging = true;
+    ptrGhostCreate(ptrDrag.sourceEl);
+    render();
+  }
+  ptrGhostMove(e.clientX, e.clientY);
+  ptrHL(ptrCellAt(e.clientX, e.clientY)?.el || null);
+});
+
+document.addEventListener('pointerup', e => {
+  if (!ptrDrag) return;
+  if (ptrDrag.active) {
+    const cell = ptrCellAt(e.clientX, e.clientY);
+    if (cell) setSlot(cell.gid, cell.zi, cell.di, ptrDrag.info.staffId);
+  }
+  ptrGhostRemove(); ptrHL(null);
+  ptrDrag = null; isDragging = false;
+  render();
+});
+
+document.addEventListener('pointercancel', () => {
+  ptrGhostRemove(); ptrHL(null);
+  ptrDrag = null; isDragging = false;
+  render();
+});
+
+function onStaffDown(e, staffId) {
+  if (e.target.closest('button')) return;
+  e.preventDefault();
+  ptrDrag = { info:{staffId}, sourceEl:e.currentTarget, startX:e.clientX, startY:e.clientY, active:false };
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadAll();
+render();
+</script>
+</body>
+</html>
