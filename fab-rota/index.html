@@ -210,13 +210,13 @@ function buildStaff(rows) {
 
 function buildWeeks(rows) {
   return rows
-    .filter(r => r.WeekStart && r.Term && r.Week)
+    .filter(r => r.StartDate && r.Term && r.Week)
     .map(r => {
-      const start = parseDate(r.WeekStart.trim());
+      const start = parseDate(r.StartDate.trim());
       if (!start || isNaN(start)) return null;
-      const term  = r.Term.trim();
-      const week  = r.Week.trim();
-      return { start, term, week, label: `${term}${week}` };
+      const term  = String(r.Term).trim();
+      const week  = String(r.Week).trim();
+      return { start, term, week, label: `T${term}W${week}` };
     })
     .filter(Boolean)
     .sort((a, b) => a.start - b.start);
