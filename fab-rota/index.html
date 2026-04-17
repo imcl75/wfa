@@ -17,11 +17,15 @@
     .week-bar { background: white; border-bottom: 1px solid #e2e8f0; padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .nav-btn { background: #f0f8fd; border: 1.5px solid #bae0f5; border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: #1798d3; line-height: 1; }
     .nav-btn:hover { background: #dbeafe; }
-    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 15px; color: #1798d3; min-width: 190px; text-align: center; }
+    .nav-btn:disabled { opacity: .35; cursor: default; }
+    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 15px; color: #1798d3; min-width: 220px; text-align: center; }
     .action-btn { background: white; border: 1.5px solid #cbd5e1; border-radius: 5px; padding: 5px 11px; font-size: 12px; cursor: pointer; color: #475569; }
     .action-btn:hover { background: #f8fafc; border-color: #94a3b8; }
     .action-btn.danger { color: #dc2626; border-color: #fca5a5; }
     .action-btn.danger:hover { background: #fef2f2; }
+    .sheet-status { font-size: 10px; color: #94a3b8; margin-left: auto; }
+    .sheet-status.ok { color: #22c55e; }
+    .sheet-status.err { color: #f97316; }
 
     .app-body { display: flex; gap: 10px; padding: 10px; max-width: 1500px; margin: 0 auto; align-items: flex-start; }
 
@@ -98,13 +102,14 @@
 </div>
 
 <div class="week-bar">
-  <button class="nav-btn" onclick="changeWeek(-1)">‹</button>
+  <button class="nav-btn" id="btnPrev" onclick="changeWeek(-1)">‹</button>
   <div class="week-label" id="weekLabel">–</div>
-  <button class="nav-btn" onclick="changeWeek(1)">›</button>
+  <button class="nav-btn" id="btnNext" onclick="changeWeek(1)">›</button>
   <button class="action-btn" onclick="goToday()">This week</button>
   <button class="action-btn" onclick="copyToNext()">Copy → next week</button>
   <button class="action-btn" onclick="setAsTerm()" style="border-color:#a3e635;color:#4d7c0f">Set as term rota</button>
   <button class="action-btn danger" onclick="resetToTerm()">Reset to term rota</button>
+  <span class="sheet-status" id="sheetStatus">Loading…</span>
 </div>
 
 <div class="app-body">
@@ -121,7 +126,7 @@
 <div class="modal-bg" id="staffModal">
   <div class="modal">
     <h3>Staff List</h3>
-    <p class="modal-hint">Click a colour dot to cycle colours. Initials auto-fill but can be overridden.</p>
+    <p class="modal-hint" id="modalHint">Click a colour dot to cycle colours. Staff loads from the school Google Sheet — add temporary staff below if needed.</p>
     <div id="modalRows"></div>
     <div class="modal-add">
       <input id="newName" placeholder="Name" oninput="autoInitials()" onkeydown="if(event.key==='Enter')addStaff()">
@@ -136,7 +141,6 @@
 // ── Config ────────────────────────────────────────────────────────────────────
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 
-// zones:null means the group uses whole space (no zone breakdown)
 const GROUPS = [
   { id:'lower', label:'Y1, Y2, Y3', time:'10:30 – 10:45', zones: null },
   { id:'upper', label:'Y4, Y5, Y6', time:'10:45 – 11:00', zones: ['MUGA','Garden Room (+Bell)','Hard Standing','Trim Trail'] },
@@ -144,31 +148,124 @@ const GROUPS = [
 
 const PALETTE = ['#1798d3','#f97316','#22c55e','#e879f9','#64748b'];
 
+const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
+const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let STAFF        = [];
-let termTemplate = null; // saved term rota — null means no template set yet
-let state        = { weekOffset: 0, slots: {} };
+let WEEKS        = []; // [{ start:Date, term:'T1', week:'W1', label:'T1W1' }, ...]
+let termTemplate = null;
+let state        = { weekIdx: 0, slots: {} };
 let isDragging   = false;
 
+// ── CSV / Sheet helpers ───────────────────────────────────────────────────────
+function csvToObjects(csv) {
+  const lines = csv.trim().split('\n');
+  if (lines.length < 2) return [];
+  function parseRow(r) {
+    const cells = []; let cur = '', inQ = false;
+    for (let i = 0; i < r.length; i++) {
+      const c = r[i];
+      if (c === '"') { if (inQ && r[i+1]==='"') { cur+='"'; i++; } else inQ=!inQ; }
+      else if (c === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cells.push(cur.trim());
+    return cells;
+  }
+  const headers = parseRow(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseRow(line);
+    const obj = {};
+    headers.forEach((h, i) => { if (h) obj[h] = vals[i] !== undefined ? vals[i] : ''; });
+    return obj;
+  }).filter(o => Object.values(o).some(v => v));
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  return null;
+}
+
+function buildStaff(rows) {
+  const colourById = {};
+  STAFF.forEach(s => { colourById[s.id] = s.col; });
+
+  return rows
+    .filter(r => r.Name && r.Name.trim())
+    .map((r, i) => {
+      const name = r.Name.trim();
+      const init = (r.Initials || '').trim() || mkInitials(name);
+      const id   = name.toLowerCase().replace(/[^a-z0-9]+/g,'_');
+      let col    = (r.Colour || '').trim();
+      if (!col || !col.startsWith('#')) col = PALETTE[i % PALETTE.length];
+      if (colourById[id]) col = colourById[id]; // preserve local colour override
+      return { id, name, init, col };
+    });
+}
+
+function buildWeeks(rows) {
+  return rows
+    .filter(r => r.WeekStart && r.Term && r.Week)
+    .map(r => {
+      const start = parseDate(r.WeekStart.trim());
+      if (!start || isNaN(start)) return null;
+      const term  = r.Term.trim();
+      const week  = r.Week.trim();
+      return { start, term, week, label: `${term}${week}` };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.start - b.start);
+}
+
 // ── Week helpers ──────────────────────────────────────────────────────────────
+function currentWeekIdx() {
+  if (!WEEKS.length) return 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i = 0; i < WEEKS.length; i++) {
+    const end = new Date(WEEKS[i].start); end.setDate(end.getDate() + 6);
+    if (today >= WEEKS[i].start && today <= end) return i;
+  }
+  // Return nearest future week, or last if all past
+  for (let i = 0; i < WEEKS.length; i++) {
+    if (WEEKS[i].start > today) return i;
+  }
+  return WEEKS.length - 1;
+}
+
 function currentMonday() {
   const d = new Date(); d.setHours(0,0,0,0);
   const day = d.getDay();
   d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
   return d;
 }
+
 function weekMonday() {
-  const d = currentMonday(); d.setDate(d.getDate() + state.weekOffset * 7); return d;
+  if (WEEKS.length && WEEKS[state.weekIdx]) return new Date(WEEKS[state.weekIdx].start);
+  const d = currentMonday(); d.setDate(d.getDate() + state.weekIdx * 7); return d;
 }
+
 function weekLabel() {
+  if (WEEKS.length && WEEKS[state.weekIdx]) {
+    const w = WEEKS[state.weekIdx];
+    const end = new Date(w.start); end.setDate(w.start.getDate() + 4);
+    const fmt = x => x.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+    return `${w.label} · ${fmt(w.start)} – ${fmt(end)}`;
+  }
   const d = weekMonday(), end = new Date(d); end.setDate(d.getDate() + 4);
   const fmt = x => x.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
   return `${fmt(d)} – ${fmt(end)}`;
 }
+
 function dayDate(di) {
   const d = weekMonday(); d.setDate(d.getDate() + di);
   return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
 }
+
 function isToday(di) {
   const d = weekMonday(); d.setDate(d.getDate() + di);
   const t = new Date(); t.setHours(0,0,0,0);
@@ -185,6 +282,7 @@ function emptyWeek() {
   });
   return w;
 }
+
 function deepCopyWeek(src) {
   const w = {};
   GROUPS.forEach(g => {
@@ -196,11 +294,11 @@ function deepCopyWeek(src) {
 }
 
 function getWeek() {
-  if (!state.slots[state.weekOffset]) {
-    state.slots[state.weekOffset] = termTemplate ? deepCopyWeek(termTemplate) : emptyWeek();
+  const key = state.weekIdx;
+  if (!state.slots[key]) {
+    state.slots[key] = termTemplate ? deepCopyWeek(termTemplate) : emptyWeek();
   }
-  // ensure structure is valid (e.g. after config change)
-  const w = state.slots[state.weekOffset];
+  const w = state.slots[key];
   GROUPS.forEach(g => {
     if (!w[g.id]) w[g.id] = Array.from({length: numZones(g)}, () => Array.from({length: 5}, () => []));
     for (let zi = 0; zi < numZones(g); zi++) {
@@ -213,7 +311,7 @@ function getWeek() {
   return w;
 }
 
-function getSlot(gid, zi, di)       { return getWeek()[gid][zi][di]; }
+function getSlot(gid, zi, di)        { return getWeek()[gid][zi][di]; }
 function addToSlot(gid, zi, di, sid) {
   const arr = getSlot(gid, zi, di);
   if (!arr.includes(sid)) { arr.push(sid); save(); }
@@ -227,25 +325,37 @@ function removeFromSlot(gid, zi, di, sid) {
 function save() {
   localStorage.setItem('wfa_fab_state', JSON.stringify(state));
   localStorage.setItem('wfa_fab_staff', JSON.stringify(STAFF));
-  localStorage.setItem('wfa_fab_term', JSON.stringify(termTemplate));
+  localStorage.setItem('wfa_fab_term',  JSON.stringify(termTemplate));
 }
+
 function loadAll() {
-  try { const s = localStorage.getItem('wfa_fab_state'); if (s) { const p = JSON.parse(s); state.slots = p.slots || {}; } } catch(e) {}
+  try {
+    const s = localStorage.getItem('wfa_fab_state');
+    if (s) {
+      const p = JSON.parse(s);
+      state.slots   = p.slots || {};
+      // Migrate from old weekOffset key if present
+      state.weekIdx = p.weekIdx !== undefined ? p.weekIdx : (p.weekOffset || 0);
+    }
+  } catch(e) {}
   try { const s = localStorage.getItem('wfa_fab_staff'); if (s) STAFF = JSON.parse(s); } catch(e) {}
   try { const s = localStorage.getItem('wfa_fab_term');  if (s) termTemplate = JSON.parse(s); } catch(e) {}
 }
 
 // ── Staff helpers ─────────────────────────────────────────────────────────────
 function staffById(id) { return STAFF.find(s => s.id === id); }
+
 function mkInitials(name) {
   const p = name.trim().split(/\s+/);
   return p.length === 1 ? name.slice(0,2).toUpperCase() : (p[0][0]+p[p.length-1][0]).toUpperCase();
 }
+
 function contrastColor(hex) {
   if (!hex || hex.length < 7) return '#fff';
   const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
   return (0.299*r+0.587*g+0.114*b)/255 > 0.55 ? '#1a1a1a' : '#ffffff';
 }
+
 function staffAssignCount(sid) {
   const w = getWeek(); let n = 0;
   GROUPS.forEach(g => {
@@ -257,11 +367,23 @@ function staffAssignCount(sid) {
 }
 
 // ── Navigation ────────────────────────────────────────────────────────────────
-function changeWeek(dir) { state.weekOffset += dir; render(); }
-function goToday()       { state.weekOffset = 0; render(); }
+function changeWeek(dir) {
+  if (WEEKS.length) {
+    state.weekIdx = Math.max(0, Math.min(WEEKS.length - 1, state.weekIdx + dir));
+  } else {
+    state.weekIdx += dir;
+  }
+  save(); render();
+}
+
+function goToday() {
+  state.weekIdx = WEEKS.length ? currentWeekIdx() : 0;
+  save(); render();
+}
 
 function copyToNext() {
-  const next = state.weekOffset + 1;
+  const next = state.weekIdx + 1;
+  if (WEEKS.length && next >= WEEKS.length) { alert('No further weeks in this term.'); return; }
   const nxt = state.slots[next];
   const hasData = nxt && GROUPS.some(g => {
     for (let zi=0; zi<numZones(g); zi++)
@@ -278,7 +400,7 @@ function copyToNext() {
     );
   });
   state.slots[next] = copy;
-  state.weekOffset = next;
+  state.weekIdx = next;
   save(); render();
 }
 
@@ -288,18 +410,26 @@ function setAsTerm() {
   save();
   alert('Term rota saved. New weeks will now start with this layout.');
 }
+
 function resetToTerm() {
   const msg = termTemplate
     ? 'Reset this week to the term rota? Any changes this week will be lost.'
     : 'No term rota set yet. Clear all assignments for this week?';
   if (!confirm(msg)) return;
-  state.slots[state.weekOffset] = termTemplate ? deepCopyWeek(termTemplate) : emptyWeek();
+  state.slots[state.weekIdx] = termTemplate ? deepCopyWeek(termTemplate) : emptyWeek();
   save(); render();
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function render() {
   document.getElementById('weekLabel').textContent = weekLabel();
+  if (WEEKS.length) {
+    document.getElementById('btnPrev').disabled = state.weekIdx <= 0;
+    document.getElementById('btnNext').disabled = state.weekIdx >= WEEKS.length - 1;
+  } else {
+    document.getElementById('btnPrev').disabled = false;
+    document.getElementById('btnNext').disabled = false;
+  }
   renderStaff();
   renderGrid();
 }
@@ -307,7 +437,7 @@ function render() {
 function renderStaff() {
   const el = document.getElementById('staffList');
   if (!STAFF.length) {
-    el.innerHTML = '<div style="font-size:11px;color:#94a3b8;padding:4px 0">No staff yet — click Edit to add.</div>';
+    el.innerHTML = '<div style="font-size:11px;color:#94a3b8;padding:4px 0">No staff — loading from sheet…</div>';
     return;
   }
   el.innerHTML = STAFF.map(s => {
@@ -352,7 +482,6 @@ function renderGroup(g) {
       tbody += `</tr>`;
     });
   } else {
-    // No zones — single row, whole space
     tbody += `<tr>`;
     for (let di=0; di<5; di++) {
       const ids = getSlot(g.id, 0, di);
@@ -399,17 +528,19 @@ function renderModal() {
         <div class="colour-dot" style="background:${s.col}" title="Click to change colour" onclick="cycleCol(${i})"></div>
         <button class="del-btn" onclick="STAFF.splice(${i},1);renderModal()">×</button>
       </div>`).join('')
-    : '<div style="font-size:12px;color:#94a3b8;padding:6px 0">No staff added yet.</div>';
+    : '<div style="font-size:12px;color:#94a3b8;padding:6px 0">No staff loaded yet.</div>';
 }
 
 function cycleCol(i) {
   STAFF[i].col = PALETTE[(PALETTE.indexOf(STAFF[i].col)+1) % PALETTE.length];
   renderModal();
 }
+
 function autoInitials() {
   const name = document.getElementById('newName').value.trim();
   document.getElementById('newInit').value = mkInitials(name);
 }
+
 function addStaff() {
   const name = document.getElementById('newName').value.trim();
   if (!name) return;
@@ -487,8 +618,42 @@ function onStaffDown(e, staffId) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-loadAll();
-render();
+async function init() {
+  loadAll();
+  render();
+
+  const status = document.getElementById('sheetStatus');
+  try {
+    const [staffCsv, termsCsv] = await Promise.all([
+      fetch(SHEET_BASE + 'Staff').then(r => { if (!r.ok) throw new Error('Staff'); return r.text(); }),
+      fetch(SHEET_BASE + 'Terms').then(r => { if (!r.ok) throw new Error('Terms'); return r.text(); }),
+    ]);
+
+    const sheetStaff = buildStaff(csvToObjects(staffCsv));
+    const sheetWeeks = buildWeeks(csvToObjects(termsCsv));
+
+    if (sheetStaff.length) STAFF = sheetStaff;
+    if (sheetWeeks.length) {
+      WEEKS = sheetWeeks;
+      const todayIdx = currentWeekIdx();
+      // Only jump to today's week on first load (weekIdx was 0 and not already in a term week)
+      if (state.weekIdx === 0) state.weekIdx = todayIdx;
+      // Clamp in case previously saved index is now out of range
+      state.weekIdx = Math.max(0, Math.min(WEEKS.length - 1, state.weekIdx));
+    }
+
+    save();
+    status.textContent = `Sheet loaded · ${STAFF.length} staff · ${WEEKS.length} weeks`;
+    status.className = 'sheet-status ok';
+  } catch(e) {
+    console.warn('Sheet load failed, using cached data', e);
+    status.textContent = STAFF.length ? 'Using cached data (offline)' : 'Sheet unavailable — add staff manually';
+    status.className = 'sheet-status err';
+  }
+  render();
+}
+
+init();
 </script>
 </body>
 </html>
