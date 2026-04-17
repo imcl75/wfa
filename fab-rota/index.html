@@ -150,6 +150,7 @@ const PALETTE = ['#1798d3','#f97316','#22c55e','#e879f9','#64748b'];
 
 const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
 const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
+const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbxRdjTeRZGHw2ZUI8J9dtv1H41B4DKxvR7IDGVjzz_yjN_0dz4ZLn_ucQ5jtqMGCBVMgw/exec';
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let STAFF        = [];
@@ -343,6 +344,9 @@ function save() {
   localStorage.setItem('wfa_fab_state', JSON.stringify(state));
   localStorage.setItem('wfa_fab_staff', JSON.stringify(STAFF));
   localStorage.setItem('wfa_fab_term',  JSON.stringify(termTemplate));
+  const staffColours = {};
+  STAFF.forEach(s => { staffColours[s.id] = s.col; });
+  fetch(SYNC_URL, { method:'POST', body: JSON.stringify({ state, termTemplate, staffColours }) }).catch(() => {});
 }
 
 function loadAll() {
@@ -641,9 +645,10 @@ async function init() {
 
   const status = document.getElementById('sheetStatus');
   try {
-    const [staffCsv, termsCsv] = await Promise.all([
+    const [staffCsv, termsCsv, remoteRaw] = await Promise.all([
       fetch(SHEET_BASE + 'Staff').then(r => { if (!r.ok) throw new Error('Staff'); return r.text(); }),
       fetch(SHEET_BASE + 'Terms').then(r => { if (!r.ok) throw new Error('Terms'); return r.text(); }),
+      fetch(SYNC_URL).then(r => r.text()).catch(() => null),
     ]);
 
     const sheetStaff = buildStaff(csvToObjects(staffCsv));
@@ -652,14 +657,28 @@ async function init() {
     if (sheetStaff.length) STAFF = sheetStaff;
     if (sheetWeeks.length) {
       WEEKS = sheetWeeks;
-      const todayIdx = currentWeekIdx();
-      // Only jump to today's week on first load (weekIdx was 0 and not already in a term week)
-      if (state.weekIdx === 0) state.weekIdx = todayIdx;
-      // Clamp in case previously saved index is now out of range
+      if (state.weekIdx === 0) state.weekIdx = currentWeekIdx();
       state.weekIdx = Math.max(0, Math.min(WEEKS.length - 1, state.weekIdx));
     }
 
-    save();
+    // Apply remote state (overrides localStorage)
+    if (remoteRaw && remoteRaw !== '{}') {
+      try {
+        const remote = JSON.parse(remoteRaw);
+        if (remote.state) {
+          state.slots   = remote.state.slots   ?? state.slots;
+          state.weekIdx = remote.state.weekIdx  ?? state.weekIdx;
+        }
+        if (remote.termTemplate !== undefined) termTemplate = remote.termTemplate;
+        if (remote.staffColours) {
+          STAFF = STAFF.map(s => ({ ...s, col: remote.staffColours[s.id] || s.col }));
+        }
+      } catch(e) {}
+    }
+
+    localStorage.setItem('wfa_fab_state', JSON.stringify(state));
+    localStorage.setItem('wfa_fab_staff', JSON.stringify(STAFF));
+    localStorage.setItem('wfa_fab_term',  JSON.stringify(termTemplate));
     status.textContent = `Sheet loaded · ${STAFF.length} staff · ${WEEKS.length} weeks`;
     status.className = 'sheet-status ok';
   } catch(e) {
