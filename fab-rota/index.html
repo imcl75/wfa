@@ -103,7 +103,8 @@
   <button class="nav-btn" onclick="changeWeek(1)">›</button>
   <button class="action-btn" onclick="goToday()">This week</button>
   <button class="action-btn" onclick="copyToNext()">Copy → next week</button>
-  <button class="action-btn danger" onclick="resetWeek()">Reset week</button>
+  <button class="action-btn" onclick="setAsTerm()" style="border-color:#a3e635;color:#4d7c0f">Set as term rota</button>
+  <button class="action-btn danger" onclick="resetToTerm()">Reset to term rota</button>
 </div>
 
 <div class="app-body">
@@ -144,9 +145,10 @@ const GROUPS = [
 const PALETTE = ['#1798d3','#f97316','#22c55e','#e879f9','#64748b'];
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let STAFF = [];
-let state  = { weekOffset: 0, slots: {} };
-let isDragging = false;
+let STAFF        = [];
+let termTemplate = null; // saved term rota — null means no template set yet
+let state        = { weekOffset: 0, slots: {} };
+let isDragging   = false;
 
 // ── Week helpers ──────────────────────────────────────────────────────────────
 function currentMonday() {
@@ -183,9 +185,20 @@ function emptyWeek() {
   });
   return w;
 }
+function deepCopyWeek(src) {
+  const w = {};
+  GROUPS.forEach(g => {
+    w[g.id] = Array.from({length: numZones(g)}, (_,zi) =>
+      Array.from({length: 5}, (_,di) => [...((src[g.id]?.[zi]?.[di]) || [])])
+    );
+  });
+  return w;
+}
 
 function getWeek() {
-  if (!state.slots[state.weekOffset]) state.slots[state.weekOffset] = emptyWeek();
+  if (!state.slots[state.weekOffset]) {
+    state.slots[state.weekOffset] = termTemplate ? deepCopyWeek(termTemplate) : emptyWeek();
+  }
   // ensure structure is valid (e.g. after config change)
   const w = state.slots[state.weekOffset];
   GROUPS.forEach(g => {
@@ -214,10 +227,12 @@ function removeFromSlot(gid, zi, di, sid) {
 function save() {
   localStorage.setItem('wfa_fab_state', JSON.stringify(state));
   localStorage.setItem('wfa_fab_staff', JSON.stringify(STAFF));
+  localStorage.setItem('wfa_fab_term', JSON.stringify(termTemplate));
 }
 function loadAll() {
   try { const s = localStorage.getItem('wfa_fab_state'); if (s) { const p = JSON.parse(s); state.slots = p.slots || {}; } } catch(e) {}
   try { const s = localStorage.getItem('wfa_fab_staff'); if (s) STAFF = JSON.parse(s); } catch(e) {}
+  try { const s = localStorage.getItem('wfa_fab_term');  if (s) termTemplate = JSON.parse(s); } catch(e) {}
 }
 
 // ── Staff helpers ─────────────────────────────────────────────────────────────
@@ -267,9 +282,18 @@ function copyToNext() {
   save(); render();
 }
 
-function resetWeek() {
-  if (!confirm('Clear all assignments for this week?')) return;
-  state.slots[state.weekOffset] = emptyWeek();
+function setAsTerm() {
+  if (!confirm('Save this week\'s rota as the term default? New weeks will auto-fill from it.')) return;
+  termTemplate = deepCopyWeek(getWeek());
+  save();
+  alert('Term rota saved. New weeks will now start with this layout.');
+}
+function resetToTerm() {
+  const msg = termTemplate
+    ? 'Reset this week to the term rota? Any changes this week will be lost.'
+    : 'No term rota set yet. Clear all assignments for this week?';
+  if (!confirm(msg)) return;
+  state.slots[state.weekOffset] = termTemplate ? deepCopyWeek(termTemplate) : emptyWeek();
   save(); render();
 }
 
