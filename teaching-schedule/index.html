@@ -231,6 +231,35 @@
     .chip-note::placeholder { color: #cbd5e1; font-style: italic; }
     .chip-note.hidden { display: none; }
     .cell-chip:hover { box-shadow: 0 3px 8px rgba(15,23,42,.08); }
+
+    /* ── Non-school day ────────────────────────────────────────────── */
+    .non-school-day { background: #f1f5f9 !important; position: relative; }
+    .non-school-day .session-label,
+    .non-school-day .session-time { color: #94a3b8; }
+    .non-school-day .view-cell { background: #f1f5f9 !important; min-height: 0 !important; }
+    .non-school-day .view-cell .drop-hint { display: none; }
+    .non-school-day .cell-chip { opacity: .3; pointer-events: none; }
+    .non-school-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      pointer-events: none; z-index: 5;
+    }
+    .non-school-badge {
+      background: #e2e8f0; color: #64748b; padding: 4px 10px; border-radius: 5px;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .non-school-week-banner {
+      background: #f1f5f9; text-align: center; padding: 40px 16px;
+    }
+    .non-school-week-banner span {
+      background: #e2e8f0; color: #64748b; padding: 8px 20px; border-radius: 8px;
+      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px;
+      text-transform: uppercase; letter-spacing: .04em; display: inline-block;
+    }
+    th.non-school-day { background: #f1f5f9 !important; }
+    th.non-school-day .day-hd-name,
+    th.non-school-day .day-hd-date { color: #94a3b8 !important; }
+    .sched-table .fixed-row td.non-school-day { background: #f1f5f9 !important; }
     .chip-resize {
       height: 4px; cursor: ns-resize; margin: 0 4px;
       border-radius: 0 0 4px 4px; opacity: .15; transition: opacity .1s;
@@ -443,6 +472,7 @@ let state = {
   activeView: 'master',
   schedule:  {}, // weekKey → view → day → sessionId → [{ subject, note, split }]
   afterSchoolEvents: {}, // 'YYYY-MM-DD' → [{ label, type, bg }]
+  nonSchoolDays: {}, // 'YYYY-MM-DD' → { label, type }
 };
 
 // ── Persistence ─────────────────────────────────────────────────────────────
@@ -711,10 +741,17 @@ function renderGrid() {
 }
 
 function renderHead() {
+  const mon = weekMonday();
   const el = document.getElementById('schedHead');
   el.innerHTML = `<tr>
     <th class="time-hd"></th>
-    ${DAYS.map((d, i) => `<th class="day-hd${isToday(i) ? ' today' : ''}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span></th>`).join('')}
+    ${DAYS.map((d, i) => {
+      const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + i);
+      const dk = dateKey(cellDate);
+      const nsd = state.nonSchoolDays[dk];
+      const cls = `day-hd${isToday(i) ? ' today' : ''}${nsd ? ' non-school-day' : ''}`;
+      return `<th class="${cls}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span></th>`;
+    }).join('')}
   </tr>`;
 }
 
@@ -722,27 +759,47 @@ function renderBody() {
   const el = document.getElementById('schedBody');
   const wk  = schedKey();
   const view = state.activeView;
+  const mon = weekMonday();
+
+  // Pre-compute non-school days for this week
+  const nsd = DAYS.map((_, di) => {
+    const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + di);
+    return state.nonSchoolDays[dateKey(cellDate)] || null;
+  });
+
   let html = '';
+
+  // If entire week is non-school, show a single banner
+  const allNonSchool = nsd.every(Boolean);
+  if (allNonSchool) {
+    const label = nsd[0] ? nsd[0].label : 'Non-school week';
+    html += `<tr><td class="non-school-week-banner" colspan="6"><span>${escHtml(label)}</span></td></tr>`;
+    el.innerHTML = html;
+    return;
+  }
 
   ROWS.forEach(row => {
     if (row.type === 'fixed') {
       html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
         <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
-        <td class="view-cell" colspan="5"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>
+        ${nsd.map((n, di) => n
+          ? `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`
+          : `<td class="view-cell" colspan="1"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`
+        ).join('')}
       </tr>`;
     } else {
-      html += `<tr class="session-row">
+      html += `<tr class="session-row${nsd.some(Boolean) ? ' non-school-row' : ''}">
         <td class="time-cell">
           <span class="session-label">${row.label}</span>
           ${row.time ? `<span class="session-time">${row.time}</span>` : ''}
         </td>
         ${DAYS.map((d, di) => {
           const day = d.toLowerCase();
+          const n = nsd[di];
           const items = getSlot(wk, view, day, row.id);
           // After-school: show sheet events as read-only chips
           let afterEvents = '';
           if (row.id === 'after') {
-            const mon = weekMonday();
             const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + di);
             const dk = dateKey(cellDate);
             const evts = state.afterSchoolEvents[dk] || [];
@@ -750,9 +807,12 @@ function renderBody() {
             const allEvts = [...recurring.map(r => ({ label: r.label, bg: r.bg })), ...evts.map(e => ({ label: e.label, bg: e.bg }))];
             afterEvents = allEvts.map(ev => `<div class="cell-chip" style="background:${ev.bg}25"><div class="chip-top"><span class="chip-colour" style="background:${ev.bg}"></span><span class="chip-name" style="color:${ev.bg}">${escHtml(ev.label)}</span></div></div>`).join('');
           }
-          return `<td class="view-cell" data-day="${day}" data-session="${row.id}">
+          const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
+          const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
+          return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
+            ${overlay}
             ${afterEvents}
-            ${items.length === 0 && !afterEvents ? '<div class="drop-hint">drop here</div>' : ''}
+            ${items.length === 0 && !afterEvents && !n ? '<div class="drop-hint">drop here</div>' : ''}
             ${items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('')}
           </td>`;
         }).join('')}
@@ -1063,7 +1123,7 @@ function dropTargetAt(x, y) {
   }
 
   const cell = el.closest('.view-cell');
-  if (!cell || !cell.dataset.day) return null;
+  if (!cell || !cell.dataset.day || cell.classList.contains('non-school-day')) return null;
   const chips = [...cell.querySelectorAll('.cell-chip:not(.dragging)')];
   let insertIdx = chips.length;
   for (let i = 0; i < chips.length; i++) {
@@ -1082,7 +1142,7 @@ function highlightCellAt(x, y) {
   const half = el.closest('.split-half');
   if (half) { half.classList.add('drop-over-half'); return; }
   const cell = el.closest('.view-cell');
-  if (cell) cell.classList.add('drop-over');
+  if (cell && !cell.classList.contains('non-school-day')) cell.classList.add('drop-over');
 }
 
 function clearDropHighlights() {
@@ -1264,6 +1324,27 @@ function buildRecurringAfterSchool(rows) {
     .filter(r => r.dayIdx !== undefined && r.label);
 }
 
+function buildNonSchoolDays(rows) {
+  const days = {};
+  rows.forEach(r => {
+    if (!r.StartDate || (r.Session && String(r.Session).trim())) return; // skip after-school events
+    const start = parseDate(r.StartDate.trim());
+    if (!start || isNaN(start)) return;
+    const end = parseDate((r.EndDate || r.StartDate).trim()) || start;
+    const label = r.Label || r.Type || 'Non-school day';
+    const type = String(r.Type || '').trim();
+    const cur = new Date(start);
+    while (cur <= end) {
+      const day = cur.getDay();
+      if (day >= 1 && day <= 5) { // only Mon–Fri
+        days[dateKey(cur)] = { label, type };
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return days;
+}
+
 // ── Data migration ──────────────────────────────────────────────────────────
 function migrateScheduleKeys() {
   // Convert old date-based keys (e.g. "2026-04-12") to T1W2 format
@@ -1303,14 +1384,19 @@ async function init() {
       fetch(SHEET_BASE + encodeURIComponent('SchoolEvents')).then(r => r.ok ? r.text() : '').catch(() => '')
     ]);
     WEEKS = buildWeeks(csvToObjects(termsText));
-    if (eventsText) state.afterSchoolEvents = buildAfterSchoolEvents(csvToObjects(eventsText));
+    if (eventsText) {
+      const evtRows = csvToObjects(eventsText);
+      state.afterSchoolEvents = buildAfterSchoolEvents(evtRows);
+      state.nonSchoolDays = buildNonSchoolDays(evtRows);
+    }
     if (schoolEventsText) recurringAfterSchool = buildRecurringAfterSchool(csvToObjects(schoolEventsText));
     migrateScheduleKeys();
     state.weekIdx = currentWeekIdx();
     document.getElementById('btnPrev').disabled = state.weekIdx === 0;
     document.getElementById('btnNext').disabled = state.weekIdx === WEEKS.length-1;
     document.getElementById('weekLabel').textContent = weekLabel();
-    document.getElementById('sheetStatus').textContent = '● Sheet connected';
+    const nsdCount = Object.keys(state.nonSchoolDays).length;
+    document.getElementById('sheetStatus').textContent = `● Sheet connected · ${nsdCount} non-school days`;
     document.getElementById('sheetStatus').className = 'sheet-status ok';
   } catch (err) {
     document.getElementById('weekLabel').textContent = weekLabel();
