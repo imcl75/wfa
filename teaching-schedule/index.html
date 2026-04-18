@@ -100,8 +100,13 @@
     .split-half { border-radius: 4px; padding: 5px 6px; font-size: 13px; font-weight: 700; min-height: 38px; }
     .split-half.drop-over-half { outline: 2px dashed #1798d3; outline-offset: -2px; background: #dbeafe !important; }
 
-    /* ── Staff views (TP/LP) ─────────────────────────────────────── */
-    /* No special layout needed — staff views render same as master */
+    /* ── Staff cell split (TP/LP views) ─────────────────────────── */
+    .staff-cell-split { display: grid; grid-template-columns: 2fr 3fr; gap: 0; border: 1px solid #e2e8f0; border-radius: 7px; overflow: hidden; background: white; min-height: 38px; }
+    .staff-class-col { display: flex; flex-direction: column; border-right: 2px solid #e2e8f0; }
+    .staff-class-chip { padding: 6px 8px; font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif; color: #1e293b; opacity: .55; display: flex; align-items: flex-start; gap: 5px; position: relative; flex: 1; }
+    .staff-class-chip + .staff-class-chip { border-top: 1px solid #f1f5f9; }
+    .staff-class-chip .class-tag { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: .04em; position: absolute; top: 3px; right: 4px; }
+    .staff-own-col { display: flex; flex-direction: column; padding: 2px; gap: 2px; }
     @media (max-width: 960px) {
       .app-body { flex-direction: column; }
       .subjects-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 180px; }
@@ -1003,7 +1008,10 @@ function renderBody() {
         ${DAYS.map((d, di) => {
           const day = d.toLowerCase();
           const n = nsd[di];
+          const isStaffView = (view !== 'master');
           const items = getSlot(wk, view, day, row.id);
+          const masterItems = isStaffView ? (getSlot(wk, 'master', day, row.id) || []) : [];
+          const ownItems = isStaffView ? items : [];
           // After-school: show sheet events as read-only chips
           let afterEvents = '';
           if (row.id === 'after') {
@@ -1030,9 +1038,16 @@ function renderBody() {
           const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
 
           // Build cell content
-          let cellContent = afterEvents;
-          if (items.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
-          cellContent += items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('');
+          let cellContent;
+          if (isStaffView && row.id !== 'after') {
+            cellContent = afterEvents;
+            if (masterItems.length === 0 && ownItems.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
+            else cellContent += renderStaffCell(masterItems, ownItems, wk, view, day, row.id);
+          } else {
+            cellContent = afterEvents;
+            if (items.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
+            cellContent += items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('');
+          }
 
           return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
             ${overlay}
@@ -1095,6 +1110,46 @@ function renderItem(item, wk, view, day, session, idx) {
       <textarea class="item-note chip-note${item.note ? '' : ' hidden'}" rows="1" placeholder="Note…" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.note||'')}</textarea>
     </div>
     <div class="chip-resize" style="background:${col}"></div>
+  </div>`;
+}
+
+// ── Staff cell split (TP/LP views) ───────────────────────────────────────────
+function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
+  // Left column: class context from master — read-only, flex-fills height
+  let leftHtml = '';
+  if (masterItems.length) {
+    leftHtml = masterItems.map(item => {
+      let label;
+      if (item.split) {
+        label = [item.subjectLeft, item.subjectRight].filter(Boolean).join(' \u00B7 ');
+      } else {
+        label = item.subject || '';
+      }
+      const col = item.split
+        ? (SUBJECT_COL[item.subjectLeft] || '#64748b')
+        : (SUBJECT_COL[item.subject] || '#64748b');
+      const dur = item.duration || 1;
+      return `<div class="staff-class-chip" style="background:${col}18;flex:${dur}">
+        <span class="chip-colour" style="background:${col}"></span>
+        <span style="flex:1;line-height:1.2">${escHtml(label)}</span>
+        <span class="class-tag">class</span>
+      </div>`;
+    }).join('');
+  } else {
+    leftHtml = `<div class="staff-class-chip" style="background:#f8fafc;flex:1"><span style="color:#cbd5e1;font-size:11px">--</span></div>`;
+  }
+
+  // Right column: own interventions — editable, droppable, stacked
+  let rightHtml = '';
+  if (ownItems.length) {
+    rightHtml = ownItems.map((item, idx) => renderItem(item, wk, view, day, session, idx)).join('');
+  } else {
+    rightHtml = '<div class="drop-hint">drop here</div>';
+  }
+
+  return `<div class="staff-cell-split">
+    <div class="staff-class-col">${leftHtml}</div>
+    <div class="staff-own-col">${rightHtml}</div>
   </div>`;
 }
 
@@ -1339,6 +1394,21 @@ function dropTargetAt(x, y) {
   ghost.style.display = 'flex';
   if (!el) return null;
 
+  // Check if dropping onto staff own column (TP/LP view)
+  const staffOwn = el.closest('.staff-own-col');
+  if (staffOwn) {
+    const cellEl = staffOwn.closest('.view-cell');
+    if (cellEl) {
+      const ownChips = [...staffOwn.querySelectorAll('.cell-chip:not(.dragging)')];
+      let insertIdx = ownChips.length;
+      for (let i = 0; i < ownChips.length; i++) {
+        const rect = ownChips[i].getBoundingClientRect();
+        if (y < rect.top + rect.height / 2) { insertIdx = i; break; }
+      }
+      return { day: cellEl.dataset.day, session: cellEl.dataset.session, insertIdx };
+    }
+  }
+
   // Check if dropping onto a split half (master view class swaps)
   const half = el.closest('.split-half');
   if (half) {
@@ -1366,6 +1436,8 @@ function highlightCellAt(x, y) {
   const el = document.elementFromPoint(x, y);
   ghost.style.display = 'flex';
   if (!el) return;
+  const staffOwn = el.closest('.staff-own-col');
+  if (staffOwn) { staffOwn.closest('.view-cell')?.classList.add('drop-over'); return; }
   const half = el.closest('.split-half');
   if (half) { half.classList.add('drop-over-half'); return; }
   const cell = el.closest('.view-cell');
