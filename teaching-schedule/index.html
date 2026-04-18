@@ -338,6 +338,7 @@
   <button class="action-btn" onclick="openSubjectModal()">Subject settings</button>
   <button class="action-btn danger" onclick="clearActiveView()">Clear view</button>
   <span class="sheet-status" id="sheetStatus">Loading…</span>
+  <span class="sheet-status" id="syncStatus"></span>
 </div>
 
 <div class="view-tabs" id="viewTabs"></div>
@@ -533,7 +534,9 @@ function loadLocal() {
 async function syncSave() {
   if (!SYNC_URL) return;
   const body = JSON.stringify({ action:'save', weekKey: schedKey(), data: state.schedule[schedKey()] || {} });
-  fetch(SYNC_URL, { method:'POST', body }).catch(() => {});
+  fetch(SYNC_URL, { method:'POST', body, headers:{'Content-Type':'text/plain'} })
+    .then(() => updateSyncStatus('ok'))
+    .catch(() => updateSyncStatus('err'));
 }
 
 async function syncLoad(weekKey) {
@@ -548,6 +551,30 @@ async function syncLoad(weekKey) {
       persistLocal();
     }
   } catch {}
+}
+
+async function syncPushAll() {
+  if (!SYNC_URL) return;
+  for (const weekKey of Object.keys(state.schedule)) {
+    const data = state.schedule[weekKey];
+    if (!data || !Object.keys(data).length) continue;
+    try {
+      await fetch(SYNC_URL, {
+        method:'POST',
+        body: JSON.stringify({ action:'save', weekKey, data }),
+        headers:{'Content-Type':'text/plain'}
+      });
+    } catch {}
+  }
+  updateSyncStatus('ok');
+}
+
+function updateSyncStatus(status) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  if (status === 'ok') { el.textContent = '● Synced'; el.className = 'sheet-status ok'; }
+  else if (status === 'err') { el.textContent = '● Sync failed'; el.className = 'sheet-status err'; }
+  else { el.textContent = '● Syncing…'; el.className = 'sheet-status'; }
 }
 
 // ── Sheet loading ────────────────────────────────────────────────────────────
@@ -1429,6 +1456,7 @@ async function init() {
 
   renderGrid();
   await syncLoad(schedKey());
+  syncPushAll(); // push all local weeks to cloud on first connection
 }
 
 init();
