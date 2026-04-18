@@ -897,7 +897,7 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'Speech & Language', col:'#0d9488' },
   ]},
   { label: 'Status', subjects: [
-    { name: 'In Class', col:'#1798d3', inClass: true },
+    { name: 'In Class', col:'#94a3b8', inClass: true },
   ]},
 ];
 
@@ -1152,12 +1152,18 @@ function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
   }
 
   // Interventions: full width below the bar
+  // In Class chips inherit colour from the class bar
+  const classCol = masterItems.length
+    ? (masterItems[0].split
+      ? (SUBJECT_COL[masterItems[0].subjectLeft] || '#64748b')
+      : (SUBJECT_COL[masterItems[0].subject] || '#64748b'))
+    : '#94a3b8';
   let rightHtml = '';
   if (ownItems.length) {
     rightHtml = ownItems.map((item, idx) => {
-      const col = SUBJECT_COL[item.subject] || '#64748b';
-      const light = col + '30';
       const isClass = !!item.inClass;
+      const col = isClass ? classCol : (SUBJECT_COL[item.subject] || '#64748b');
+      const light = col + '30';
       const cls = isClass ? 'cell-chip in-class-chip' : 'cell-chip';
       return `<div class="${cls}" style="background:${light}" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
         <div class="chip-top">
