@@ -508,6 +508,55 @@ let STAFF  = loadStaff();
 let SUBJECTS = loadSubjects();
 let WEEKS  = [];
 
+// ── Subject name migration ────────────────────────────────────────────────
+// Strips stray emojis from chip subject names so they match SUBJECT_COL
+function stripEmoji(s) { return s.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').replace(/\s+/g, ' ').trim(); }
+function migrateSubjectNames() {
+  // Fix subject definitions in SUBJECTS
+  let subjChanged = false;
+  SUBJECTS.forEach(g => {
+    g.subjects.forEach(s => {
+      const cleaned = stripEmoji(s.name);
+      if (cleaned !== s.name && cleaned) {
+        s.name = cleaned;
+        subjChanged = true;
+      }
+    });
+  });
+  if (subjChanged) saveSubjectsLocal();
+  // Rebuild SUBJECT_COL
+  for (const key of Object.keys(SUBJECT_COL)) delete SUBJECT_COL[key];
+  SUBJECTS.forEach(g => g.subjects.forEach(s => { SUBJECT_COL[s.name] = s.col; }));
+  // Also keep emoji versions mapped so existing chips still match
+  SUBJECT_GROUPS.forEach(g => g.subjects.forEach(s => { if (!SUBJECT_COL[s.name]) SUBJECT_COL[s.name] = s.col; }));
+  // Fix chips in schedule data
+  let schedChanged = false;
+  Object.values(state.schedule).forEach(week => {
+    Object.values(week || {}).forEach(view => {
+      if (!view || typeof view !== 'object') return;
+      Object.values(view).forEach(day => {
+        if (!day || typeof day !== 'object') return;
+        Object.values(day).forEach(slot => {
+          if (!Array.isArray(slot)) return;
+          slot.forEach(item => {
+            ['subject','subjectLeft','subjectRight'].forEach(key => {
+              if (item[key]) {
+                const cleaned = stripEmoji(item[key]);
+                if (cleaned !== item[key] && SUBJECT_COL[cleaned]) {
+                  item[key] = cleaned;
+                  schedChanged = true;
+                }
+              }
+            });
+          });
+        });
+      });
+    });
+  });
+  if (schedChanged) persistLocal();
+}
+migrateSubjectNames();
+
 let state = {
   weekIdx:   0,
   activeView: 'master',
