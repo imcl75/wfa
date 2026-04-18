@@ -878,6 +878,7 @@ const STAFF_SUBJECT_GROUPS = [
 
 function renderSidebar() {
   const el = document.getElementById('subjectList');
+  console.log('STAFF_SUBJECT_GROUPS labels:', STAFF_SUBJECT_GROUPS.map(g => g.label));
   let groups = SUBJECTS;
   if (state.activeView !== 'master') groups = [...SUBJECTS, ...STAFF_SUBJECT_GROUPS];
   el.innerHTML = groups.map(g => `
