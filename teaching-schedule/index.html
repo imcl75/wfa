@@ -248,14 +248,6 @@
       font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px;
       text-transform: uppercase; letter-spacing: .04em;
     }
-    .non-school-week-banner {
-      background: #f1f5f9; text-align: center; padding: 40px 16px;
-    }
-    .non-school-week-banner span {
-      background: #e2e8f0; color: #64748b; padding: 8px 20px; border-radius: 8px;
-      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px;
-      text-transform: uppercase; letter-spacing: .04em; display: inline-block;
-    }
     th.non-school-day { background: #f1f5f9 !important; }
     th.non-school-day .day-hd-name,
     th.non-school-day .day-hd-date { color: #94a3b8 !important; }
@@ -768,15 +760,6 @@ function renderBody() {
   });
 
   let html = '';
-
-  // If entire week is non-school, show a single banner
-  const allNonSchool = nsd.every(Boolean);
-  if (allNonSchool) {
-    const label = nsd[0] ? nsd[0].label : 'Non-school week';
-    html += `<tr><td class="non-school-week-banner" colspan="6"><span>${escHtml(label)}</span></td></tr>`;
-    el.innerHTML = html;
-    return;
-  }
 
   ROWS.forEach(row => {
     if (row.type === 'fixed') {
@@ -1324,19 +1307,25 @@ function buildRecurringAfterSchool(rows) {
     .filter(r => r.dayIdx !== undefined && r.label);
 }
 
+const BLOCKING_TYPES = new Set([
+  'Half Term', 'Christmas', 'Easter', 'Summer Holiday',
+  'INSET 1', 'INSET 2', 'INSET 3', 'INSET 4', 'INSET 5',
+  'Bank Holiday', 'CLF Conference',
+]);
+
 function buildNonSchoolDays(rows) {
   const days = {};
   rows.forEach(r => {
-    if (!r.StartDate || (r.Session && String(r.Session).trim())) return; // skip after-school events
+    if (!r.StartDate || (r.Session && String(r.Session).trim())) return;
+    const type = String(r.Type || '').trim();
+    if (!BLOCKING_TYPES.has(type)) return;
     const start = parseDate(r.StartDate.trim());
     if (!start || isNaN(start)) return;
     const end = parseDate((r.EndDate || r.StartDate).trim()) || start;
-    const label = r.Label || r.Type || 'Non-school day';
-    const type = String(r.Type || '').trim();
+    const label = r.Label || type;
     const cur = new Date(start);
     while (cur <= end) {
-      const day = cur.getDay();
-      if (day >= 1 && day <= 5) { // only Mon–Fri
+      if (cur.getDay() >= 1 && cur.getDay() <= 5) {
         days[dateKey(cur)] = { label, type };
       }
       cur.setDate(cur.getDate() + 1);
