@@ -1480,7 +1480,7 @@ function saveStaffOut() {
   const startIdx = ROWS.findIndex(r => r.id === start);
   const endIdx = ROWS.findIndex(r => r.id === end);
   if (startIdx < 0 || endIdx < 0 || startIdx > endIdx) { closeStaffOutModal(); return; }
-  const colour = document.getElementById('soColour').value;
+  const colour = document.querySelector('input[name="soColour"]:checked')?.value || STAFF_OUT_COLOURS[0];
   spans.push({ start, end, label, cover, colour });
   setStaffOut(schedKey(), state.activeView, day, spans);
   closeStaffOutModal();
