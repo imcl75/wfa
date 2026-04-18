@@ -255,29 +255,18 @@
     .sched-table .fixed-row td.non-school-day { background: #f1f5f9 !important; }
 
     /* ── Staff-out spans (PPA, Leadership, etc.) ──────────────── */
-    .staff-out-bg {
-      position: relative;
-    }
-    .staff-out-bg::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: #47556910;
-      border-left: 3px solid #475569;
+    .staff-out-strip {
+      position: absolute; top: 0; bottom: 0; width: 3px;
       pointer-events: none; z-index: 0;
     }
-    .staff-out-bg.staff-out-first::before {
-      border-radius: 6px 0 0 0;
-    }
-    .staff-out-bg.staff-out-last::before {
-      border-radius: 0 0 0 6px;
-    }
-    .staff-out-bg.staff-out-only::before {
-      border-radius: 6px 0 0 6px;
-    }
+    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; }
+    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; }
+    .staff-out-strip.strip-only  { border-radius: 3px; }
+    .staff-out-strip.strip-mid   { border-radius: 0; }
     .staff-out-tag {
       position: relative; z-index: 1;
       display: inline-flex; align-items: center; gap: 4px;
-      background: #475569; color: white;
+      color: white;
       font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 11px;
       padding: 2px 8px; border-radius: 4px;
       margin-bottom: 4px; white-space: nowrap;
@@ -888,8 +877,15 @@ function renderBody() {
         ${nsd.map((n, di) => {
           if (n) return `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
           const soList = staffOutMap[`${di}-${ri}`] || [];
-          const bgCls = soList.length ? ' staff-out-bg' + (soList.some(s => s.isFirst) ? ' staff-out-first' : '') + (soList.some(s => s.isLast) ? ' staff-out-last' : '') : '';
-          return `<td class="view-cell${bgCls}"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
+          const strips = soList.map((s, si) => {
+            let cls = 'staff-out-strip';
+            if (s.isFirst && s.isLast) cls += ' strip-only';
+            else if (s.isFirst) cls += ' strip-first';
+            else if (s.isLast) cls += ' strip-last';
+            else cls += ' strip-mid';
+            return `<div class="${cls}" style="left:${si * 5 + 0}px; background:${s.colour}"></div>`;
+          }).join('');
+          return `<td class="view-cell">${strips}<div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
         }).join('')}
       </tr>`;
     } else {
@@ -912,14 +908,22 @@ function renderBody() {
             const allEvts = [...recurring.map(r => ({ label: r.label, bg: r.bg })), ...evts.map(e => ({ label: e.label, bg: e.bg }))];
             afterEvents = allEvts.map(ev => `<div class="cell-chip" style="background:${ev.bg}25"><div class="chip-top"><span class="chip-colour" style="background:${ev.bg}"></span><span class="chip-name" style="color:${ev.bg}">${escHtml(ev.label)}</span></div></div>`).join('');
           }
-          // Staff-out background overlay + tag badges (supports overlapping spans)
+          // Staff-out colour strips + tag badges (supports overlapping spans)
           const soList = staffOutMap[`${di}-${ri}`] || [];
-          const soBg = soList.length ? ' staff-out-bg' + (soList.some(s => s.isFirst) ? ' staff-out-first' : '') + (soList.some(s => s.isLast) ? ' staff-out-last' : '') : '';
-          const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
-          const cellCls = `view-cell${n ? ' non-school-day' : ''}${soBg}`;
+          const strips = soList.map((s, si) => {
+            let cls = 'staff-out-strip';
+            if (s.isFirst && s.isLast) cls += ' strip-only';
+            else if (s.isFirst) cls += ' strip-first';
+            else if (s.isLast) cls += ' strip-last';
+            else cls += ' strip-mid';
+            return `<div class="${cls}" style="left:${si * 5 + 0}px; background:${s.colour}"></div>`;
+          }).join('');
+          const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag" style="background:${s.colour}">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
+          const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
           const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
           return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
             ${overlay}
+            ${strips}
             ${soTags}
             ${afterEvents}
             ${items.length === 0 && !afterEvents && !n ? '<div class="drop-hint">drop here</div>' : ''}
@@ -1394,6 +1398,7 @@ const SESSION_OPTIONS = [
   { id:'s2', label:'Session 2 (11:00–12:00)' },
   { id:'s3', label:'Session 3 (13:20–15:00)' },
 ];
+const STAFF_OUT_COLOURS = ['#475569','#7c3aed','#dc2626','#16a34a','#d97706'];
 
 function getStaffOut(wk, view, day) {
   if (!state.schedule[wk] || !state.schedule[wk][view] || !state.schedule[wk][view][day]) return [];
@@ -1416,7 +1421,7 @@ function openStaffOutModal(dayIdx) {
   const existing = getStaffOut(schedKey(), state.activeView, day);
   const existingHtml = existing.length ? existing.map((sp, i) => `
     <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9">
-      <span style="background:#475569;color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">${escHtml(sp.label)}</span>
+      <span style="background:${sp.colour || '#475569'};color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">${escHtml(sp.label)}</span>
       <span style="font-size:12px;color:#64748b">${SESSION_OPTIONS.find(s=>s.id===sp.start)?.label||sp.start} → ${SESSION_OPTIONS.find(s=>s.id===sp.end)?.label||sp.end}</span>
       ${sp.cover ? `<span style="font-size:12px;color:#94a3b8">Cover: ${escHtml(sp.cover)}</span>` : ''}
       <button style="margin-left:auto;background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px" onclick="removeStaffOut(${i})">×</button>
@@ -1438,8 +1443,20 @@ function openStaffOutModal(dayIdx) {
         </select>
         <input id="soCover" placeholder="Cover (optional)" style="flex:1;min-width:100px;border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;font-size:13px;font-family:Arial,sans-serif">
       </div>
+      <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+        <span style="font-size:12px;color:#64748b;font-weight:600">Colour:</span>
+        ${STAFF_OUT_COLOURS.map((c, i) => `<label style="cursor:pointer"><input type="radio" name="soColour" value="${c}" id="soColour${i}" ${i === 0 ? 'checked' : ''} style="display:none"><span style="display:inline-block;width:24px;height:24px;border-radius:5px;background:${c};border:2.5px solid ${i===0?'#1e293b':'transparent'};vertical-align:middle;transition:border .1s"></span></label>`).join('')}
+      </div>
     </div>
   `;
+  // Highlight selected colour on click
+  document.querySelectorAll('input[name="soColour"]').forEach(r => {
+    r.addEventListener('change', () => {
+      document.querySelectorAll('input[name="soColour"]').forEach(r2 => {
+        r2.parentElement.querySelector('span').style.borderColor = r2.checked ? '#1e293b' : 'transparent';
+      });
+    });
+  });
   document.getElementById('staffOutModal').classList.add('open');
 }
 
@@ -1463,7 +1480,8 @@ function saveStaffOut() {
   const startIdx = ROWS.findIndex(r => r.id === start);
   const endIdx = ROWS.findIndex(r => r.id === end);
   if (startIdx < 0 || endIdx < 0 || startIdx > endIdx) { closeStaffOutModal(); return; }
-  spans.push({ start, end, label, cover, colour: '#475569' });
+  const colour = document.getElementById('soColour').value;
+  spans.push({ start, end, label, cover, colour });
   setStaffOut(schedKey(), state.activeView, day, spans);
   closeStaffOutModal();
 }
