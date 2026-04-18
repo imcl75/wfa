@@ -80,6 +80,7 @@
     .view-cell {
       vertical-align: top; padding: 8px; border-right: 1px solid #e2e8f0;
       border-bottom: 2px solid #d1d5db; min-height: 78px; background: white;
+      position: relative;
     }
     .view-cell:last-child { border-right: none; }
     .day-hd { width: 140px; }
@@ -157,7 +158,7 @@
     .sched-table .fixed-row td.span-cell {
       border-right: none;
     }
-    .fixed-label { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: #64748b; }
+    .fixed-label { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: #64748b; position: relative; z-index: 1; }
     .fixed-sub { font-size: 9.5px; color: #94a3b8; }
 
     /* FAB row highlight */
@@ -185,13 +186,13 @@
     .sched-table .session-row td.view-cell.drop-over {
       background: #dbeafe !important; outline: 2px dashed #1798d3; outline-offset: -3px;
     }
-    .drop-hint { font-size: 10px; color: #d1d5db; padding: 6px 4px; text-align: center; }
+    .drop-hint { font-size: 10px; color: #d1d5db; padding: 6px 4px; text-align: center; position: relative; z-index: 1; }
 
     /* ── Cell chips ──────────────────────────────────────────────── */
     .cell-chip {
       border-radius: 7px; margin-bottom: 3px; overflow: hidden;
       border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
-      display: flex; flex-direction: column;
+      display: flex; flex-direction: column; position: relative; z-index: 1;
     }
     .chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
     .chip-colour { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -254,32 +255,36 @@
     .sched-table .fixed-row td.non-school-day { background: #f1f5f9 !important; }
 
     /* ── Staff-out spans (PPA, Leadership, etc.) ──────────────── */
-    .out-col {
-      width: 30px; min-width: 30px; padding: 0 !important;
-      border-right: 1px solid #e2e8f0; vertical-align: top;
+    .staff-out-bg {
       position: relative;
     }
-    .out-col.out-hidden { width: 0; min-width: 0; border: none; padding: 0 !important; }
-    .out-col-fill {
-      width: 100%; height: 100%; min-height: 28px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      background: #475569;
+    .staff-out-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: #47556910;
+      border-left: 3px solid #475569;
+      pointer-events: none; z-index: 0;
     }
-    .out-col-fill.fill-first { border-radius: 6px 6px 0 0; }
-    .out-col-fill.fill-last  { border-radius: 0 0 6px 6px; }
-    .out-col-fill.fill-only { border-radius: 6px; }
-    .out-col-fill.fill-mid  { border-radius: 0; }
-    .out-col-fill.fill-stub { min-height: 4px; background: #475569; }
-    .out-col-text {
-      writing-mode: vertical-rl; text-orientation: mixed;
-      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px;
-      letter-spacing: .04em; white-space: nowrap; color: white;
+    .staff-out-bg.staff-out-first::before {
+      border-radius: 6px 0 0 0;
     }
-    .out-col-cover {
-      writing-mode: vertical-rl; text-orientation: mixed;
-      font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 9px;
-      white-space: nowrap; color: rgba(255,255,255,.85);
+    .staff-out-bg.staff-out-last::before {
+      border-radius: 0 0 0 6px;
+    }
+    .staff-out-bg.staff-out-only::before {
+      border-radius: 6px 0 0 6px;
+    }
+    .staff-out-tag {
+      position: relative; z-index: 1;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #475569; color: white;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 11px;
+      padding: 2px 8px; border-radius: 4px;
+      margin-bottom: 4px; white-space: nowrap;
+    }
+    .staff-out-cover {
+      font-weight: 600; font-size: 10px;
+      color: rgba(255,255,255,.85);
     }
     .day-hd-add {
       display: inline-block; font-size: 13px; font-weight: 800;
@@ -287,13 +292,6 @@
       vertical-align: middle; border-radius: 3px;
     }
     .day-hd-add:hover { background: #dbeafe; }
-    .staff-out-del {
-      position: absolute; top: -1px; right: 0; z-index: 3;
-      background: none; border: none; cursor: pointer;
-      font-size: 11px; color: rgba(0,0,0,.25); padding: 0 2px; line-height: 1;
-      pointer-events: all;
-    }
-    .staff-out-del:hover { color: #dc2626; }
     .day-event-tag {
       display: inline-block; font-size: 8.5px; font-weight: 700;
       padding: 1px 5px; border-radius: 3px; margin-top: 2px;
@@ -823,7 +821,6 @@ function renderGrid() {
 
 function renderHead() {
   const mon = weekMonday();
-  const isStaffView = state.activeView !== 'master';
   const el = document.getElementById('schedHead');
   el.innerHTML = `<tr>
     <th class="time-hd"></th>
@@ -834,9 +831,8 @@ function renderHead() {
       const evts = state.schoolEvents[dk] || [];
       const cls = `day-hd${isToday(i) ? ' today' : ''}${nsd ? ' non-school-day' : ''}`;
       const tags = evts.map(e => `<span class="day-event-tag">${escHtml(e.label)}</span>`).join(' ');
-      const addBtn = isStaffView && !nsd ? `<span class="day-hd-add" onclick="openStaffOutModal(${i})" title="Add staff out">＋</span>` : '';
-      const outCol = isStaffView ? `<th class="out-col${nsd ? ' out-hidden' : ''}"></th>` : '';
-      return `${outCol}<th class="${cls}"><span class="day-hd-name">${d}${addBtn}</span><br><span class="day-hd-date">${dayDate(i)}</span>${tags ? '<br>' + tags : ''}</th>`;
+      const addBtn = !nsd ? `<span class="day-hd-add" onclick="openStaffOutModal(${i})" title="Add staff out">＋</span>` : '';
+      return `<th class="${cls}"><span class="day-hd-name">${d}${addBtn}</span><br><span class="day-hd-date">${dayDate(i)}</span>${tags ? '<br>' + tags : ''}</th>`;
     }).join('')}
   </tr>`;
 }
@@ -853,9 +849,9 @@ function renderBody() {
     return state.nonSchoolDays[dateKey(cellDate)] || null;
   });
 
-  // Pre-compute staff-out spans per (dayIndex, rowIndex)
+  // Pre-compute staff-out spans per (dayIndex, rowIndex) — supports multiple overlapping spans
   const staffOutMap = {};
-  if (view !== 'master') {
+  {
     DAYS.forEach((d, di) => {
       const day = d.toLowerCase();
       if (nsd[di]) return;
@@ -867,14 +863,16 @@ function renderBody() {
         if (startIdx < 0 || endIdx < 0) return;
         ROWS.forEach((row, ri) => {
           if (ri >= startIdx && ri <= endIdx) {
-            staffOutMap[`${di}-${ri}`] = {
+            const key = `${di}-${ri}`;
+            if (!staffOutMap[key]) staffOutMap[key] = [];
+            staffOutMap[key].push({
               label: sp.label,
               cover: sp.cover || '',
               colour: sp.colour,
               isFirst: ri === startIdx,
               isLast: ri === endIdx,
               isFixed: row.type === 'fixed',
-            };
+            });
           }
         });
       });
@@ -888,12 +886,10 @@ function renderBody() {
       html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
         <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
         ${nsd.map((n, di) => {
-          if (n) return `<td class="out-col out-hidden"></td><td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
-          const so = staffOutMap[`${di}-${ri}`];
-          const outCell = view !== 'master'
-            ? `<td class="out-col">${so ? '<div class="out-col-fill fill-stub"></div>' : ''}</td>`
-            : '';
-          return `${outCell}<td class="view-cell" colspan="1"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
+          if (n) return `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
+          const soList = staffOutMap[`${di}-${ri}`] || [];
+          const bgCls = soList.length ? ' staff-out-bg' + (soList.some(s => s.isFirst) ? ' staff-out-first' : '') + (soList.some(s => s.isLast) ? ' staff-out-last' : '') : '';
+          return `<td class="view-cell${bgCls}"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
         }).join('')}
       </tr>`;
     } else {
@@ -916,32 +912,15 @@ function renderBody() {
             const allEvts = [...recurring.map(r => ({ label: r.label, bg: r.bg })), ...evts.map(e => ({ label: e.label, bg: e.bg }))];
             afterEvents = allEvts.map(ev => `<div class="cell-chip" style="background:${ev.bg}25"><div class="chip-top"><span class="chip-colour" style="background:${ev.bg}"></span><span class="chip-name" style="color:${ev.bg}">${escHtml(ev.label)}</span></div></div>`).join('');
           }
-          const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
+          // Staff-out background overlay + tag badges (supports overlapping spans)
+          const soList = staffOutMap[`${di}-${ri}`] || [];
+          const soBg = soList.length ? ' staff-out-bg' + (soList.some(s => s.isFirst) ? ' staff-out-first' : '') + (soList.some(s => s.isLast) ? ' staff-out-last' : '') : '';
+          const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
+          const cellCls = `view-cell${n ? ' non-school-day' : ''}${soBg}`;
           const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
-          // Staff-out column
-          const so = staffOutMap[`${di}-${ri}`];
-          let outCell = '';
-          if (view !== 'master') {
-            if (n) {
-              outCell = `<td class="out-col out-hidden"></td>`;
-            } else if (so) {
-              let fillCls = 'out-col-fill';
-              if (so.isFirst && so.isLast) fillCls += ' fill-only';
-              else if (so.isFirst) fillCls += ' fill-first';
-              else if (so.isLast) fillCls += ' fill-last';
-              else fillCls += ' fill-mid';
-              let content = '';
-              if (so.isFirst) {
-                content = `<span class="out-col-text">${escHtml(so.label)}</span>`;
-                if (so.cover) content += `<span class="out-col-cover">${escHtml(so.cover)}</span>`;
-              }
-              outCell = `<td class="out-col"><div class="${fillCls}">${content}</div></td>`;
-            } else {
-              outCell = `<td class="out-col"></td>`;
-            }
-          }
-          return `${outCell}<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
+          return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
             ${overlay}
+            ${soTags}
             ${afterEvents}
             ${items.length === 0 && !afterEvents && !n ? '<div class="drop-hint">drop here</div>' : ''}
             ${items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('')}
