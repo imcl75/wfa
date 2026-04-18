@@ -885,8 +885,7 @@ const STAFF_SUBJECT_GROUPS = [
 
 function renderSidebar() {
   const el = document.getElementById('subjectList');
-  let groups = SUBJECTS;
-  if (state.activeView !== 'master') groups = [...SUBJECTS, ...STAFF_SUBJECT_GROUPS];
+  let groups = state.activeView === 'master' ? SUBJECTS : STAFF_SUBJECT_GROUPS;
   el.innerHTML = groups.map(g => `
     <div class="subj-group">
       <div class="subj-group-label">${g.label}</div>
