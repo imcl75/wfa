@@ -256,12 +256,12 @@
 
     /* ── Staff-out spans (PPA, Leadership, etc.) ──────────────── */
     .staff-out-strip {
-      position: absolute; top: -1px; bottom: -2px; width: 3px;
+      position: absolute; top: 0; bottom: 0; width: 3px;
       pointer-events: none; z-index: 0;
     }
-    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; top: 4px; }
-    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; bottom: -1px; }
-    .staff-out-strip.strip-only  { border-radius: 3px; top: 4px; bottom: -1px; }
+    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; }
+    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; }
+    .staff-out-strip.strip-only  { border-radius: 3px; }
     .staff-out-strip.strip-mid   { border-radius: 0; }
     .staff-out-tag {
       position: relative; z-index: 1;
@@ -887,7 +887,7 @@ function renderBody() {
           }).join('');
           const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag" style="background:${s.colour}">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
           const pad = soList.length ? `padding-left:${soList.length * 5 + 8}px;` : '';
-          return `<td class="view-cell">${strips}<div style="${pad}"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</div></td>`;
+          return `<td class="view-cell">${strips}<div style="${pad}">${soTags}<div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</div></td>`;
         }).join('')}
       </tr>`;
     } else {
