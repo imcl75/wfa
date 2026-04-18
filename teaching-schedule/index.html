@@ -256,12 +256,12 @@
 
     /* ── Staff-out spans (PPA, Leadership, etc.) ──────────────── */
     .staff-out-strip {
-      position: absolute; top: 0; bottom: 0; width: 3px;
+      position: absolute; top: -1px; bottom: -2px; width: 3px;
       pointer-events: none; z-index: 0;
     }
-    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; }
-    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; }
-    .staff-out-strip.strip-only  { border-radius: 3px; }
+    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; top: 0; }
+    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; bottom: 0; }
+    .staff-out-strip.strip-only  { border-radius: 3px; top: 0; bottom: 0; }
     .staff-out-strip.strip-mid   { border-radius: 0; }
     .staff-out-tag {
       position: relative; z-index: 1;
@@ -1394,9 +1394,11 @@ function saveStaffModal() {
 
 // ── Staff-out spans (PPA, Leadership, etc.) ────────────────────────────────
 const SESSION_OPTIONS = [
-  { id:'s1', label:'Session 1 (09:00–10:45)' },
-  { id:'s2', label:'Session 2 (11:00–12:00)' },
-  { id:'s3', label:'Session 3 (13:20–15:00)' },
+  { id:'reg-am', label:'Morning Reg (08:45)' },
+  { id:'s1',     label:'Session 1 (09:00–10:45)' },
+  { id:'s2',     label:'Session 2 (11:00–12:00)' },
+  { id:'s3',     label:'Session 3 (13:20–15:00)' },
+  { id:'home',   label:'Home Time (15:15)' },
 ];
 const STAFF_OUT_COLOURS = ['#475569','#7c3aed','#dc2626','#16a34a','#d97706'];
 
