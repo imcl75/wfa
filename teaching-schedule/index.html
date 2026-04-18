@@ -191,6 +191,7 @@
     .cell-chip {
       border-radius: 7px; margin-bottom: 3px; overflow: hidden;
       border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
+      display: flex; flex-direction: column;
     }
     .chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
     .chip-colour { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
@@ -230,6 +231,12 @@
     .chip-note::placeholder { color: #cbd5e1; font-style: italic; }
     .chip-note.hidden { display: none; }
     .cell-chip:hover { box-shadow: 0 3px 8px rgba(15,23,42,.08); }
+    .chip-resize {
+      height: 4px; cursor: ns-resize; margin: 0 4px;
+      border-radius: 0 0 4px 4px; opacity: .15; transition: opacity .1s;
+    }
+    .cell-chip:hover .chip-resize { opacity: .35; }
+    .chip-resize:hover { opacity: .6 !important; }
 
     /* ── Drag ghost ──────────────────────────────────────────────── */
     #drag-ghost {
@@ -762,16 +769,21 @@ function renderBody() {
   el.querySelectorAll('.chip-handle').forEach(h => {
     h.addEventListener('pointerdown', onChipPointerDown);
   });
+  el.querySelectorAll('.chip-resize').forEach(h => {
+    h.addEventListener('pointerdown', onResizePointerDown);
+  });
 }
 
 function renderItem(item, wk, view, day, session, idx) {
-  const col = SUBJECT_COL[item.subject] || '#64748b';
+  const col = SUBJECT_COL[item.subject] || SUBJECT_COL[item.subjectLeft] || '#64748b';
   const light = col + '50';
+  const dur = item.duration || 1;
+  const minH = Math.max(32, dur * 32);
   if (item.split) {
     const colL = SUBJECT_COL[item.subjectLeft] || '#64748b';
     const colR = SUBJECT_COL[item.subjectRight] || '#64748b';
-    return `<div class="cell-chip" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
-      <div class="split-wrap">
+    return `<div class="cell-chip" style="min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+      <div class="split-wrap" style="flex:1">
         <div class="split-half" style="background:${colL}50"><span class="chip-colour" style="background:${colL};display:inline-block;margin-right:3px"></span><span style="font-size:13px;font-weight:800;font-family:'Nunito',sans-serif">${escHtml(item.subjectLeft || '')}</span><textarea class="item-note chip-note" rows="1" data-side="left" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.noteLeft || '')}</textarea></div>
         <div class="split-half" style="background:${colR}50"><span class="chip-colour" style="background:${colR};display:inline-block;margin-right:3px"></span><span style="font-size:13px;font-weight:800;font-family:'Nunito',sans-serif">${escHtml(item.subjectRight || '')}</span><textarea class="item-note chip-note" rows="1" data-side="right" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.noteRight || '')}</textarea></div>
       </div>
@@ -780,9 +792,10 @@ function renderItem(item, wk, view, day, session, idx) {
         <span style="flex:1"></span>
         <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
       </div>
+      <div class="chip-resize" style="background:${col}"></div>
     </div>`;
   }
-  return `<div class="cell-chip" style="background:${light}" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+  return `<div class="cell-chip" style="background:${light};min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
     <div class="chip-top">
       <span class="chip-handle" title="Drag to reorder">≡</span>
       <span class="chip-colour" style="background:${col}"></span>
@@ -794,6 +807,7 @@ function renderItem(item, wk, view, day, session, idx) {
       <button class="chip-note-toggle${item.note ? ' has-note' : ''}" onclick="this.style.display='none';this.nextElementSibling.classList.remove('hidden');this.nextElementSibling.focus();return false">+</button>
       <textarea class="item-note chip-note${item.note ? '' : ' hidden'}" rows="1" placeholder="Note…" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.note||'')}</textarea>
     </div>
+    <div class="chip-resize" style="background:${col}"></div>
   </div>`;
 }
 
@@ -851,6 +865,44 @@ function onNoteBlur(e) {
     }
     persistLocal(); syncSave();
   }
+}
+
+// ── Resize chip height ──────────────────────────────────────────────────────
+let resize = null; // { chipEl, startY, startDur, item }
+
+function onResizePointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const handle = e.currentTarget;
+  const chipEl = handle.closest('.cell-chip');
+  const { wk, view, day, session, idx } = chipEl.dataset;
+  const slot = getSlot(wk, view, day, session);
+  const item = slot[Number(idx)];
+  if (!item) return;
+  resize = { chipEl, startY: e.clientY, startDur: item.duration || 1, item };
+  handle.setPointerCapture(e.pointerId);
+  handle.addEventListener('pointermove', onResizePointerMove);
+  handle.addEventListener('pointerup', onResizePointerUp);
+  handle.addEventListener('pointercancel', onResizePointerUp);
+}
+
+function onResizePointerMove(e) {
+  if (!resize) return;
+  const dy = e.clientY - resize.startY;
+  const newDur = Math.max(1, Math.round((resize.startDur * 32 + dy) / 32));
+  resize.item.duration = newDur;
+  resize.chipEl.style.minHeight = Math.max(32, newDur * 32) + 'px';
+}
+
+function onResizePointerUp(e) {
+  if (!resize) return;
+  const handle = e.currentTarget;
+  handle.removeEventListener('pointermove', onResizePointerMove);
+  handle.removeEventListener('pointerup', onResizePointerUp);
+  handle.removeEventListener('pointercancel', onResizePointerUp);
+  persistLocal(); syncSave();
+  resize = null;
 }
 
 // ── Drag and drop ────────────────────────────────────────────────────────────
@@ -966,7 +1018,7 @@ function onDragEnd(e) {
       slot.splice(insertAt, 0, drag.sourceData.item);
     } else {
       const insertAt = insertIdx < 0 ? slot.length : Math.min(insertIdx, slot.length);
-      slot.splice(insertAt, 0, { subject: drag.subject, note: '' });
+      slot.splice(insertAt, 0, { subject: drag.subject, note: '', duration: 1 });
     }
     persistLocal(); syncSave();
   }
