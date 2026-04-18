@@ -901,10 +901,10 @@ const STAFF_SUBJECT_GROUPS = [
   ]},
 ];
 function hzPalette() {
-  const picks = ['Writer','Mathematician','Reader','Artist','Musician','Athlete','Linguist','Designer','Other'];
+  const picks = ['Writer / Enquiry','Mathematician','Reader','Artist','Musician','Athlete','Linguist','Designer','Other'];
   return picks.map(name => {
-    const s = SUBJECTS.flatMap(g => g.subjects).find(s => s.name === name)
-      || SUBJECT_GROUPS.flatMap(g => g.subjects).find(s => s.name === name);
+    const allSubjects = SUBJECTS.flatMap(g => g.subjects).concat(SUBJECT_GROUPS.flatMap(g => g.subjects));
+    const s = allSubjects.find(s => s.name === name) || allSubjects.find(s => name.startsWith(s.name));
     return { name, col: s ? s.col : '#64748b' };
   });
 }
