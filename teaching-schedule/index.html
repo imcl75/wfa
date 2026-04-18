@@ -194,6 +194,15 @@
       border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
       display: flex; flex-direction: column; position: relative; z-index: 1;
     }
+    .cell-chip.chip-shadow {
+      opacity: .55;
+      border-style: dashed;
+    }
+    .chip-shadow-tag {
+      font-size: 8.5px; font-weight: 700; text-transform: uppercase;
+      color: #64748b; background: #f1f5f9;
+      padding: 1px 5px; border-radius: 3px; margin-left: auto;
+    }
     .chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
     .chip-colour { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .chip-name { font-size: 13px; font-weight: 800; flex: 1; line-height: 1.25; color: #1e293b; font-family: 'Nunito', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -829,9 +838,28 @@ function renderViewTabs() {
 }
 
 // ── Render: subjects sidebar ─────────────────────────────────────────────────
+const STAFF_SUBJECT_GROUPS = [
+  { label: 'Interventions', subjects: [
+    { name: 'Phonics Intervention', col:'#fb923c' },
+    { name: 'Reading Intervention', col:'#e34234' },
+    { name: 'Maths Intervention', col:'#ffe44d' },
+  ]},
+  { label: 'Support', subjects: [
+    { name: '1:1 Support', col:'#7c3aed' },
+    { name: 'Small Group', col:'#c4b5fd' },
+    { name: 'In-Class Support', col:'#93c5fd' },
+  ]},
+  { label: 'Cover', subjects: [
+    { name: 'Cover PPA', col:'#475569' },
+    { name: 'Cover Course', col:'#64748b' },
+  ]},
+];
+
 function renderSidebar() {
   const el = document.getElementById('subjectList');
-  el.innerHTML = SUBJECTS.map(g => `
+  let groups = SUBJECTS;
+  if (state.activeView !== 'master') groups = [...SUBJECTS, ...STAFF_SUBJECT_GROUPS];
+  el.innerHTML = groups.map(g => `
     <div class="subj-group">
       <div class="subj-group-label">${g.label}</div>
       ${g.subjects.map(s => `
@@ -1007,10 +1035,12 @@ function renderItem(item, wk, view, day, session, idx) {
   const light = col + '50';
   const dur = item.duration || 1;
   const minH = Math.max(32, dur * 32);
+  const isShadow = !!item.shadow;
+  const shadowCls = isShadow ? ' chip-shadow' : '';
   if (item.split) {
     const colL = SUBJECT_COL[item.subjectLeft] || '#64748b';
     const colR = SUBJECT_COL[item.subjectRight] || '#64748b';
-    return `<div class="cell-chip" style="min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+    return `<div class="cell-chip${shadowCls}" style="min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
       <div class="split-wrap" style="flex:1">
         <div class="split-half" style="background:${colL}50"><span class="chip-colour" style="background:${colL};display:inline-block;margin-right:3px"></span><span style="font-size:13px;font-weight:800;font-family:'Nunito',sans-serif">${escHtml(item.subjectLeft || '')}</span><textarea class="item-note chip-note" rows="1" data-side="left" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.noteLeft || '')}</textarea></div>
         <div class="split-half" style="background:${colR}50"><span class="chip-colour" style="background:${colR};display:inline-block;margin-right:3px"></span><span style="font-size:13px;font-weight:800;font-family:'Nunito',sans-serif">${escHtml(item.subjectRight || '')}</span><textarea class="item-note chip-note" rows="1" data-side="right" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.noteRight || '')}</textarea></div>
@@ -1021,6 +1051,17 @@ function renderItem(item, wk, view, day, session, idx) {
         <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
       </div>
       <div class="chip-resize" style="background:${col}"></div>
+    </div>`;
+  }
+  if (isShadow) {
+    return `<div class="cell-chip${shadowCls}" style="background:${light};min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+      <div class="chip-top">
+        <span class="chip-handle" title="Drag to reorder">≡</span>
+        <span class="chip-colour" style="background:${col}"></span>
+        <span class="chip-name">${escHtml(item.subject)}</span>
+        <span class="chip-shadow-tag">in class</span>
+        <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
+      </div>
     </div>`;
   }
   return `<div class="cell-chip" style="background:${light};min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
@@ -1335,14 +1376,35 @@ function copyMasterToStaff() {
   const wk = schedKey();
   const weekData = state.schedule[wk];
   if (!weekData || !weekData.master) { alert('No master view data to copy.'); return; }
-  const master = JSON.parse(JSON.stringify(weekData.master));
+  const master = weekData.master;
   VIEWS.filter(v => v !== 'master').forEach(v => {
     if (!state.schedule[wk]) state.schedule[wk] = {};
-    state.schedule[wk][v] = JSON.parse(JSON.stringify(master));
+    if (!state.schedule[wk][v]) state.schedule[wk][v] = {};
+    const staffView = state.schedule[wk][v];
+    Object.keys(master).forEach(day => {
+      if (!master[day] || typeof master[day] !== 'object') return;
+      if (!staffView[day]) staffView[day] = {};
+      Object.keys(master[day]).forEach(session => {
+        const masterSlot = master[day][session];
+        if (!Array.isArray(masterSlot)) return;
+        if (!staffView[day][session]) staffView[day][session] = [];
+        const slot = staffView[day][session];
+        // Remove old shadow chips, keep own chips
+        const ownChips = slot.filter(c => !c.shadow);
+        // Generate new shadow chips from master
+        const shadows = masterSlot.filter(c => !c.shadow).map(c => ({
+          subject: c.subject, shadow: true, duration: c.duration || 1,
+          ...(c.split ? { split: true, subjectLeft: c.subjectLeft, subjectRight: c.subjectRight } : {}),
+        }));
+        staffView[day][session] = [...ownChips, ...shadows];
+      });
+      // Preserve _out data
+      if (master[day]._out && !staffView[day]._out) staffView[day]._out = [];
+    });
   });
   persistLocal(); syncSave();
   renderGrid();
-  alert('Master copied to all staff views.');
+  alert('Class context copied to staff views (own activities preserved).');
 }
 
 function clearActiveView() {
@@ -1557,7 +1619,14 @@ function escHtml(s) {
 
 function setView(view) {
   state.activeView = view;
+  // Ensure staff-specific subjects have colour entries
+  if (view !== 'master') {
+    STAFF_SUBJECT_GROUPS.forEach(g => g.subjects.forEach(s => {
+      if (!SUBJECT_COL[s.name]) SUBJECT_COL[s.name] = s.col;
+    }));
+  }
   renderViewTabs();
+  renderSidebar();
   renderGrid();
 }
 
