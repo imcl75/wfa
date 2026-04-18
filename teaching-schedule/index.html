@@ -901,7 +901,14 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'HomeZone - Other', col:'#94a3b8', colourable: true },
   ]},
 ];
-const HZ_PALETTE = ['#7c3aed','#c4b5fd','#16a34a','#fb923c','#0d9488','#64748b','#ec4899','#92400e'];
+function hzPalette() {
+  const picks = ['Artist','Musician','Athlete','Linguist','Designer','Other'];
+  return picks.map(name => {
+    const s = SUBJECTS.flatMap(g => g.subjects).find(s => s.name === name)
+      || SUBJECT_GROUPS.flatMap(g => g.subjects).find(s => s.name === name);
+    return { name, col: s ? s.col : '#64748b' };
+  });
+}
 
 function renderSidebar() {
   const el = document.getElementById('subjectList');
@@ -1151,9 +1158,10 @@ function showHzPalette(e, dotEl) {
   const slot = getSlot(wk, view, day, session);
   const item = slot[Number(idx)];
   const currentCol = item.hzCol || '#94a3b8';
+  const pal = hzPalette();
   const pop = document.createElement('div');
   pop.className = 'hz-colour-pop';
-  pop.innerHTML = HZ_PALETTE.map(c => `<span style="background:${c}${c === currentCol ? ';border-color:#1e293b' : ''}" data-col="${c}"></span>`).join('');
+  pop.innerHTML = pal.map(p => `<span style="background:${p.col}${p.col === currentCol ? ';border-color:#1e293b' : ''}" data-col="${p.col}" title="${p.name}"></span>`).join('');
   pop.addEventListener('click', function(ev) {
     const swatch = ev.target.closest('[data-col]');
     if (!swatch) return;
