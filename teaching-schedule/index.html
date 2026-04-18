@@ -259,9 +259,9 @@
       position: absolute; top: -1px; bottom: -2px; width: 3px;
       pointer-events: none; z-index: 0;
     }
-    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; top: 0; }
-    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; bottom: 0; }
-    .staff-out-strip.strip-only  { border-radius: 3px; top: 0; bottom: 0; }
+    .staff-out-strip.strip-first { border-radius: 3px 3px 0 0; top: 4px; }
+    .staff-out-strip.strip-last  { border-radius: 0 0 3px 3px; bottom: -1px; }
+    .staff-out-strip.strip-only  { border-radius: 3px; top: 4px; bottom: -1px; }
     .staff-out-strip.strip-mid   { border-radius: 0; }
     .staff-out-tag {
       position: relative; z-index: 1;
@@ -883,9 +883,11 @@ function renderBody() {
             else if (s.isFirst) cls += ' strip-first';
             else if (s.isLast) cls += ' strip-last';
             else cls += ' strip-mid';
-            return `<div class="${cls}" style="left:${si * 5 + 0}px; background:${s.colour}"></div>`;
+            return `<div class="${cls}" style="left:${si * 5 - 1}px; background:${s.colour}"></div>`;
           }).join('');
-          return `<td class="view-cell">${strips}<div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
+          const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag" style="background:${s.colour}">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
+          const pad = soList.length ? `padding-left:${soList.length * 5 + 8}px;` : '';
+          return `<td class="view-cell">${strips}<div style="${pad}"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</div></td>`;
         }).join('')}
       </tr>`;
     } else {
@@ -916,18 +918,21 @@ function renderBody() {
             else if (s.isFirst) cls += ' strip-first';
             else if (s.isLast) cls += ' strip-last';
             else cls += ' strip-mid';
-            return `<div class="${cls}" style="left:${si * 5 + 0}px; background:${s.colour}"></div>`;
+            return `<div class="${cls}" style="left:${si * 5 - 1}px; background:${s.colour}"></div>`;
           }).join('');
           const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag" style="background:${s.colour}">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
+          const contentPad = soList.length ? `padding-left:${soList.length * 5 + 4}px;` : '';
           const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
           const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
           return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
             ${overlay}
             ${strips}
+            <div style="${contentPad}">
             ${soTags}
             ${afterEvents}
             ${items.length === 0 && !afterEvents && !n ? '<div class="drop-hint">drop here</div>' : ''}
             ${items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('')}
+            </div>
           </td>`;
         }).join('')}
       </tr>`;
