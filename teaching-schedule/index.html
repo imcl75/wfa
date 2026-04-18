@@ -107,6 +107,17 @@
     .staff-class-chip + .staff-class-chip { border-top: 1px solid #f1f5f9; }
     .staff-class-chip .class-tag { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: .04em; position: absolute; top: 3px; right: 4px; }
     .staff-own-col { display: flex; flex-direction: column; padding: 2px; gap: 2px; }
+    .staff-own-col .cell-chip { border-radius: 5px; margin-bottom: 0; }
+    .staff-own-col .chip-top { padding: 2px 4px; gap: 3px; }
+    .staff-own-col .chip-name { font-size: 11px; font-weight: 700; }
+    .staff-own-col .chip-colour { width: 6px; height: 6px; }
+    .staff-own-col .chip-handle { font-size: 8px; padding: 0 1px; }
+    .staff-own-col .chip-del { font-size: 11px; }
+    .staff-own-col .chip-split { display: none; }
+    .staff-own-col .chip-resize { display: none; }
+    .staff-own-col .chip-note-toggle { font-size: 9px; padding: 0 2px; }
+    .staff-own-col .cell-chip.in-class-chip { background: #1798d318; border-style: dashed; }
+    .staff-own-col .cell-chip.in-class-chip .chip-name { color: #1798d3; font-style: italic; }
     @media (max-width: 960px) {
       .app-body { flex-direction: column; }
       .subjects-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 180px; }
@@ -357,7 +368,7 @@
   <img src="logo.png" alt="Wallscourt Farm Academy">
   <div>
     <div class="app-title">Y4 Teaching Schedule</div>
-    <div class="app-subtitle">Wallscourt Farm Academy · v2.5</div>
+    <div class="app-subtitle">Wallscourt Farm Academy</div>
   </div>
   <div class="header-actions">
     <button class="icon-btn" onclick="openStaffModal()" title="Edit staff names">⚙</button>
@@ -886,6 +897,9 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'Sensory circuit', col:'#16a34a' },
     { name: 'Speech & Language', col:'#0d9488' },
   ]},
+  { label: 'Status', subjects: [
+    { name: 'In Class', col:'#1798d3', inClass: true },
+  ]},
 ];
 
 function renderSidebar() {
@@ -898,9 +912,9 @@ function renderSidebar() {
         <div class="subj-chip"
           style="background:${s.col}50"
           data-subject="${escHtml(s.name)}"
-          data-col="${s.col}">
+          data-col="${s.col}"${s.inClass ? ' data-in-class="1"' : ''}>
           <span class="subj-dot" style="background:${s.col}"></span>
-          <span class="subj-name">${escHtml(s.name)}</span>
+          <span class="subj-name"${s.inClass ? ' style="font-style:italic"' : ''}>${escHtml(s.name)}</span>
         </div>
       `).join('')}
     </div>
@@ -1139,10 +1153,27 @@ function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
     leftHtml = `<div class="staff-class-chip" style="background:#f8fafc;flex:1"><span style="color:#cbd5e1;font-size:11px">--</span></div>`;
   }
 
-  // Right column: own interventions — editable, droppable, stacked
+  // Right column: own interventions — compact, editable, droppable
   let rightHtml = '';
   if (ownItems.length) {
-    rightHtml = ownItems.map((item, idx) => renderItem(item, wk, view, day, session, idx)).join('');
+    rightHtml = ownItems.map((item, idx) => {
+      const col = SUBJECT_COL[item.subject] || '#64748b';
+      const light = col + '30';
+      const isClass = !!item.inClass;
+      const cls = isClass ? 'cell-chip in-class-chip' : 'cell-chip';
+      return `<div class="${cls}" style="background:${light}" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
+        <div class="chip-top">
+          <span class="chip-handle" title="Drag to reorder">≡</span>
+          <span class="chip-colour" style="background:${col}"></span>
+          <span class="chip-name">${escHtml(item.subject)}</span>
+          <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
+        </div>
+        <div class="chip-note-wrap">
+          <button class="chip-note-toggle${item.note ? ' has-note' : ''}" onclick="this.style.display='none';this.nextElementSibling.classList.remove('hidden');this.nextElementSibling.focus();return false">+</button>
+          <textarea class="item-note chip-note${item.note ? '' : ' hidden'}" rows="1" placeholder="Note…" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.note||'')}</textarea>
+        </div>
+      </div>`;
+    }).join('');
   } else {
     rightHtml = '<div class="drop-hint">drop here</div>';
   }
@@ -1260,7 +1291,7 @@ function onSubjectPointerDown(e) {
   const subject = chip.dataset.subject;
   const col = chip.dataset.col;
 
-  drag = { subject, col, sourceType: 'sidebar', sourceChip: chip, sourceData: null };
+  drag = { subject, col, sourceType: 'sidebar', sourceChip: chip, sourceData: null, inClass: !!chip.dataset.inClass };
   chip.classList.add('dragging');
   chip.setPointerCapture(e.pointerId);
 
@@ -1360,7 +1391,9 @@ function onDragEnd(e) {
       slot.splice(insertAt, 0, drag.sourceData.item);
     } else {
       const insertAt = insertIdx < 0 ? slot.length : Math.min(insertIdx, slot.length);
-      slot.splice(insertAt, 0, { subject: drag.subject, note: '', duration: 1 });
+      const newItem = { subject: drag.subject, note: '', duration: 1 };
+      if (drag.inClass) newItem.inClass = true;
+      slot.splice(insertAt, 0, newItem);
     }
     persistLocal(); syncSave();
   }
