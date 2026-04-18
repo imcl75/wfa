@@ -101,10 +101,6 @@
     .split-half.drop-over-half { outline: 2px dashed #1798d3; outline-offset: -2px; background: #dbeafe !important; }
 
     /* ── Staff cell split (TP/LP views) ─────────────────────────── */
-    .staff-cell-split { display: flex; flex-direction: column; border: 1px solid #e2e8f0; border-radius: 7px; overflow: hidden; background: white; min-height: 38px; }
-    .staff-class-bar { display: flex; flex-direction: row; gap: 0; border-bottom: 1px solid #e2e8f0; }
-    .staff-class-chip { padding: 2px 6px; font-size: 10px; font-weight: 800; font-family: 'Nunito', sans-serif; color: #1e293b; opacity: .5; display: flex; align-items: center; gap: 3px; flex: 1; min-height: 18px; }
-    .staff-class-chip + .staff-class-chip { border-left: 1px solid #f1f5f9; }
     .staff-own-col { display: flex; flex-direction: column; padding: 2px; gap: 2px; flex: 1; }
     .staff-own-col .cell-chip { border-radius: 5px; margin-bottom: 0; }
     .staff-own-col .chip-top { padding: 2px 4px; gap: 3px; }
@@ -113,10 +109,7 @@
     .staff-own-col .chip-handle { font-size: 8px; padding: 0 1px; }
     .staff-own-col .chip-del { font-size: 11px; }
     .staff-own-col .chip-split { display: none; }
-    .staff-own-col .chip-resize { display: none; }
     .staff-own-col .chip-note-toggle { font-size: 9px; padding: 0 2px; }
-    .staff-own-col .cell-chip.in-class-chip { background: #1798d318; border-style: dashed; }
-    .staff-own-col .cell-chip.in-class-chip .chip-name { color: #1798d3; font-style: italic; }
     @media (max-width: 960px) {
       .app-body { flex-direction: column; }
       .subjects-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 180px; }
@@ -586,6 +579,7 @@ function migrateShadowsOut() {
           const before = dayObj[sessionKey].length;
           dayObj[sessionKey] = dayObj[sessionKey].filter(item => !item.shadow);
           if (dayObj[sessionKey].length !== before) changed = true;
+          dayObj[sessionKey].forEach(item => { if (item.inClass) { delete item.inClass; changed = true; } });
         });
       });
     });
@@ -896,8 +890,11 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'Sensory circuit', col:'#16a34a' },
     { name: 'Speech & Language', col:'#0d9488' },
   ]},
-  { label: 'Status', subjects: [
-    { name: 'In Class', col:'#94a3b8', inClass: true },
+  { label: 'In Class', subjects: [
+    { name: 'In Class · Writer', col:'#0055ff' },
+    { name: 'In Class · Mathematician', col:'#f7d000' },
+    { name: 'In Class · Reader', col:'#e34234' },
+    { name: 'In Class · Other', col:'#64748b' },
   ]},
 ];
 
@@ -911,9 +908,9 @@ function renderSidebar() {
         <div class="subj-chip"
           style="background:${s.col}50"
           data-subject="${escHtml(s.name)}"
-          data-col="${s.col}"${s.inClass ? ' data-in-class="1"' : ''}>
+          data-col="${s.col}">
           <span class="subj-dot" style="background:${s.col}"></span>
-          <span class="subj-name"${s.inClass ? ' style="font-style:italic"' : ''}>${escHtml(s.name)}</span>
+          <span class="subj-name">${escHtml(s.name)}</span>
         </div>
       `).join('')}
     </div>
@@ -1023,7 +1020,6 @@ function renderBody() {
           const n = nsd[di];
           const isStaffView = (view !== 'master');
           const items = getSlot(wk, view, day, row.id);
-          const masterItems = isStaffView ? (getSlot(wk, 'master', day, row.id) || []) : [];
           const ownItems = isStaffView ? items : [];
           // After-school: show sheet events as read-only chips
           let afterEvents = '';
@@ -1054,8 +1050,8 @@ function renderBody() {
           let cellContent;
           if (isStaffView && row.id !== 'after') {
             cellContent = afterEvents;
-            if (masterItems.length === 0 && ownItems.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
-            else cellContent += renderStaffCell(masterItems, ownItems, wk, view, day, row.id);
+            if (ownItems.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
+            else cellContent += renderStaffCell(ownItems, wk, view, day, row.id);
           } else {
             cellContent = afterEvents;
             if (items.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
@@ -1127,65 +1123,14 @@ function renderItem(item, wk, view, day, session, idx) {
 }
 
 // ── Staff cell split (TP/LP views) ───────────────────────────────────────────
-function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
-  // Top bar: class context from master — thin, read-only, full width
-  let barHtml = '';
-  if (masterItems.length) {
-    barHtml = masterItems.map(item => {
-      let label;
-      if (item.split) {
-        label = [item.subjectLeft, item.subjectRight].filter(Boolean).join(' \u00B7 ');
-      } else {
-        label = item.subject || '';
-      }
-      const col = item.split
-        ? (SUBJECT_COL[item.subjectLeft] || '#64748b')
-        : (SUBJECT_COL[item.subject] || '#64748b');
-      const dur = item.duration || 1;
-      return `<div class="staff-class-chip" style="background:${col}18;flex:${dur}">
-        <span class="chip-colour" style="background:${col}"></span>
-        <span style="flex:1;line-height:1">${escHtml(label)}</span>
-      </div>`;
-    }).join('');
-  } else {
-    barHtml = `<div class="staff-class-chip" style="background:#f8fafc;flex:1"><span style="color:#cbd5e1;font-size:10px">--</span></div>`;
-  }
-
-  // Interventions: full width below the bar
-  // In Class chips inherit colour from the class bar
-  const classCol = masterItems.length
-    ? (masterItems[0].split
-      ? (SUBJECT_COL[masterItems[0].subjectLeft] || '#64748b')
-      : (SUBJECT_COL[masterItems[0].subject] || '#64748b'))
-    : '#94a3b8';
-  let rightHtml = '';
+function renderStaffCell(ownItems, wk, view, day, session) {
+  let html = '';
   if (ownItems.length) {
-    rightHtml = ownItems.map((item, idx) => {
-      const isClass = !!item.inClass;
-      const col = isClass ? classCol : (SUBJECT_COL[item.subject] || '#64748b');
-      const light = col + '30';
-      const cls = isClass ? 'cell-chip in-class-chip' : 'cell-chip';
-      return `<div class="${cls}" style="background:${light}" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
-        <div class="chip-top">
-          <span class="chip-handle" title="Drag to reorder">≡</span>
-          <span class="chip-colour" style="background:${col}"></span>
-          <span class="chip-name">${escHtml(item.subject)}</span>
-          <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
-        </div>
-        <div class="chip-note-wrap">
-          <button class="chip-note-toggle${item.note ? ' has-note' : ''}" onclick="this.style.display='none';this.nextElementSibling.classList.remove('hidden');this.nextElementSibling.focus();return false">+</button>
-          <textarea class="item-note chip-note${item.note ? '' : ' hidden'}" rows="1" placeholder="Note…" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">${escHtml(item.note||'')}</textarea>
-        </div>
-      </div>`;
-    }).join('');
+    html = ownItems.map((item, idx) => renderItem(item, wk, view, day, session, idx)).join('');
   } else {
-    rightHtml = '<div class="drop-hint">drop here</div>';
+    html = '<div class="drop-hint">drop here</div>';
   }
-
-  return `<div class="staff-cell-split">
-    <div class="staff-class-bar">${barHtml}</div>
-    <div class="staff-own-col">${rightHtml}</div>
-  </div>`;
+  return `<div class="staff-own-col">${html}</div>`;
 }
 
 // ── Chip actions ─────────────────────────────────────────────────────────────
@@ -1295,7 +1240,7 @@ function onSubjectPointerDown(e) {
   const subject = chip.dataset.subject;
   const col = chip.dataset.col;
 
-  drag = { subject, col, sourceType: 'sidebar', sourceChip: chip, sourceData: null, inClass: !!chip.dataset.inClass };
+  drag = { subject, col, sourceType: 'sidebar', sourceChip: chip, sourceData: null };
   chip.classList.add('dragging');
   chip.setPointerCapture(e.pointerId);
 
@@ -1395,9 +1340,7 @@ function onDragEnd(e) {
       slot.splice(insertAt, 0, drag.sourceData.item);
     } else {
       const insertAt = insertIdx < 0 ? slot.length : Math.min(insertIdx, slot.length);
-      const newItem = { subject: drag.subject, note: '', duration: 1 };
-      if (drag.inClass) newItem.inClass = true;
-      slot.splice(insertAt, 0, newItem);
+      slot.splice(insertAt, 0, { subject: drag.subject, note: '', duration: 1 });
     }
     persistLocal(); syncSave();
   }
