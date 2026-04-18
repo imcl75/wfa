@@ -163,6 +163,8 @@
     /* FAB row highlight */
     .sched-table .fixed-row.fab-row td { background: #f0f8fd; }
     .sched-table .fixed-row.fab-row .fixed-label { color: #1798d3; }
+    .sched-table .fixed-row.story-row td { background: #fef2f2; }
+    .sched-table .fixed-row.story-row .fixed-label { color: #e34234; }
 
     /* Session rows */
     .sched-table .session-row td.time-cell {
@@ -365,7 +367,7 @@ const ROWS = [
   { type:'fixed',   id:'lunch',  label:'Lunch',             time:'12:00–13:10', cls:'fab-row' },
   { type:'fixed',   id:'reg-pm', label:'PM Registration',   time:'13:10–13:20' },
   { type:'session', id:'s3',     label:'Session 3',         time:'13:20–15:00' },
-  { type:'fixed',   id:'story',  label:'Story Time',        time:'15:00–15:15' },
+  { type:'fixed',   id:'story',  label:'Story Time',        time:'15:00–15:15', cls:'story-row' },
   { type:'fixed',   id:'home',   label:'Home Time',         time:'15:15' },
   { type:'session', id:'after',  label:'After School',      time:'' },
 ];
