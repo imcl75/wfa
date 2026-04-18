@@ -255,28 +255,32 @@
 
     /* ── Staff-out spans (PPA, Leadership, etc.) ──────────────── */
     .out-col {
-      width: 28px; min-width: 28px; padding: 0 !important;
+      width: 30px; min-width: 30px; padding: 0 !important;
       border-right: 1px solid #e2e8f0; vertical-align: top;
-      position: relative; overflow: hidden;
+      position: relative;
     }
-    .out-col.out-hidden { width: 0; min-width: 0; border: none; padding: 0; }
+    .out-col.out-hidden { width: 0; min-width: 0; border: none; padding: 0 !important; }
     .out-col-fill {
-      width: 100%; height: 100%; min-height: 100%;
+      width: 100%; height: 100%; min-height: 28px;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
+      background: #475569;
     }
+    .out-col-fill.fill-first { border-radius: 6px 6px 0 0; }
+    .out-col-fill.fill-last  { border-radius: 0 0 6px 6px; }
+    .out-col-fill.fill-only { border-radius: 6px; }
+    .out-col-fill.fill-mid  { border-radius: 0; }
+    .out-col-fill.fill-stub { min-height: 4px; background: #475569; }
     .out-col-text {
       writing-mode: vertical-rl; text-orientation: mixed;
-      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 10px;
-      letter-spacing: .03em; white-space: nowrap;
-      color: white;
+      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px;
+      letter-spacing: .04em; white-space: nowrap; color: white;
     }
     .out-col-cover {
       writing-mode: vertical-rl; text-orientation: mixed;
       font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 9px;
       white-space: nowrap; color: rgba(255,255,255,.85);
     }
-    .out-col.stub { height: 10px; }
     .day-hd-add {
       display: inline-block; font-size: 13px; font-weight: 800;
       color: #1798d3; cursor: pointer; margin-left: 4px; line-height: 1;
@@ -887,7 +891,7 @@ function renderBody() {
           if (n) return `<td class="out-col out-hidden"></td><td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
           const so = staffOutMap[`${di}-${ri}`];
           const outCell = view !== 'master'
-            ? `<td class="out-col">${so ? `<div class="out-col-fill stub" style="background:${so.colour}"></div>` : ''}</td>`
+            ? `<td class="out-col">${so ? '<div class="out-col-fill fill-stub"></div>' : ''}</td>`
             : '';
           return `${outCell}<td class="view-cell" colspan="1"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
         }).join('')}
@@ -921,12 +925,17 @@ function renderBody() {
             if (n) {
               outCell = `<td class="out-col out-hidden"></td>`;
             } else if (so) {
+              let fillCls = 'out-col-fill';
+              if (so.isFirst && so.isLast) fillCls += ' fill-only';
+              else if (so.isFirst) fillCls += ' fill-first';
+              else if (so.isLast) fillCls += ' fill-last';
+              else fillCls += ' fill-mid';
               let content = '';
               if (so.isFirst) {
                 content = `<span class="out-col-text">${escHtml(so.label)}</span>`;
                 if (so.cover) content += `<span class="out-col-cover">${escHtml(so.cover)}</span>`;
               }
-              outCell = `<td class="out-col"><div class="out-col-fill" style="background:${so.colour}">${content}</div></td>`;
+              outCell = `<td class="out-col"><div class="${fillCls}">${content}</div></td>`;
             } else {
               outCell = `<td class="out-col"></td>`;
             }
@@ -1428,7 +1437,7 @@ function openStaffOutModal(dayIdx) {
   const existing = getStaffOut(schedKey(), state.activeView, day);
   const existingHtml = existing.length ? existing.map((sp, i) => `
     <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9">
-      <span style="background:${sp.colour};color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">${escHtml(sp.label)}</span>
+      <span style="background:#475569;color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">${escHtml(sp.label)}</span>
       <span style="font-size:12px;color:#64748b">${SESSION_OPTIONS.find(s=>s.id===sp.start)?.label||sp.start} → ${SESSION_OPTIONS.find(s=>s.id===sp.end)?.label||sp.end}</span>
       ${sp.cover ? `<span style="font-size:12px;color:#94a3b8">Cover: ${escHtml(sp.cover)}</span>` : ''}
       <button style="margin-left:auto;background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px" onclick="removeStaffOut(${i})">×</button>
@@ -1449,7 +1458,6 @@ function openStaffOutModal(dayIdx) {
           ${SESSION_OPTIONS.map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
         </select>
         <input id="soCover" placeholder="Cover (optional)" style="flex:1;min-width:100px;border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;font-size:13px;font-family:Arial,sans-serif">
-        <input id="soColour" type="color" value="#f97316" style="width:36px;height:30px;padding:0;border:none;background:none;cursor:pointer">
       </div>
     </div>
   `;
@@ -1470,14 +1478,13 @@ function saveStaffOut() {
   const start = document.getElementById('soStart').value;
   const end = document.getElementById('soEnd').value;
   const cover = document.getElementById('soCover').value.trim();
-  const colour = document.getElementById('soColour').value;
   const day = DAYS[_staffOutDay].toLowerCase();
   const spans = getStaffOut(schedKey(), state.activeView, day);
   // Ensure start <= end in ROWS order
   const startIdx = ROWS.findIndex(r => r.id === start);
   const endIdx = ROWS.findIndex(r => r.id === end);
   if (startIdx < 0 || endIdx < 0 || startIdx > endIdx) { closeStaffOutModal(); return; }
-  spans.push({ start, end, label, cover, colour });
+  spans.push({ start, end, label, cover, colour: '#475569' });
   setStaffOut(schedKey(), state.activeView, day, spans);
   closeStaffOutModal();
 }
