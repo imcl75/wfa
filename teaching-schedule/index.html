@@ -252,6 +252,12 @@
     th.non-school-day .day-hd-name,
     th.non-school-day .day-hd-date { color: #94a3b8 !important; }
     .sched-table .fixed-row td.non-school-day { background: #f1f5f9 !important; }
+    .day-event-tag {
+      display: inline-block; font-size: 8.5px; font-weight: 700;
+      padding: 1px 5px; border-radius: 3px; margin-top: 2px;
+      color: #475569; background: #e2e8f0; white-space: nowrap;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    }
     .chip-resize {
       height: 4px; cursor: ns-resize; margin: 0 4px;
       border-radius: 0 0 4px 4px; opacity: .15; transition: opacity .1s;
@@ -465,6 +471,7 @@ let state = {
   schedule:  {}, // weekKey → view → day → sessionId → [{ subject, note, split }]
   afterSchoolEvents: {}, // 'YYYY-MM-DD' → [{ label, type, bg }]
   nonSchoolDays: {}, // 'YYYY-MM-DD' → { label, type }
+  schoolEvents: {},  // 'YYYY-MM-DD' → [{ label, type }]
 };
 
 // ── Persistence ─────────────────────────────────────────────────────────────
@@ -741,8 +748,10 @@ function renderHead() {
       const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + i);
       const dk = dateKey(cellDate);
       const nsd = state.nonSchoolDays[dk];
+      const evts = state.schoolEvents[dk] || [];
       const cls = `day-hd${isToday(i) ? ' today' : ''}${nsd ? ' non-school-day' : ''}`;
-      return `<th class="${cls}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span></th>`;
+      const tags = evts.map(e => `<span class="day-event-tag">${escHtml(e.label)}</span>`).join(' ');
+      return `<th class="${cls}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span>${tags ? '<br>' + tags : ''}</th>`;
     }).join('')}
   </tr>`;
 }
@@ -1334,6 +1343,30 @@ function buildNonSchoolDays(rows) {
   return days;
 }
 
+function buildSchoolEvents(rows) {
+  const events = {};
+  rows.forEach(r => {
+    if (!r.StartDate) return;
+    if (r.Session && String(r.Session).trim()) return; // after-school events handled elsewhere
+    const type = String(r.Type || '').trim();
+    if (BLOCKING_TYPES.has(type)) return; // blocking events handled elsewhere
+    const start = parseDate(r.StartDate.trim());
+    if (!start || isNaN(start)) return;
+    const end = parseDate((r.EndDate || r.StartDate).trim()) || start;
+    const label = r.Label || type;
+    const cur = new Date(start);
+    while (cur <= end) {
+      if (cur.getDay() >= 1 && cur.getDay() <= 5) {
+        const k = dateKey(cur);
+        if (!events[k]) events[k] = [];
+        events[k].push({ label, type });
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return events;
+}
+
 // ── Data migration ──────────────────────────────────────────────────────────
 function migrateScheduleKeys() {
   // Convert old date-based keys (e.g. "2026-04-12") to T1W2 format
@@ -1377,6 +1410,7 @@ async function init() {
       const evtRows = csvToObjects(eventsText);
       state.afterSchoolEvents = buildAfterSchoolEvents(evtRows);
       state.nonSchoolDays = buildNonSchoolDays(evtRows);
+      state.schoolEvents = buildSchoolEvents(evtRows);
     }
     if (schoolEventsText) recurringAfterSchool = buildRecurringAfterSchool(csvToObjects(schoolEventsText));
     migrateScheduleKeys();
