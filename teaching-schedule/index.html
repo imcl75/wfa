@@ -207,6 +207,10 @@
     }
     .chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
     .chip-colour { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .chip-colour.colourable { cursor: pointer; width: 10px; height: 10px; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #94a3b8; }
+    .hz-colour-pop { position: absolute; top: 18px; left: 4px; background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px; display: flex; gap: 3px; z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+    .hz-colour-pop span { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; }
+    .hz-colour-pop span:hover { border-color: #1e293b; }
     .chip-name { font-size: 13px; font-weight: 800; flex: 1; line-height: 1.25; color: #1e293b; font-family: 'Nunito', sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .chip-handle {
       cursor: grab; font-size: 10px; color: rgba(0,0,0,.18); padding: 0 2px;
@@ -891,15 +895,13 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'Speech & Language', col:'#0d9488' },
   ]},
   { label: 'HomeZone', subjects: [
-    { name: 'HomeZone - Wri / Enq', col:'#0055ff' },
+    { name: 'HomeZone - Writer / Enquiry', col:'#0055ff' },
     { name: 'HomeZone - Mathematician', col:'#f7d000' },
     { name: 'HomeZone - Reader', col:'#e34234' },
-    { name: 'HomeZone - Artist', col:'#7c3aed' },
-    { name: 'HomeZone - Musician', col:'#c4b5fd' },
-    { name: 'HomeZone - Athlete', col:'#16a34a' },
-    { name: 'HomeZone - Linguist', col:'#fb923c' },
+    { name: 'HomeZone - Other', col:'#94a3b8', colourable: true },
   ]},
 ];
+const HZ_PALETTE = ['#7c3aed','#c4b5fd','#16a34a','#fb923c','#0d9488','#64748b','#ec4899','#92400e'];
 
 function renderSidebar() {
   const el = document.getElementById('subjectList');
@@ -1089,10 +1091,13 @@ function renderBody() {
 }
 
 function renderItem(item, wk, view, day, session, idx) {
-  const col = SUBJECT_COL[item.subject] || SUBJECT_COL[item.subjectLeft] || '#64748b';
+  const col = item.hzCol || SUBJECT_COL[item.subject] || SUBJECT_COL[item.subjectLeft] || '#64748b';
   const light = col + '50';
   const dur = item.duration || 1;
   const minH = Math.max(32, dur * 32);
+  const isColourable = item.subject === 'HomeZone - Other';
+  const colCls = isColourable ? 'chip-colour colourable' : 'chip-colour';
+  const colClick = isColourable ? ` onclick="showHzPalette(event,this)"` : '';
   if (item.split) {
     const colL = SUBJECT_COL[item.subjectLeft] || '#64748b';
     const colR = SUBJECT_COL[item.subjectRight] || '#64748b';
@@ -1112,7 +1117,7 @@ function renderItem(item, wk, view, day, session, idx) {
   return `<div class="cell-chip" style="background:${light};min-height:${minH}px" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}">
     <div class="chip-top">
       <span class="chip-handle" title="Drag to reorder">≡</span>
-      <span class="chip-colour" style="background:${col}"></span>
+      <span class="${colCls}" style="background:${col}"${colClick}></span>
       <span class="chip-name">${escHtml(item.subject)}</span>
       <button class="chip-split" title="Split into two groups" onclick="splitItem(this)">⇔</button>
       <button class="chip-del" data-wk="${escHtml(wk)}" data-view="${escHtml(view)}" data-day="${escHtml(day)}" data-session="${escHtml(session)}" data-idx="${idx}" onclick="removeItem(this)">×</button>
@@ -1137,6 +1142,34 @@ function renderStaffCell(ownItems, wk, view, day, session) {
 }
 
 // ── Chip actions ─────────────────────────────────────────────────────────────
+function showHzPalette(e, dotEl) {
+  e.stopPropagation();
+  const chip = dotEl.closest('.cell-chip');
+  const existing = chip.querySelector('.hz-colour-pop');
+  if (existing) { existing.remove(); return; }
+  const { wk, view, day, session, idx } = chip.dataset;
+  const slot = getSlot(wk, view, day, session);
+  const item = slot[Number(idx)];
+  const currentCol = item.hzCol || '#94a3b8';
+  const pop = document.createElement('div');
+  pop.className = 'hz-colour-pop';
+  pop.innerHTML = HZ_PALETTE.map(c => `<span style="background:${c}${c === currentCol ? ';border-color:#1e293b' : ''}" data-col="${c}"></span>`).join('');
+  pop.addEventListener('click', function(ev) {
+    const swatch = ev.target.closest('[data-col]');
+    if (!swatch) return;
+    item.hzCol = swatch.dataset.col;
+    persistLocal(); syncSave();
+    pop.remove();
+    renderGrid();
+  });
+  dotEl.parentElement.style.position = 'relative';
+  dotEl.parentElement.appendChild(pop);
+}
+
+document.addEventListener('click', function() {
+  document.querySelectorAll('.hz-colour-pop').forEach(p => p.remove());
+});
+
 function removeItem(btn) {
   const { wk, view, day, session, idx } = btn.dataset;
   const slot = getSlot(wk, view, day, session);
