@@ -1161,11 +1161,12 @@ function showHzPalette(e, dotEl) {
   const pal = hzPalette();
   const pop = document.createElement('div');
   pop.className = 'hz-colour-pop';
-  pop.innerHTML = pal.map(p => `<span style="background:${p.col}${p.col === currentCol ? ';border-color:#1e293b' : ''}" data-col="${p.col}" title="${p.name}"></span>`).join('');
+  pop.innerHTML = pal.map(p => `<span style="background:${p.col}${p.col === currentCol ? ';border-color:#1e293b' : ''}" data-col="${p.col}" data-name="${p.name}" title="${p.name}"></span>`).join('');
   pop.addEventListener('click', function(ev) {
     const swatch = ev.target.closest('[data-col]');
     if (!swatch) return;
     item.hzCol = swatch.dataset.col;
+    item.subject = swatch.dataset.name === 'Other' ? 'HomeZone - Other' : `HomeZone - ${swatch.dataset.name}`;
     persistLocal(); syncSave();
     pop.remove();
     renderGrid();
