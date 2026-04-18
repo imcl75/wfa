@@ -564,7 +564,6 @@ function migrateSubjectNames() {
   });
   if (schedChanged) persistLocal();
 }
-migrateSubjectNames();
 
 let state = {
   weekIdx:   0,
@@ -1742,6 +1741,7 @@ function migrateScheduleKeys() {
 // ── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   loadLocal();
+  migrateSubjectNames();
 
   document.getElementById('weekLabel').textContent = '…';
   renderSidebar();
