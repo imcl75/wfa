@@ -101,12 +101,11 @@
     .split-half.drop-over-half { outline: 2px dashed #1798d3; outline-offset: -2px; background: #dbeafe !important; }
 
     /* ── Staff cell split (TP/LP views) ─────────────────────────── */
-    .staff-cell-split { display: grid; grid-template-columns: 2fr 3fr; gap: 0; border: 1px solid #e2e8f0; border-radius: 7px; overflow: hidden; background: white; min-height: 38px; }
-    .staff-class-col { display: flex; flex-direction: column; border-right: 2px solid #e2e8f0; }
-    .staff-class-chip { padding: 6px 8px; font-size: 13px; font-weight: 800; font-family: 'Nunito', sans-serif; color: #1e293b; opacity: .55; display: flex; align-items: flex-start; gap: 5px; position: relative; flex: 1; }
-    .staff-class-chip + .staff-class-chip { border-top: 1px solid #f1f5f9; }
-    .staff-class-chip .class-tag { font-size: 6.5px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: .04em; position: absolute; top: 3px; right: 4px; }
-    .staff-own-col { display: flex; flex-direction: column; padding: 2px; gap: 2px; }
+    .staff-cell-split { display: flex; flex-direction: column; border: 1px solid #e2e8f0; border-radius: 7px; overflow: hidden; background: white; min-height: 38px; }
+    .staff-class-bar { display: flex; flex-direction: row; gap: 0; border-bottom: 1px solid #e2e8f0; }
+    .staff-class-chip { padding: 2px 6px; font-size: 10px; font-weight: 800; font-family: 'Nunito', sans-serif; color: #1e293b; opacity: .5; display: flex; align-items: center; gap: 3px; flex: 1; min-height: 18px; }
+    .staff-class-chip + .staff-class-chip { border-left: 1px solid #f1f5f9; }
+    .staff-own-col { display: flex; flex-direction: column; padding: 2px; gap: 2px; flex: 1; }
     .staff-own-col .cell-chip { border-radius: 5px; margin-bottom: 0; }
     .staff-own-col .chip-top { padding: 2px 4px; gap: 3px; }
     .staff-own-col .chip-name { font-size: 11px; font-weight: 700; }
@@ -1129,10 +1128,10 @@ function renderItem(item, wk, view, day, session, idx) {
 
 // ── Staff cell split (TP/LP views) ───────────────────────────────────────────
 function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
-  // Left column: class context from master — read-only, flex-fills height
-  let leftHtml = '';
+  // Top bar: class context from master — thin, read-only, full width
+  let barHtml = '';
   if (masterItems.length) {
-    leftHtml = masterItems.map(item => {
+    barHtml = masterItems.map(item => {
       let label;
       if (item.split) {
         label = [item.subjectLeft, item.subjectRight].filter(Boolean).join(' \u00B7 ');
@@ -1145,15 +1144,14 @@ function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
       const dur = item.duration || 1;
       return `<div class="staff-class-chip" style="background:${col}18;flex:${dur}">
         <span class="chip-colour" style="background:${col}"></span>
-        <span style="flex:1;line-height:1.2">${escHtml(label)}</span>
-        <span class="class-tag">class</span>
+        <span style="flex:1;line-height:1">${escHtml(label)}</span>
       </div>`;
     }).join('');
   } else {
-    leftHtml = `<div class="staff-class-chip" style="background:#f8fafc;flex:1"><span style="color:#cbd5e1;font-size:11px">--</span></div>`;
+    barHtml = `<div class="staff-class-chip" style="background:#f8fafc;flex:1"><span style="color:#cbd5e1;font-size:10px">--</span></div>`;
   }
 
-  // Right column: own interventions — compact, editable, droppable
+  // Interventions: full width below the bar
   let rightHtml = '';
   if (ownItems.length) {
     rightHtml = ownItems.map((item, idx) => {
@@ -1179,7 +1177,7 @@ function renderStaffCell(masterItems, ownItems, wk, view, day, session) {
   }
 
   return `<div class="staff-cell-split">
-    <div class="staff-class-col">${leftHtml}</div>
+    <div class="staff-class-bar">${barHtml}</div>
     <div class="staff-own-col">${rightHtml}</div>
   </div>`;
 }
