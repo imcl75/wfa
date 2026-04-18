@@ -14,6 +14,7 @@
       background: white; border-bottom: 2px solid #1798d3;
       padding: 10px 16px; display: flex; align-items: center; gap: 12px;
       position: sticky; top: 0; z-index: 200; box-shadow: 0 1px 0 rgba(15,23,42,.04);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
     .app-header img { height: 40px; }
     .app-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; color: #1798d3; line-height: 1.2; }
@@ -33,6 +34,7 @@
       background: white; border-bottom: 1px solid #e2e8f0;
       padding: 6px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
       position: sticky; top: 62px; z-index: 199; box-shadow: 0 1px 0 rgba(15,23,42,.03);
+      -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
     .nav-btn { background: #f0f8fd; border: 1.5px solid #bae0f5; border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: #1798d3; line-height: 1; }
     .nav-btn:hover { background: #dbeafe; }
@@ -895,14 +897,11 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'Speech & Language', col:'#0d9488' },
   ]},
   { label: 'HomeZone', subjects: [
-    { name: 'HomeZone - Writer / Enquiry', col:'#0055ff' },
-    { name: 'HomeZone - Mathematician', col:'#f7d000' },
-    { name: 'HomeZone - Reader', col:'#e34234' },
-    { name: 'HomeZone - Other', col:'#94a3b8', colourable: true },
+    { name: 'HomeZone', col:'#94a3b8', colourable: true },
   ]},
 ];
 function hzPalette() {
-  const picks = ['Artist','Musician','Athlete','Linguist','Designer','Other'];
+  const picks = ['Writer','Mathematician','Reader','Artist','Musician','Athlete','Linguist','Designer','Other'];
   return picks.map(name => {
     const s = SUBJECTS.flatMap(g => g.subjects).find(s => s.name === name)
       || SUBJECT_GROUPS.flatMap(g => g.subjects).find(s => s.name === name);
@@ -1102,7 +1101,7 @@ function renderItem(item, wk, view, day, session, idx) {
   const light = col + '50';
   const dur = item.duration || 1;
   const minH = Math.max(32, dur * 32);
-  const isColourable = item.subject === 'HomeZone - Other';
+  const isColourable = item.subject === 'HomeZone' || item.subject.startsWith('HomeZone - ');
   const colCls = isColourable ? 'chip-colour colourable' : 'chip-colour';
   const colClick = isColourable ? ` onclick="showHzPalette(event,this)"` : '';
   if (item.split) {
