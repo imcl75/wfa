@@ -252,6 +252,46 @@
     th.non-school-day .day-hd-name,
     th.non-school-day .day-hd-date { color: #94a3b8 !important; }
     .sched-table .fixed-row td.non-school-day { background: #f1f5f9 !important; }
+
+    /* ── Staff-out spans (PPA, Leadership, etc.) ──────────────── */
+    .staff-out-bar {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 22px;
+      pointer-events: none; z-index: 1; display: flex; align-items: center;
+      justify-content: center; overflow: hidden;
+    }
+    .staff-out-bar.staff-out-first { border-radius: 6px 0 0 0; }
+    .staff-out-bar.staff-out-last  { border-radius: 0 0 0 6px; }
+    .staff-out-bar.staff-out-first.staff-out-last { border-radius: 6px 0 0 6px; }
+    .staff-out-bar.staff-out-mid   { border-radius: 0; }
+    .staff-out-bar.staff-out-fixed { width: 10px; opacity: .35; }
+    .staff-out-text {
+      writing-mode: vertical-rl; text-orientation: mixed;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 10px;
+      letter-spacing: .03em; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; max-height: calc(100% - 6px);
+    }
+    .staff-out-cover {
+      writing-mode: vertical-rl; text-orientation: mixed;
+      font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 9px;
+      white-space: nowrap; overflow: hidden; opacity: .7;
+    }
+    .view-cell:has(.staff-out-bar) { padding-left: 26px; }
+    .view-cell:has(.staff-out-bar.staff-out-fixed) { padding-left: 14px; }
+    .sched-table .session-row td.view-cell > .cell-chip,
+    .sched-table .session-row td.view-cell > .drop-hint { position: relative; z-index: 2; }
+    .day-hd-add {
+      display: inline-block; font-size: 13px; font-weight: 800;
+      color: #1798d3; cursor: pointer; margin-left: 4px; line-height: 1;
+      vertical-align: middle; border-radius: 3px;
+    }
+    .day-hd-add:hover { background: #dbeafe; }
+    .staff-out-del {
+      position: absolute; top: -1px; right: 0; z-index: 3;
+      background: none; border: none; cursor: pointer;
+      font-size: 11px; color: rgba(0,0,0,.25); padding: 0 2px; line-height: 1;
+      pointer-events: all;
+    }
+    .staff-out-del:hover { color: #dc2626; }
     .day-event-tag {
       display: inline-block; font-size: 8.5px; font-weight: 700;
       padding: 1px 5px; border-radius: 3px; margin-top: 2px;
@@ -383,6 +423,19 @@
 
 <!-- Drag ghost -->
 <div id="drag-ghost" style="display:none"></div>
+
+<!-- Staff-out modal -->
+<div class="modal-bg" id="staffOutModal">
+  <div class="modal">
+    <h3>Add Staff Out</h3>
+    <p class="modal-hint">Mark when this person is out of class (PPA, leadership, course, etc.)</p>
+    <div id="staffOutFields"></div>
+    <div class="modal-footer">
+      <button class="modal-cancel" onclick="closeStaffOutModal()">Cancel</button>
+      <button class="modal-save" onclick="saveStaffOut()">Add</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
@@ -768,6 +821,7 @@ function renderGrid() {
 
 function renderHead() {
   const mon = weekMonday();
+  const isStaffView = state.activeView !== 'master';
   const el = document.getElementById('schedHead');
   el.innerHTML = `<tr>
     <th class="time-hd"></th>
@@ -778,7 +832,8 @@ function renderHead() {
       const evts = state.schoolEvents[dk] || [];
       const cls = `day-hd${isToday(i) ? ' today' : ''}${nsd ? ' non-school-day' : ''}`;
       const tags = evts.map(e => `<span class="day-event-tag">${escHtml(e.label)}</span>`).join(' ');
-      return `<th class="${cls}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span>${tags ? '<br>' + tags : ''}</th>`;
+      const addBtn = isStaffView && !nsd ? `<span class="day-hd-add" onclick="openStaffOutModal(${i})" title="Add staff out">＋</span>` : '';
+      return `<th class="${cls}"><span class="day-hd-name">${d}${addBtn}</span><br><span class="day-hd-date">${dayDate(i)}</span>${tags ? '<br>' + tags : ''}</th>`;
     }).join('')}
   </tr>`;
 }
@@ -795,16 +850,46 @@ function renderBody() {
     return state.nonSchoolDays[dateKey(cellDate)] || null;
   });
 
+  // Pre-compute staff-out spans per (dayIndex, rowIndex)
+  const staffOutMap = {};
+  if (view !== 'master') {
+    DAYS.forEach((d, di) => {
+      const day = d.toLowerCase();
+      if (nsd[di]) return;
+      const spans = getStaffOut(wk, view, day);
+      if (!spans.length) return;
+      spans.forEach(sp => {
+        const startIdx = ROWS.findIndex(r => r.id === sp.start);
+        const endIdx = ROWS.findIndex(r => r.id === sp.end);
+        if (startIdx < 0 || endIdx < 0) return;
+        ROWS.forEach((row, ri) => {
+          if (ri >= startIdx && ri <= endIdx) {
+            staffOutMap[`${di}-${ri}`] = {
+              label: sp.label,
+              cover: sp.cover || '',
+              colour: sp.colour,
+              isFirst: ri === startIdx,
+              isLast: ri === endIdx,
+              isFixed: row.type === 'fixed',
+            };
+          }
+        });
+      });
+    });
+  }
+
   let html = '';
 
-  ROWS.forEach(row => {
+  ROWS.forEach((row, ri) => {
     if (row.type === 'fixed') {
       html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
         <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
-        ${nsd.map((n, di) => n
-          ? `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`
-          : `<td class="view-cell" colspan="1"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`
-        ).join('')}
+        ${nsd.map((n, di) => {
+          if (n) return `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
+          const so = staffOutMap[`${di}-${ri}`];
+          const soBar = so ? `<div class="staff-out-bar staff-out-fixed${so.isFirst ? ' staff-out-first' : ''}${so.isLast ? ' staff-out-last' : ''}" style="background:${so.colour}"></div>` : '';
+          return `<td class="view-cell" colspan="1" style="position:relative">${soBar}<div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
+        }).join('')}
       </tr>`;
     } else {
       html += `<tr class="session-row${nsd.some(Boolean) ? ' non-school-row' : ''}">
@@ -828,8 +913,24 @@ function renderBody() {
           }
           const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
           const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
+          // Staff-out bar
+          const so = staffOutMap[`${di}-${ri}`];
+          let soBar = '';
+          if (so) {
+            let cls = 'staff-out-bar';
+            if (so.isFixed) cls += ' staff-out-fixed';
+            else {
+              if (so.isFirst) cls += ' staff-out-first';
+              if (so.isLast) cls += ' staff-out-last';
+              if (!so.isFirst && !so.isLast) cls += ' staff-out-mid';
+            }
+            const labelText = so.isFirst ? `<span class="staff-out-text" style="color:${so.colour}">${escHtml(so.label)}</span>` : '';
+            const coverText = so.isFirst && so.cover ? `<span class="staff-out-cover" style="color:${so.colour}">${escHtml(so.cover)}</span>` : '';
+            soBar = `<div class="${cls}" style="background:${so.colour}25">${labelText}${coverText}</div>`;
+          }
           return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}" style="position:relative">
             ${overlay}
+            ${soBar}
             ${afterEvents}
             ${items.length === 0 && !afterEvents && !n ? '<div class="drop-hint">drop here</div>' : ''}
             ${items.map((item, idx) => renderItem(item, wk, view, day, row.id, idx)).join('')}
@@ -1295,6 +1396,92 @@ function saveStaffModal() {
   staffColourPicks = {};
   closeStaffModal();
   renderGrid();
+}
+
+// ── Staff-out spans (PPA, Leadership, etc.) ────────────────────────────────
+const SESSION_OPTIONS = [
+  { id:'s1', label:'Session 1 (09:00–10:45)' },
+  { id:'s2', label:'Session 2 (11:00–12:00)' },
+  { id:'s3', label:'Session 3 (13:20–15:00)' },
+];
+
+function getStaffOut(wk, view, day) {
+  if (!state.schedule[wk] || !state.schedule[wk][view] || !state.schedule[wk][view][day]) return [];
+  const dayObj = state.schedule[wk][view][day];
+  return dayObj._out || [];
+}
+
+function setStaffOut(wk, view, day, spans) {
+  const dayObj = ensureDay(wk, view, day);
+  dayObj._out = spans;
+  persistLocal(); syncSave();
+  renderGrid();
+}
+
+let _staffOutDay = null;
+
+function openStaffOutModal(dayIdx) {
+  _staffOutDay = dayIdx;
+  const day = DAYS[dayIdx].toLowerCase();
+  const existing = getStaffOut(schedKey(), state.activeView, day);
+  const existingHtml = existing.length ? existing.map((sp, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      <span style="background:${sp.colour};color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">${escHtml(sp.label)}</span>
+      <span style="font-size:12px;color:#64748b">${SESSION_OPTIONS.find(s=>s.id===sp.start)?.label||sp.start} → ${SESSION_OPTIONS.find(s=>s.id===sp.end)?.label||sp.end}</span>
+      ${sp.cover ? `<span style="font-size:12px;color:#94a3b8">Cover: ${escHtml(sp.cover)}</span>` : ''}
+      <button style="margin-left:auto;background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px" onclick="removeStaffOut(${i})">×</button>
+    </div>
+  `).join('') : '<p style="font-size:12px;color:#94a3b8">No staff-out entries for this day.</p>';
+
+  document.getElementById('staffOutFields').innerHTML = `
+    <div style="margin-bottom:14px">${existingHtml}</div>
+    <div style="border-top:2px solid #e2e8f0;padding-top:12px">
+      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:8px">Add new</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="soLabel" placeholder="PPA, Leadership…" style="flex:1;min-width:100px;border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;font-size:13px;font-family:Arial,sans-serif">
+        <select id="soStart" style="border:1px solid #e2e8f0;border-radius:5px;padding:6px 8px;font-size:13px;font-family:Arial,sans-serif">
+          ${SESSION_OPTIONS.map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
+        </select>
+        <span style="font-size:13px;color:#94a3b8">→</span>
+        <select id="soEnd" style="border:1px solid #e2e8f0;border-radius:5px;padding:6px 8px;font-size:13px;font-family:Arial,sans-serif">
+          ${SESSION_OPTIONS.map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
+        </select>
+        <input id="soCover" placeholder="Cover (optional)" style="flex:1;min-width:100px;border:1px solid #e2e8f0;border-radius:5px;padding:6px 10px;font-size:13px;font-family:Arial,sans-serif">
+        <input id="soColour" type="color" value="#f97316" style="width:36px;height:30px;padding:0;border:none;background:none;cursor:pointer">
+      </div>
+    </div>
+  `;
+  document.getElementById('staffOutModal').classList.add('open');
+}
+
+function removeStaffOut(idx) {
+  const day = DAYS[_staffOutDay].toLowerCase();
+  const spans = getStaffOut(schedKey(), state.activeView, day);
+  spans.splice(idx, 1);
+  setStaffOut(schedKey(), state.activeView, day, spans);
+  openStaffOutModal(_staffOutDay); // refresh modal
+}
+
+function saveStaffOut() {
+  const label = document.getElementById('soLabel').value.trim();
+  if (!label) { closeStaffOutModal(); return; }
+  const start = document.getElementById('soStart').value;
+  const end = document.getElementById('soEnd').value;
+  const cover = document.getElementById('soCover').value.trim();
+  const colour = document.getElementById('soColour').value;
+  const day = DAYS[_staffOutDay].toLowerCase();
+  const spans = getStaffOut(schedKey(), state.activeView, day);
+  // Ensure start <= end in ROWS order
+  const startIdx = ROWS.findIndex(r => r.id === start);
+  const endIdx = ROWS.findIndex(r => r.id === end);
+  if (startIdx < 0 || endIdx < 0 || startIdx > endIdx) { closeStaffOutModal(); return; }
+  spans.push({ start, end, label, cover, colour });
+  setStaffOut(schedKey(), state.activeView, day, spans);
+  closeStaffOutModal();
+}
+
+function closeStaffOutModal() {
+  document.getElementById('staffOutModal').classList.remove('open');
 }
 
 // ── Utility ──────────────────────────────────────────────────────────────────
