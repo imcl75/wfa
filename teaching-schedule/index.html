@@ -737,7 +737,7 @@ function computeViews(staff) {
 // ── Build staff from sheet ────────────────────────────────────────────────────
 function buildTeachingStaff(rows, yearGroup) {
   const filtered = rows.filter(r => {
-    return normaliseYG((r.YearGroup || '').trim()) === yearGroup;
+    return yearGroupMatches((r.YearGroup || '').trim(), yearGroup);
   });
   const colours = ['#1798d3','#f97316','#22c55e','#8b5cf6','#ec4899','#0f766e'];
   let colourIdx = 0;
@@ -748,13 +748,26 @@ function buildTeachingStaff(rows, yearGroup) {
   });
 }
 
-function normaliseYG(yg) { return yg === 'YR' ? 'Reception' : yg; }
+function normaliseYG(yg) {
+  if (yg === 'YR' || yg === 'R') return 'Reception';
+  if (/^\d+$/.test(yg)) return 'Y' + yg;
+  return yg;
+}
+function expandYearGroups(raw) {
+  // "3,4,5,6" → ["Y3","Y4","Y5","Y6"], "R" → ["Reception"], "" → []
+  return raw.split(',').map(s => s.trim()).filter(Boolean).map(normaliseYG);
+}
+function yearGroupMatches(raw, yearGroup) {
+  // Blank = universal; otherwise check if yearGroup is in the expanded list
+  if (!raw) return true;
+  return expandYearGroups(raw).includes(yearGroup);
+}
 
 // ── Build subjects from sheet ─────────────────────────────────────────────────
 function buildSubjectGroups(rows, yearGroup) {
   // Blank YearGroup = universal defaults; specific YearGroup = additions
   const defaults = rows.filter(r => !(r.YearGroup || '').trim());
-  const specific = rows.filter(r => normaliseYG((r.YearGroup || '').trim()) === yearGroup);
+  const specific = rows.filter(r => yearGroupMatches((r.YearGroup || '').trim(), yearGroup));
   const merged = [...defaults, ...specific];
   const groupMap = {};
   const groupOrder = [];
@@ -775,7 +788,7 @@ function buildSubjectGroups(rows, yearGroup) {
 function buildInterventions(rows, yearGroup) {
   // Blank YearGroup = universal defaults; specific YearGroup = additions
   const defaults = rows.filter(r => !(r.YearGroup || '').trim());
-  const specific = rows.filter(r => normaliseYG((r.YearGroup || '').trim()) === yearGroup);
+  const specific = rows.filter(r => yearGroupMatches((r.YearGroup || '').trim(), yearGroup));
   const merged = [...defaults, ...specific];
   const groupMap = {};
   const groupOrder = [];
@@ -2136,9 +2149,13 @@ async function init() {
     if (staffText) {
       const staffRows = csvToObjects(staffText);
       ALL_SHEET_STAFF = staffRows;
-      const yearGroups = [...new Set(staffRows.map(r => {
-        return normaliseYG((r.YearGroup || '').trim());
-      }).filter(Boolean))].sort();
+      const yearGroups = [...new Set(staffRows.flatMap(r => {
+        return expandYearGroups((r.YearGroup || '').trim());
+      }))];
+      yearGroups.sort((a, b) => {
+        const order = ['Reception','Y1','Y2','Y3','Y4','Y5','Y6'];
+        return order.indexOf(a) - order.indexOf(b);
+      });
       populateYearGroupSelect(yearGroups.length ? yearGroups : [YEAR_GROUP]);
       const oldIds = STAFF.map(s => s.id);
       STAFF = buildTeachingStaff(staffRows, YEAR_GROUP);
