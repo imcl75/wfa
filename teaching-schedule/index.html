@@ -540,6 +540,39 @@ const FALLBACK_STAFF = {
   ],
 };
 
+const FALLBACK_INTERVENTIONS_DATA = [
+  { label: 'Reader', subjects: [
+    { name: '1 to 1 reading', col:'#e34234' },
+    { name: '3 in 3 reading', col:'#ef6c5a' },
+    { name: '3 in 3 bookclub', col:'#f09c8e' },
+    { name: 'Phonics', col:'#fb923c' },
+  ]},
+  { label: 'Mathematician', subjects: [
+    { name: 'Arithmetic', col:'#ffe44d' },
+    { name: 'Maths', col:'#f7d000' },
+    { name: 'Times Tables', col:'#ffd54f' },
+    { name: 'Typing', col:'#e8b800' },
+  ]},
+  { label: 'Writer', subjects: [
+    { name: 'Writing skills', col:'#4b8bff' },
+    { name: 'Spelling Skills', col:'#93c5fd' },
+    { name: 'Handwriting', col:'#60a5fa' },
+    { name: 'Hamish & Milo', col:'#7c3aed' },
+  ]},
+  { label: 'Well-Being', subjects: [
+    { name: 'movement break', col:'#22c55e' },
+    { name: 'Sensory circuit', col:'#16a34a' },
+    { name: 'Speech & Language', col:'#0d9488' },
+  ]},
+  { label: 'HomeZone', subjects: [
+    { name: 'HomeZone', col:'#94a3b8', colourable: true },
+  ]},
+];
+
+const FALLBACK_INTERVENTIONS = {
+  Y4: FALLBACK_INTERVENTIONS_DATA.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })),
+};
+
 // ── Year group state ──────────────────────────────────────────────────────────
 let YEAR_GROUP = 'Y4';
 
@@ -1065,40 +1098,6 @@ function renderViewTabs() {
 }
 
 // ── Render: subjects sidebar ─────────────────────────────────────────────────
-// Fallback interventions per year group (used when sheet Interventions tab is unavailable)
-const FALLBACK_INTERVENTIONS_DATA = [
-  { label: 'Reader', subjects: [
-    { name: '1 to 1 reading', col:'#e34234' },
-    { name: '3 in 3 reading', col:'#ef6c5a' },
-    { name: '3 in 3 bookclub', col:'#f09c8e' },
-    { name: 'Phonics', col:'#fb923c' },
-  ]},
-  { label: 'Mathematician', subjects: [
-    { name: 'Arithmetic', col:'#ffe44d' },
-    { name: 'Maths', col:'#f7d000' },
-    { name: 'Times Tables', col:'#ffd54f' },
-    { name: 'Typing', col:'#e8b800' },
-  ]},
-  { label: 'Writer', subjects: [
-    { name: 'Writing skills', col:'#4b8bff' },
-    { name: 'Spelling Skills', col:'#93c5fd' },
-    { name: 'Handwriting', col:'#60a5fa' },
-    { name: 'Hamish & Milo', col:'#7c3aed' },
-  ]},
-  { label: 'Well-Being', subjects: [
-    { name: 'movement break', col:'#22c55e' },
-    { name: 'Sensory circuit', col:'#16a34a' },
-    { name: 'Speech & Language', col:'#0d9488' },
-  ]},
-  { label: 'HomeZone', subjects: [
-    { name: 'HomeZone', col:'#94a3b8', colourable: true },
-  ]},
-];
-
-const FALLBACK_INTERVENTIONS = {
-  Y4: FALLBACK_INTERVENTIONS_DATA.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })),
-};
-
 function fallbackInterventions() {
   return (FALLBACK_INTERVENTIONS[YEAR_GROUP] || FALLBACK_INTERVENTIONS['Y4']).map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) }));
 }
