@@ -769,8 +769,11 @@ function computeViews(staff) {
 
 // ── Build staff from sheet ────────────────────────────────────────────────────
 function buildTeachingStaff(rows, yearGroup) {
+  // For staff, blank YearGroup means unassigned — NOT universal
   const filtered = rows.filter(r => {
-    return yearGroupMatches((r.YearGroup || '').trim(), yearGroup);
+    const yg = (r.YearGroup || '').trim();
+    if (!yg) return false;
+    return yearGroupMatches(yg, yearGroup);
   });
   const colours = ['#1798d3','#f97316','#22c55e','#8b5cf6','#ec4899','#0f766e'];
   let colourIdx = 0;
