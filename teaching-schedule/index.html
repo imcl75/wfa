@@ -753,38 +753,47 @@ function buildTeachingStaff(rows, yearGroup) {
 
 // ── Build subjects from sheet ─────────────────────────────────────────────────
 function buildSubjectGroups(rows, yearGroup) {
-  const filtered = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  // Blank YearGroup = universal defaults; specific YearGroup = additions
+  const defaults = rows.filter(r => !(r.YearGroup || '').trim());
+  const specific = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  const merged = [...defaults, ...specific];
   const groupMap = {};
   const groupOrder = [];
-  filtered.forEach(r => {
+  merged.forEach(r => {
     const g = r.Group;
     if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
-    groupMap[g].subjects.push({ name: r.Subject, col: r.Colour || '#64748b' });
+    groupMap[g].subjects.push({ name: r.Subject, col: r.Colour || '#64748b', _order: parseInt(r.Order) || 99 });
   });
   // Sort subjects within each group by Order
   Object.values(groupMap).forEach(g => {
-    g.subjects.sort((a, b) => {
-      const ao = parseInt(filtered.find(r => r.Subject === a.name && r.Group === g.label)?.Order) || 99;
-      const bo = parseInt(filtered.find(r => r.Subject === b.name && r.Group === g.label)?.Order) || 99;
-      return ao - bo;
-    });
+    g.subjects.sort((a, b) => a._order - b._order);
+    g.subjects.forEach(s => delete s._order);
   });
   return groupOrder.map(g => groupMap[g]);
 }
 
 // ── Build interventions from sheet ─────────────────────────────────────────────
 function buildInterventions(rows, yearGroup) {
-  const filtered = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  // Blank YearGroup = universal defaults; specific YearGroup = additions
+  const defaults = rows.filter(r => !(r.YearGroup || '').trim());
+  const specific = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  const merged = [...defaults, ...specific];
   const groupMap = {};
   const groupOrder = [];
-  filtered.forEach(r => {
+  merged.forEach(r => {
     const g = r.Group;
     if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
     groupMap[g].subjects.push({
       name: r.Activity,
       col: r.Colour || '#64748b',
-      colourable: r.Colourable === 'true' || r.Colourable === 'TRUE'
+      colourable: r.Colourable === 'true' || r.Colourable === 'TRUE',
+      _order: parseInt(r.Order) || 99
     });
+  });
+  // Sort subjects within each group by Order
+  Object.values(groupMap).forEach(g => {
+    g.subjects.sort((a, b) => a._order - b._order);
+    g.subjects.forEach(s => delete s._order);
   });
   return groupOrder.map(g => groupMap[g]);
 }
