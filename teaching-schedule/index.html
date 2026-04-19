@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Y4 Learning Schedule · WFA</title>
+  <title>Learning Schedule · WFA</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -23,6 +23,12 @@
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
     .icon-btn { background: none; border: 1.5px solid #e2e8f0; border-radius: 5px; cursor: pointer; font-size: 16px; color: #64748b; padding: 5px 9px; line-height: 1; }
     .icon-btn:hover { border-color: #1798d3; color: #1798d3; background: #f0f8fd; }
+    .yg-select {
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
+      color: #1798d3; background: #f0f8fd; border: 1.5px solid #bae0f5;
+      border-radius: 5px; padding: 5px 9px; cursor: pointer; line-height: 1;
+    }
+    .yg-select:hover { background: #dbeafe; }
     @media (max-width: 720px) {
       .app-header { padding: 10px 12px; gap: 10px; }
       .app-header img { height: 34px; }
@@ -364,10 +370,13 @@
 <div class="app-header">
   <img src="logo.png" alt="Wallscourt Farm Academy">
   <div>
-    <div class="app-title">Y4 Learning Schedule</div>
+    <div class="app-title" id="appTitle">Y4 Learning Schedule</div>
     <div class="app-subtitle">Wallscourt Farm Academy</div>
   </div>
   <div class="header-actions">
+    <select id="yearGroupSelect" class="yg-select" onchange="changeYearGroup(this.value)">
+      <option value="Y4">Y4</option>
+    </select>
     <button class="icon-btn" onclick="openStaffModal()" title="Edit staff names">⚙</button>
   </div>
 </div>
@@ -417,7 +426,7 @@
 <div class="modal-bg" id="staffModal">
   <div class="modal">
     <h3>Edit Staff Names</h3>
-    <p class="modal-hint">Set the names for your Y4 team. These are saved locally on this device.</p>
+    <p class="modal-hint" id="staffModalHint">Set the names for your team. These are saved locally on this device.</p>
     <div id="staffModalRows"></div>
     <div class="modal-footer">
       <button class="modal-cancel" onclick="closeStaffModal()">Cancel</button>
@@ -450,7 +459,7 @@ const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbwlNv08Z0cFSgKq_1zcr
 
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri'];
-const VIEWS = ['master','tp','lp'];
+let VIEWS = ['master','tp','lp'];
 
 const ROWS = [
   { type:'fixed',   id:'reg-am', label:'Morning Reg',      time:'08:45–09:00' },
@@ -506,22 +515,79 @@ const SUBJECT_GROUPS = [
   ]},
 ];
 
+// Fallback subject groups per year group (used when sheet is unavailable)
+const FALLBACK_SUBJECT_GROUPS = {
+  Y4: SUBJECT_GROUPS.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })),
+};
+
+// Sheet data caches (populated after fetch, used for year group switching)
+let ALL_SHEET_STAFF = [];
+let SHEET_SUBJECT_GROUPS = [];
+let SHEET_INTERVENTIONS = [];
+
 // Flat lookup: name → col
 const SUBJECT_COL = {};
 SUBJECT_GROUPS.forEach(g => g.subjects.forEach(s => { SUBJECT_COL[s.name] = s.col; }));
 
 const STAFF_COLOURS = ['#1798d3','#f97316','#22c55e','#8b5cf6'];
 const COLOUR_PALETTE = ['#1798d3','#f97316','#22c55e','#8b5cf6','#ec4899','#0f766e','#dc2626','#92400e','#64748b'];
-const DEFAULT_STAFF = [
-  { id:'t1', name:'Teacher 1', role:'Class Teacher',    col:'#1798d3' },
-  { id:'t2', name:'Teacher 2', role:'Class Teacher',    col:'#f97316' },
-  { id:'tp', name:'Emma J',   role:'Teaching Partner', col:'#22c55e' },
-  { id:'lp', name:'Emma C',   role:'Learning Partner', col:'#8b5cf6' },
-];
+const FALLBACK_STAFF = {
+  Y4: [
+    { id:'t1', name:'Teacher 1', role:'Class Teacher',    col:'#1798d3' },
+    { id:'t2', name:'Teacher 2', role:'Class Teacher',    col:'#f97316' },
+    { id:'tp', name:'Emma J',   role:'Teaching Partner', col:'#22c55e' },
+    { id:'lp', name:'Emma C',   role:'Learning Partner', col:'#8b5cf6' },
+  ],
+};
+
+// ── Year group state ──────────────────────────────────────────────────────────
+let YEAR_GROUP = 'Y4';
+
+function loadYearGroup() {
+  migrateLocalStorage();
+  return localStorage.getItem('wfa_ts_yeargroup') || 'Y4';
+}
+
+function saveYearGroup(yg) {
+  YEAR_GROUP = yg;
+  localStorage.setItem('wfa_ts_yeargroup', yg);
+}
+
+function migrateLocalStorage() {
+  const mappings = [
+    ['wfa_ts_schedule',  'wfa_ts_schedule_Y4'],
+    ['wfa_ts_staff',    'wfa_ts_staff_Y4'],
+    ['wfa_ts_subjects', 'wfa_ts_subjects_Y4'],
+  ];
+  mappings.forEach(([oldKey, newKey]) => {
+    if (localStorage.getItem(oldKey) && !localStorage.getItem(newKey)) {
+      localStorage.setItem(newKey, localStorage.getItem(oldKey));
+      localStorage.removeItem(oldKey);
+    }
+  });
+  if (!localStorage.getItem('wfa_ts_yeargroup')) {
+    localStorage.setItem('wfa_ts_yeargroup', 'Y4');
+  }
+}
+
+function staffKey()      { return `wfa_ts_staff_${YEAR_GROUP}`; }
+function subjectsKey()   { return `wfa_ts_subjects_${YEAR_GROUP}`; }
+function scheduleKeyLS() { return `wfa_ts_schedule_${YEAR_GROUP}`; }
+function interventionsKey() { return `wfa_ts_interventions_${YEAR_GROUP}`; }
+
+function fallbackStaff() {
+  return (FALLBACK_STAFF[YEAR_GROUP] || FALLBACK_STAFF['Y4']).map(s => ({...s}));
+}
+
+function fallbackSubjects() {
+  return (FALLBACK_SUBJECT_GROUPS[YEAR_GROUP] || FALLBACK_SUBJECT_GROUPS['Y4']).map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) }));
+}
 
 // ── State ───────────────────────────────────────────────────────────────────
+YEAR_GROUP = loadYearGroup();
 let STAFF  = loadStaff();
 let SUBJECTS = loadSubjects();
+let INTERVENTIONS = loadInterventions();
 let WEEKS  = [];
 
 // ── Subject name migration ────────────────────────────────────────────────
@@ -575,7 +641,7 @@ function migrateSubjectNames() {
 function migrateShadowsOut() {
   let changed = false;
   Object.values(state.schedule).forEach(weekData => {
-    ['tp','lp'].forEach(view => {
+    VIEWS.filter(v => v !== 'master').forEach(view => {
       if (!weekData[view] || typeof weekData[view] !== 'object') return;
       Object.values(weekData[view]).forEach(dayObj => {
         if (!dayObj || typeof dayObj !== 'object') return;
@@ -610,21 +676,30 @@ let state = {
 
 // ── Persistence ─────────────────────────────────────────────────────────────
 function loadStaff() {
-  try { return JSON.parse(localStorage.getItem('wfa_ts_staff')) || DEFAULT_STAFF.map(s => ({...s})); }
-  catch { return DEFAULT_STAFF.map(s => ({...s})); }
+  try { return JSON.parse(localStorage.getItem(staffKey())) || fallbackStaff(); }
+  catch { return fallbackStaff(); }
 }
 
 function loadSubjects() {
-  try { return JSON.parse(localStorage.getItem('wfa_ts_subjects')) || SUBJECT_GROUPS.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })); }
-  catch { return SUBJECT_GROUPS.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })); }
+  try { return JSON.parse(localStorage.getItem(subjectsKey())) || fallbackSubjects(); }
+  catch { return fallbackSubjects(); }
+}
+
+function loadInterventions() {
+  try { return JSON.parse(localStorage.getItem(interventionsKey())) || fallbackInterventions(); }
+  catch { return fallbackInterventions(); }
 }
 
 function saveStaffLocal() {
-  localStorage.setItem('wfa_ts_staff', JSON.stringify(STAFF));
+  localStorage.setItem(staffKey(), JSON.stringify(STAFF));
 }
 
 function saveSubjectsLocal() {
-  localStorage.setItem('wfa_ts_subjects', JSON.stringify(SUBJECTS));
+  localStorage.setItem(subjectsKey(), JSON.stringify(SUBJECTS));
+}
+
+function saveInterventionsLocal() {
+  localStorage.setItem(interventionsKey(), JSON.stringify(INTERVENTIONS));
 }
 
 function schedKey() {
@@ -635,9 +710,9 @@ function schedKey() {
 
 function ensureWeek(weekKey) {
   if (!state.schedule[weekKey]) state.schedule[weekKey] = {};
-  if (!state.schedule[weekKey].master) state.schedule[weekKey].master = {};
-  if (!state.schedule[weekKey].tp) state.schedule[weekKey].tp = {};
-  if (!state.schedule[weekKey].lp) state.schedule[weekKey].lp = {};
+  VIEWS.forEach(v => {
+    if (!state.schedule[weekKey][v]) state.schedule[weekKey][v] = {};
+  });
   return state.schedule[weekKey];
 }
 
@@ -647,6 +722,92 @@ function ensureDay(weekKey, view, day) {
   return wk[view][day];
 }
 
+// ── Compute views from staff ──────────────────────────────────────────────────
+function computeViews(staff) {
+  const views = ['master'];
+  staff.forEach(s => {
+    const role = (s.role || '').toLowerCase();
+    if (role.includes('teaching partner') || role.includes('learning partner')) {
+      views.push(s.id);
+    }
+  });
+  return views;
+}
+
+// ── Build staff from sheet ────────────────────────────────────────────────────
+function buildTeachingStaff(rows, yearGroup) {
+  const filtered = rows.filter(r => {
+    const yg = (r.YearGroup || '').trim();
+    // Normalise YR → Reception
+    const normalised = yg === 'YR' ? 'Reception' : yg;
+    return normalised === yearGroup;
+  });
+  const colours = ['#1798d3','#f97316','#22c55e','#8b5cf6','#ec4899','#0f766e'];
+  let colourIdx = 0;
+  return filtered.map(r => {
+    const id = r.Name.toLowerCase().replace(/[^a-z0-9]+/g,'_');
+    const col = (r.Colour && r.Colour.trim()) || colours[colourIdx++ % colours.length];
+    return { id, name: r.Name.trim(), role: (r.Role || '').trim(), col };
+  });
+}
+
+// ── Build subjects from sheet ─────────────────────────────────────────────────
+function buildSubjectGroups(rows, yearGroup) {
+  const filtered = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  const groupMap = {};
+  const groupOrder = [];
+  filtered.forEach(r => {
+    const g = r.Group;
+    if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
+    groupMap[g].subjects.push({ name: r.Subject, col: r.Colour || '#64748b' });
+  });
+  // Sort subjects within each group by Order
+  Object.values(groupMap).forEach(g => {
+    g.subjects.sort((a, b) => {
+      const ao = parseInt(filtered.find(r => r.Subject === a.name && r.Group === g.label)?.Order) || 99;
+      const bo = parseInt(filtered.find(r => r.Subject === b.name && r.Group === g.label)?.Order) || 99;
+      return ao - bo;
+    });
+  });
+  return groupOrder.map(g => groupMap[g]);
+}
+
+// ── Build interventions from sheet ─────────────────────────────────────────────
+function buildInterventions(rows, yearGroup) {
+  const filtered = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  const groupMap = {};
+  const groupOrder = [];
+  filtered.forEach(r => {
+    const g = r.Group;
+    if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
+    groupMap[g].subjects.push({
+      name: r.Activity,
+      col: r.Colour || '#64748b',
+      colourable: r.Colourable === 'true' || r.Colourable === 'TRUE'
+    });
+  });
+  return groupOrder.map(g => groupMap[g]);
+}
+
+// ── Rebuild SUBJECT_COL from current data ─────────────────────────────────────
+function rebuildSubjectCol() {
+  for (const key of Object.keys(SUBJECT_COL)) delete SUBJECT_COL[key];
+  SUBJECTS.forEach(g => g.subjects.forEach(s => { SUBJECT_COL[s.name] = s.col; }));
+  SUBJECT_GROUPS.forEach(g => g.subjects.forEach(s => { if (!SUBJECT_COL[s.name]) SUBJECT_COL[s.name] = s.col; }));
+  INTERVENTIONS.forEach(g => g.subjects.forEach(s => { if (!SUBJECT_COL[s.name]) SUBJECT_COL[s.name] = s.col; }));
+}
+
+// ── Update title and UI ────────────────────────────────────────────────────────
+function updateTitle() {
+  document.getElementById('appTitle').textContent = `${YEAR_GROUP} Learning Schedule`;
+  document.title = `${YEAR_GROUP} Learning Schedule · WFA`;
+}
+
+function populateYearGroupSelect(yearGroups) {
+  const sel = document.getElementById('yearGroupSelect');
+  sel.innerHTML = yearGroups.map(yg => `<option value="${yg}"${yg===YEAR_GROUP?' selected':''}>${yg}</option>`).join('');
+}
+
 function getSlot(weekKey, view, day, session) {
   const dayObj = ensureDay(weekKey, view, day);
   if (!dayObj[session]) dayObj[session] = [];
@@ -654,19 +815,19 @@ function getSlot(weekKey, view, day, session) {
 }
 
 function persistLocal() {
-  try { localStorage.setItem('wfa_ts_schedule', JSON.stringify(state.schedule)); } catch {}
+  try { localStorage.setItem(scheduleKeyLS(), JSON.stringify(state.schedule)); } catch {}
 }
 
 function loadLocal() {
   try {
-    const s = localStorage.getItem('wfa_ts_schedule');
+    const s = localStorage.getItem(scheduleKeyLS());
     if (s) state.schedule = JSON.parse(s);
   } catch {}
 }
 
 async function syncSave() {
   if (!SYNC_URL) return;
-  const body = JSON.stringify({ action:'save', weekKey: schedKey(), data: state.schedule[schedKey()] || {} });
+  const body = JSON.stringify({ action:'save', yearGroup: YEAR_GROUP, weekKey: schedKey(), data: state.schedule[schedKey()] || {} });
   fetch(SYNC_URL, { method:'POST', body, headers:{'Content-Type':'text/plain'} })
     .then(() => updateSyncStatus('ok'))
     .catch(() => updateSyncStatus('err'));
@@ -675,7 +836,7 @@ async function syncSave() {
 async function syncLoad(weekKey) {
   if (!SYNC_URL) return;
   try {
-    const res = await fetch(`${SYNC_URL}?action=load&weekKey=${encodeURIComponent(weekKey)}`);
+    const res = await fetch(`${SYNC_URL}?action=load&yearGroup=${encodeURIComponent(YEAR_GROUP)}&weekKey=${encodeURIComponent(weekKey)}`);
     if (!res.ok) return;
     const json = await res.json();
     if (json && json.data) {
@@ -694,7 +855,7 @@ async function syncPushAll() {
     try {
       await fetch(SYNC_URL, {
         method:'POST',
-        body: JSON.stringify({ action:'save', weekKey, data }),
+        body: JSON.stringify({ action:'save', yearGroup: YEAR_GROUP, weekKey, data }),
         headers:{'Content-Type':'text/plain'}
       });
     } catch {}
@@ -871,7 +1032,8 @@ function renderViewTabs() {
 }
 
 // ── Render: subjects sidebar ─────────────────────────────────────────────────
-const STAFF_SUBJECT_GROUPS = [
+// Fallback interventions per year group (used when sheet Interventions tab is unavailable)
+const FALLBACK_INTERVENTIONS_DATA = [
   { label: 'Reader', subjects: [
     { name: '1 to 1 reading', col:'#e34234' },
     { name: '3 in 3 reading', col:'#ef6c5a' },
@@ -899,6 +1061,14 @@ const STAFF_SUBJECT_GROUPS = [
     { name: 'HomeZone', col:'#94a3b8', colourable: true },
   ]},
 ];
+
+const FALLBACK_INTERVENTIONS = {
+  Y4: FALLBACK_INTERVENTIONS_DATA.map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) })),
+};
+
+function fallbackInterventions() {
+  return (FALLBACK_INTERVENTIONS[YEAR_GROUP] || FALLBACK_INTERVENTIONS['Y4']).map(g => ({ label: g.label, subjects: g.subjects.map(s => ({...s})) }));
+}
 function hzPalette() {
   const picks = ['Writer / Enquiry','Mathematician','Reader','Artist','Musician','Athlete','Linguist','Designer','Other'];
   return picks.map(name => {
@@ -910,7 +1080,7 @@ function hzPalette() {
 
 function renderSidebar() {
   const el = document.getElementById('subjectList');
-  let groups = state.activeView === 'master' ? SUBJECTS : STAFF_SUBJECT_GROUPS;
+  let groups = state.activeView === 'master' ? SUBJECTS : INTERVENTIONS;
   el.innerHTML = groups.map(g => `
     <div class="subj-group">
       <div class="subj-group-label">${g.label}</div>
@@ -1559,6 +1729,7 @@ function closeSubjectModal() {
 
 // ── Staff modal ────────────────────────────────────────────────────────────
 function openStaffModal() {
+  document.getElementById('staffModalHint').textContent = `Set the names for your ${YEAR_GROUP} team. These are saved locally on this device.`;
   const el = document.getElementById('staffModalRows');
   el.innerHTML = STAFF.map((s, i) => `
     <div class="staff-modal-row">
@@ -1721,7 +1892,7 @@ function setView(view) {
   state.activeView = view;
   // Ensure staff-specific subjects have colour entries
   if (view !== 'master') {
-    STAFF_SUBJECT_GROUPS.forEach(g => g.subjects.forEach(s => {
+    INTERVENTIONS.forEach(g => g.subjects.forEach(s => {
       if (!SUBJECT_COL[s.name]) SUBJECT_COL[s.name] = s.col;
     }));
   }
@@ -1839,23 +2010,110 @@ function migrateScheduleKeys() {
   if (migrated) persistLocal();
 }
 
+// ── Year group switching ──────────────────────────────────────────────────────
+function changeYearGroup(newYG) {
+  // Persist current schedule before switching
+  persistLocal();
+
+  YEAR_GROUP = newYG;
+  saveYearGroup(newYG);
+  updateTitle();
+
+  // Rebuild staff from sheet data
+  if (ALL_SHEET_STAFF.length) {
+    STAFF = buildTeachingStaff(ALL_SHEET_STAFF, YEAR_GROUP);
+  } else {
+    STAFF = fallbackStaff();
+  }
+  VIEWS = computeViews(STAFF);
+  saveStaffLocal();
+
+  // Rebuild subjects
+  if (SHEET_SUBJECT_GROUPS.length) {
+    SUBJECTS = buildSubjectGroups(SHEET_SUBJECT_GROUPS, YEAR_GROUP);
+  } else {
+    SUBJECTS = fallbackSubjects();
+  }
+  saveSubjectsLocal();
+
+  // Rebuild interventions
+  if (SHEET_INTERVENTIONS.length) {
+    INTERVENTIONS = buildInterventions(SHEET_INTERVENTIONS, YEAR_GROUP);
+  } else {
+    INTERVENTIONS = fallbackInterventions();
+  }
+  saveInterventionsLocal();
+
+  // Rebuild colour lookup
+  rebuildSubjectCol();
+
+  // Load schedule for this year group
+  state.schedule = {};
+  loadLocal();
+
+  // Reset view to master
+  state.activeView = 'master';
+
+  // Re-render everything
+  renderViewTabs();
+  renderSidebar();
+  renderGrid();
+
+  // Sync load for the new year group
+  syncLoad(schedKey());
+}
+
+// ── View ID migration ─────────────────────────────────────────────────────────
+function migrateViewIds(oldIds) {
+  // When staff IDs change (e.g. from hard-coded 'tp'/'lp' to name-derived IDs),
+  // remap schedule data so existing chips aren't lost
+  const newIds = STAFF.map(s => s.id);
+  const idMap = {};
+  oldIds.forEach((oldId, i) => {
+    const newId = newIds[i];
+    if (oldId !== newId && newId) {
+      idMap[oldId] = newId;
+    }
+  });
+  if (!Object.keys(idMap).length) return;
+
+  let migrated = false;
+  Object.keys(state.schedule).forEach(weekKey => {
+    const week = state.schedule[weekKey];
+    Object.keys(idMap).forEach(oldId => {
+      const newId = idMap[oldId];
+      if (week[oldId]) {
+        week[newId] = week[oldId];
+        delete week[oldId];
+        migrated = true;
+      }
+    });
+  });
+  if (migrated) persistLocal();
+}
+
 // ── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   loadLocal();
+  VIEWS = computeViews(STAFF);
   migrateSubjectNames();
   migrateShadowsOut();
   migrateSubjects();
 
+  updateTitle();
   document.getElementById('weekLabel').textContent = '…';
   renderSidebar();
   renderViewTabs();
   renderGrid();
 
   try {
-    const [termsText, eventsText, schoolEventsText] = await Promise.all([
+    const [termsText, eventsText, schoolEventsText, staffText, subjectGroupsText, interventionsText] = await Promise.all([
       fetch(SHEET_BASE + encodeURIComponent('Terms')).then(r => { if (!r.ok) throw new Error('Terms tab not found'); return r.text(); }),
       fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => ''),
-      fetch(SHEET_BASE + encodeURIComponent('SchoolEvents')).then(r => r.ok ? r.text() : '').catch(() => '')
+      fetch(SHEET_BASE + encodeURIComponent('SchoolEvents')).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(SHEET_BASE + encodeURIComponent('Staff')).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(SHEET_BASE + encodeURIComponent('SubjectGroups')).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(SHEET_BASE + encodeURIComponent('Interventions')).then(r => r.ok ? r.text() : '').catch(() => ''),
     ]);
     WEEKS = buildWeeks(csvToObjects(termsText));
     if (eventsText) {
@@ -1865,6 +2123,44 @@ async function init() {
       state.schoolEvents = buildSchoolEvents(evtRows);
     }
     if (schoolEventsText) recurringAfterSchool = buildRecurringAfterSchool(csvToObjects(schoolEventsText));
+
+    // NEW: Staff tab
+    if (staffText) {
+      const staffRows = csvToObjects(staffText);
+      ALL_SHEET_STAFF = staffRows;
+      const yearGroups = [...new Set(staffRows.map(r => {
+        const yg = (r.YearGroup || '').trim();
+        return yg === 'YR' ? 'Reception' : yg;
+      }).filter(Boolean))].sort();
+      populateYearGroupSelect(yearGroups.length ? yearGroups : [YEAR_GROUP]);
+      const oldIds = STAFF.map(s => s.id);
+      STAFF = buildTeachingStaff(staffRows, YEAR_GROUP);
+      VIEWS = computeViews(STAFF);
+      saveStaffLocal();
+      // Migrate view IDs if staff IDs changed
+      migrateViewIds(oldIds);
+    }
+
+    // NEW: SubjectGroups tab
+    if (subjectGroupsText) {
+      const sgRows = csvToObjects(subjectGroupsText);
+      SHEET_SUBJECT_GROUPS = sgRows;
+      if (!localStorage.getItem(subjectsKey())) {
+        SUBJECTS = buildSubjectGroups(sgRows, YEAR_GROUP);
+        saveSubjectsLocal();
+      }
+      rebuildSubjectCol();
+    }
+
+    // NEW: Interventions tab
+    if (interventionsText) {
+      const intRows = csvToObjects(interventionsText);
+      SHEET_INTERVENTIONS = intRows;
+      INTERVENTIONS = buildInterventions(intRows, YEAR_GROUP);
+      saveInterventionsLocal();
+      rebuildSubjectCol();
+    }
+
     migrateScheduleKeys();
     state.weekIdx = currentWeekIdx();
     document.getElementById('btnPrev').disabled = state.weekIdx === 0;
@@ -1879,6 +2175,8 @@ async function init() {
     document.getElementById('sheetStatus').className = 'sheet-status err';
   }
 
+  renderViewTabs();
+  renderSidebar();
   renderGrid();
   await syncLoad(schedKey());
   syncPushAll(); // push all local weeks to cloud on first connection
