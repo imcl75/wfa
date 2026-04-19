@@ -23,8 +23,12 @@
   header img { height: 44px; background: white; border-radius: 8px; padding: 4px 6px; }
   header h1 { font-size: 1.7rem; font-weight: 900; }
   header p  { font-size: 0.9rem; opacity: 0.85; margin-top: 4px; }
-  .admin-link {
+  .header-links {
     margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+  .admin-link {
     color: rgba(255,255,255,.7);
     font-size: 0.8rem;
     font-weight: 700;
@@ -88,8 +92,10 @@
     <h1>WFA Schedules</h1>
     <p>Wallscourt Farm Academy</p>
   </div>
-  <a class="admin-link" href="guide.html">Guide</a>
-  <a class="admin-link" href="https://docs.google.com/spreadsheets/d/1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw/edit?gid=1373120912#gid=1373120912" target="_blank">Admin</a>
+  <div class="header-links">
+    <a class="admin-link" href="guide.html">Guide</a>
+    <a class="admin-link" href="https://docs.google.com/spreadsheets/d/1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw/edit?gid=1373120912#gid=1373120912" target="_blank">Admin</a>
+  </div>
 </header>
 
 <main>
