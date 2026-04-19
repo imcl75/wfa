@@ -909,6 +909,11 @@ async function syncLoad(weekKey) {
     if (!res.ok) return;
     const json = await res.json();
     if (json && json.data) {
+      // Validate: only accept data if its view keys match current VIEWS
+      // (old sync script ignores yearGroup param and could return wrong year group's data)
+      const dataViews = Object.keys(json.data);
+      const validViews = dataViews.every(v => VIEWS.includes(v));
+      if (!validViews) return;
       state.schedule[weekKey] = json.data;
       renderGrid();
       persistLocal();
