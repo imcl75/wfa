@@ -1152,7 +1152,7 @@ function renderSidebar() {
         <div class="subj-chip"
           style="background:${s.col}50"
           data-subject="${escHtml(s.name)}"
-          data-col="${s.col}">
+          data-col="${s.col}"${s.colourable ? ' data-colourable="true"' : ''}>
           <span class="subj-dot" style="background:${s.col}"></span>
           <span class="subj-name">${escHtml(s.name)}</span>
         </div>
@@ -1334,7 +1334,7 @@ function renderItem(item, wk, view, day, session, idx) {
   const light = col + '50';
   const dur = item.duration || 1;
   const minH = Math.max(32, dur * 32);
-  const isColourable = item.subject && (item.subject === 'HomeZone' || item.subject.startsWith('HomeZone - '));
+  const isColourable = item.colourable || (item.subject && (item.subject === 'HomeZone' || item.subject.startsWith('HomeZone - ')));
   const colCls = isColourable ? 'chip-colour colourable' : 'chip-colour';
   const colClick = isColourable ? ` onclick="showHzPalette(event,this)"` : '';
   if (item.split) {
@@ -1517,7 +1517,7 @@ function onSubjectPointerDown(e) {
   const subject = chip.dataset.subject;
   const col = chip.dataset.col;
 
-  drag = { subject, col, sourceType: 'sidebar', sourceChip: chip, sourceData: null };
+  drag = { subject, col, colourable: chip.dataset.colourable === 'true', sourceType: 'sidebar', sourceChip: chip, sourceData: null };
   chip.classList.add('dragging');
   chip.setPointerCapture(e.pointerId);
 
@@ -1617,7 +1617,9 @@ function onDragEnd(e) {
       slot.splice(insertAt, 0, drag.sourceData.item);
     } else {
       const insertAt = insertIdx < 0 ? slot.length : Math.min(insertIdx, slot.length);
-      slot.splice(insertAt, 0, { subject: drag.subject, note: '', duration: 1 });
+      const newItem = { subject: drag.subject, note: '', duration: 1 };
+      if (drag.colourable) newItem.colourable = true;
+      slot.splice(insertAt, 0, newItem);
     }
     persistLocal(); syncSave();
   }
