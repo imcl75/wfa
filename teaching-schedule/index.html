@@ -390,7 +390,6 @@
   <button class="action-btn" onclick="goToday()">This week</button>
   <span class="sep">|</span>
   <button class="action-btn" onclick="copyWeekToNext()">Copy week → next week</button>
-  <button class="action-btn" onclick="copyMasterToStaff()">Clean staff views</button>
   <button class="action-btn" onclick="openSubjectModal()">Subject settings</button>
   <button class="action-btn danger" onclick="clearActiveView()">Clear view</button>
   <span class="sheet-status" id="sheetStatus">Loading…</span>
@@ -1718,28 +1717,6 @@ function copyWeekToNext() {
   state.schedule[WEEKS[idx + 1].key] = JSON.parse(JSON.stringify(state.schedule[wk] || {}));
   persistLocal(); syncSave();
   alert(`${wk} copied to next week.`);
-}
-
-function copyMasterToStaff() {
-  const wk = schedKey();
-  if (!state.schedule[wk]) return;
-  let cleaned = false;
-  VIEWS.filter(v => v !== 'master').forEach(v => {
-    const staffView = state.schedule[wk][v];
-    if (!staffView || typeof staffView !== 'object') return;
-    Object.values(staffView).forEach(dayObj => {
-      if (!dayObj || typeof dayObj !== 'object') return;
-      Object.keys(dayObj).forEach(session => {
-        if (!Array.isArray(dayObj[session])) return;
-        const before = dayObj[session].length;
-        dayObj[session] = dayObj[session].filter(c => !c.shadow);
-        if (dayObj[session].length !== before) cleaned = true;
-      });
-    });
-  });
-  persistLocal(); syncSave();
-  renderGrid();
-  alert(cleaned ? 'Removed shadow chips from staff views.' : 'Staff views already clean — no shadow chips found.');
 }
 
 function clearActiveView() {
