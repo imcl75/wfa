@@ -1305,7 +1305,7 @@ function renderItem(item, wk, view, day, session, idx) {
   const light = col + '50';
   const dur = item.duration || 1;
   const minH = Math.max(32, dur * 32);
-  const isColourable = item.subject === 'HomeZone' || item.subject.startsWith('HomeZone - ');
+  const isColourable = item.subject && (item.subject === 'HomeZone' || item.subject.startsWith('HomeZone - '));
   const colCls = isColourable ? 'chip-colour colourable' : 'chip-colour';
   const colClick = isColourable ? ` onclick="showHzPalette(event,this)"` : '';
   if (item.split) {
