@@ -134,6 +134,7 @@
       padding: 0 4px 8px; display: flex; align-items: center; justify-content: space-between;
     }
     .subj-group { margin-bottom: 6px; }
+    .subj-group.group-empty-label { margin-top: 12px; }
     .subj-group-label { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: #cbd5e1; padding: 0 5px 2px; }
     .subj-chip {
       display: flex; align-items: center; gap: 5px; padding: 5px 6px;
@@ -1146,8 +1147,8 @@ function renderSidebar() {
   const el = document.getElementById('subjectList');
   let groups = state.activeView === 'master' ? SUBJECTS : INTERVENTIONS;
   el.innerHTML = groups.map(g => `
-    <div class="subj-group">
-      <div class="subj-group-label">${g.label}</div>
+    <div class="subj-group${!g.label ? ' group-empty-label' : ''}">
+      ${g.label ? `<div class="subj-group-label">${escHtml(g.label)}</div>` : ''}
       ${g.subjects.map(s => `
         <div class="subj-chip"
           style="background:${s.col}50"
