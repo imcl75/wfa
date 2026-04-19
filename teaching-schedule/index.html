@@ -766,12 +766,18 @@ function yearGroupMatches(raw, yearGroup) {
 // ── Build subjects from sheet ─────────────────────────────────────────────────
 function buildSubjectGroups(rows, yearGroup) {
   // Blank YearGroup = universal defaults; specific YearGroup = additions
-  const defaults = rows.filter(r => !(r.YearGroup || '').trim());
-  const specific = rows.filter(r => yearGroupMatches((r.YearGroup || '').trim(), yearGroup));
-  const merged = [...defaults, ...specific];
+  // Deduplicate: universal rows first, then year-group-specific rows (skipping universal ones)
+  const matched = rows.filter(r => {
+    const raw = (r.YearGroup || '').trim();
+    return !raw || yearGroupMatches(raw, yearGroup);
+  });
+  const seen = new Set();
   const groupMap = {};
   const groupOrder = [];
-  merged.forEach(r => {
+  matched.forEach(r => {
+    const key = (r.Group || '').trim() + '||' + r.Subject;
+    if (seen.has(key)) return;
+    seen.add(key);
     const g = (r.Group || '').trim() || '';
     if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
     groupMap[g].subjects.push({ name: r.Subject, col: r.Colour || '#64748b', _order: parseInt(r.Order) || 99 });
@@ -787,12 +793,18 @@ function buildSubjectGroups(rows, yearGroup) {
 // ── Build interventions from sheet ─────────────────────────────────────────────
 function buildInterventions(rows, yearGroup) {
   // Blank YearGroup = universal defaults; specific YearGroup = additions
-  const defaults = rows.filter(r => !(r.YearGroup || '').trim());
-  const specific = rows.filter(r => yearGroupMatches((r.YearGroup || '').trim(), yearGroup));
-  const merged = [...defaults, ...specific];
+  // Deduplicate: universal rows first, then year-group-specific rows (skipping universal ones)
+  const matched = rows.filter(r => {
+    const raw = (r.YearGroup || '').trim();
+    return !raw || yearGroupMatches(raw, yearGroup);
+  });
+  const seen = new Set();
   const groupMap = {};
   const groupOrder = [];
-  merged.forEach(r => {
+  matched.forEach(r => {
+    const key = (r.Group || '').trim() + '||' + r.Activity;
+    if (seen.has(key)) return;
+    seen.add(key);
     const g = (r.Group || '').trim() || '';
     if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
     groupMap[g].subjects.push({
