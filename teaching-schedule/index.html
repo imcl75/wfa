@@ -166,22 +166,22 @@
 
     /* Fixed rows */
     .sched-table .fixed-row td {
-      background: #f8fafc; padding: 7px 14px;
-      border-bottom: 1px solid #e2e8f0;
+      background: var(--brand-light); padding: 7px 14px;
+      border-bottom: 1px solid var(--brand-border);
     }
     .sched-table .fixed-row td.time-cell {
-      font-size: 9.5px; color: #94a3b8; font-weight: 700;
-      border-right: 2px solid #d1d5db; white-space: nowrap;
+      font-size: 9.5px; color: var(--brand); font-weight: 700;
+      border-right: 2px solid var(--brand-border); white-space: nowrap;
       padding: 7px 6px;
     }
     .sched-table .fixed-row td.span-cell {
       border-right: none;
     }
-    .fixed-label { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: #64748b; position: relative; z-index: 1; }
-    .fixed-sub { font-size: 9.5px; color: #94a3b8; }
+    .fixed-label { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: var(--brand); position: relative; z-index: 1; }
+    .fixed-sub { font-size: 9.5px; color: var(--brand); opacity: 0.6; }
 
-    /* FAB row highlight */
-    .sched-table .fixed-row.fab-row td { background: #f0f8fd; }
+    /* FAB row highlight — slightly stronger tint */
+    .sched-table .fixed-row.fab-row td { background: var(--brand-light); }
     .sched-table .fixed-row.fab-row .fixed-label { color: var(--brand); }
     .sched-table .fixed-row.story-row td { background: #fef2f2; }
     .sched-table .fixed-row.story-row .fixed-label { color: #e34234; }
