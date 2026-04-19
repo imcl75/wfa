@@ -462,18 +462,108 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri'];
 let VIEWS = ['master','tp','lp'];
 
-const ROWS = [
-  { type:'fixed',   id:'reg-am', label:'Morning Reg',      time:'08:45–09:00' },
-  { type:'session', id:'s1',     label:'Session 1',         time:'09:00–10:45' },
-  { type:'fixed',   id:'fab',    label:'Fresh Air Break',   time:'10:45–11:00', cls:'fab-row' },
-  { type:'session', id:'s2',     label:'Session 2',         time:'11:00–12:00' },
-  { type:'fixed',   id:'lunch',  label:'Lunch',             time:'12:00–13:10', cls:'fab-row' },
-  { type:'fixed',   id:'reg-pm', label:'PM Registration',   time:'13:10–13:20' },
-  { type:'session', id:'s3',     label:'Session 3',         time:'13:20–15:00' },
-  { type:'fixed',   id:'story',  label:'Story Time',        time:'15:00–15:15', cls:'story-row' },
-  { type:'fixed',   id:'home',   label:'Home Time',         time:'15:15' },
-  { type:'session', id:'after',  label:'After School',      time:'' },
+// ── Day structure (ROWS) — dynamic per year group ────────────────────────────────
+const DEFAULT_ROWS = [
+  { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+  { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:3 },
+  { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:4 },
+  { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:00', order:5 },
+  { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:00-12:05', order:6 },
+  { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:00-13:10', cls:'fab-row', order:7 },
+  { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:10-13:15', order:8 },
+  { type:'session', id:'s3',     label:'Session 3',              time:'13:15-15:00', order:9 },
+  { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:10 },
+  { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:11 },
+  { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:12 },
 ];
+
+const FALLBACK_DAY_STRUCTURES = {
+  Reception: [
+    { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+    { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:15', order:2 },
+    { type:'fixed',   id:'lrsnack',label:'Learning Review Snack', time:'10:15-10:30', cls:'fab-row', order:3 },
+    { type:'session', id:'s2',     label:'Session 2',              time:'10:45-11:30', order:4 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'11:30-11:40', order:5 },
+    { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'11:40-12:45', cls:'fab-row', order:6 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'12:45-12:50', order:7 },
+    { type:'session', id:'s3',     label:'Session 3',              time:'12:50-15:00', order:8 },
+    { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
+    { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
+    { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:11 },
+  ],
+  Y1: [
+    { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+    { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:30', order:2 },
+    { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:30-10:45', cls:'fab-row', order:3 },
+    { type:'session', id:'s2',     label:'Session 2',              time:'10:45-11:45', order:4 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'11:45-11:50', order:5 },
+    { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'11:50-12:50', cls:'fab-row', order:6 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'12:50-12:55', order:7 },
+    { type:'session', id:'s3',     label:'Session 3',              time:'12:55-15:00', order:8 },
+    { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
+    { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
+    { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:11 },
+  ],
+  Y2: [
+    { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+    { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:30', order:2 },
+    { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:30-10:45', cls:'fab-row', order:3 },
+    { type:'session', id:'s2',     label:'Session 2',              time:'10:45-11:45', order:4 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'11:45-11:50', order:5 },
+    { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'11:50-12:50', cls:'fab-row', order:6 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'12:50-12:55', order:7 },
+    { type:'session', id:'s3',     label:'Session 3',              time:'12:55-15:00', order:8 },
+    { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
+    { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
+    { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:11 },
+  ],
+  Y3: [
+    { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+    { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:30', order:2 },
+    { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:30-10:45', cls:'fab-row', order:3 },
+    { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:00', order:4 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:00-12:05', order:5 },
+    { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:00-13:05', cls:'fab-row', order:6 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:05-13:10', order:7 },
+    { type:'session', id:'s3',     label:'Session 3',              time:'13:10-15:00', order:8 },
+    { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
+    { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
+    { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:11 },
+  ],
+  Y4: DEFAULT_ROWS.map(r => ({...r})),
+  Y5: [
+    { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+    { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:2 },
+    { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:3 },
+    { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:15', order:4 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:15-12:20', order:5 },
+    { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:15-13:20', cls:'fab-row', order:6 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:20-13:25', order:7 },
+    { type:'session', id:'s3',     label:'Session 3',              time:'13:25-15:00', order:8 },
+    { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
+    { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
+    { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:11 },
+  ],
+  Y6: [
+    { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+    { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:2 },
+    { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:3 },
+    { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:15', order:4 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:15-12:20', order:5 },
+    { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:15-13:20', cls:'fab-row', order:6 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:20-13:25', order:7 },
+    { type:'session', id:'s3',     label:'Session 3',              time:'13:25-15:00', order:8 },
+    { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
+    { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
+    { type:'fixed',   id:'after',  label:'After School',           time:'15:15-17:00', afterSchool:true, order:11 },
+  ],
+};
+
+function fallbackDayStructure(yg) {
+  return (FALLBACK_DAY_STRUCTURES[yg] || FALLBACK_DAY_STRUCTURES['Y4']).map(r => ({...r}));
+}
+
+let ROWS = DEFAULT_ROWS.map(r => ({...r})); // reinitialised after YEAR_GROUP loads
 
 const SUBJECT_GROUPS = [
   { label: 'Enquiry', subjects: [
@@ -525,6 +615,7 @@ const FALLBACK_SUBJECT_GROUPS = {
 let ALL_SHEET_STAFF = [];
 let SHEET_SUBJECT_GROUPS = [];
 let SHEET_INTERVENTIONS = [];
+let SHEET_DAY_STRUCTURES = [];
 
 // Flat lookup: name → col
 const SUBJECT_COL = {};
@@ -619,6 +710,7 @@ function fallbackSubjects() {
 
 // ── State ───────────────────────────────────────────────────────────────────
 YEAR_GROUP = loadYearGroup();
+ROWS = fallbackDayStructure(YEAR_GROUP);
 let STAFF  = loadStaff();
 let SUBJECTS = loadSubjects();
 let INTERVENTIONS = loadInterventions();
@@ -752,7 +844,11 @@ function ensureWeek(weekKey) {
 
 function ensureDay(weekKey, view, day) {
   const wk = ensureWeek(weekKey);
-  if (!wk[view][day]) wk[view][day] = { s1:[], s2:[], s3:[], after:[] };
+  if (!wk[view][day]) {
+    const dayObj = {};
+    ROWS.filter(r => r.type === 'session').forEach(r => { dayObj[r.id] = []; });
+    wk[view][day] = dayObj;
+  }
   return wk[view][day];
 }
 
@@ -857,6 +953,49 @@ function buildInterventions(rows, yearGroup) {
     g.subjects.forEach(s => delete s._order);
   });
   return groupOrder.map(g => groupMap[g]);
+}
+
+// ── Build day structure from sheet ──────────────────────────────────────────────
+function buildDayStructure(rows, yearGroup) {
+  // Blank YearGroup = universal rows; specific YearGroup = overrides
+  // Deduplicate by ID (case-insensitive): specific rows override universal rows with the same ID
+  const matched = rows.filter(r => {
+    const raw = (r.YearGroup || '').trim();
+    return !raw || yearGroupMatches(raw, yearGroup);
+  });
+  const seen = new Set();
+  const result = [];
+  const toRow = r => ({
+    type: (r.Type || 'session').trim().toLowerCase(),
+    id: (r.ID || '').trim().toLowerCase(),
+    label: (r.Label || '').trim(),
+    time: (r.Time || '').trim(),
+    cls: (r.Class || '').trim() || undefined,
+    afterSchool: (r.ID || '').trim().toLowerCase() === 'after',
+    order: parseInt(r.Order) || 99,
+  });
+  // Process universal (blank YearGroup) first, then specific
+  const universal = matched.filter(r => !(r.YearGroup || '').trim());
+  const specific = matched.filter(r => !!(r.YearGroup || '').trim());
+  universal.forEach(r => {
+    const id = (r.ID || '').trim().toLowerCase();
+    if (seen.has(id)) return;
+    seen.add(id);
+    result.push(toRow(r));
+  });
+  specific.forEach(r => {
+    const id = (r.ID || '').trim().toLowerCase();
+    if (seen.has(id)) {
+      const idx = result.findIndex(e => e.id === id);
+      if (idx >= 0) result[idx] = toRow(r);
+    } else {
+      seen.add(id);
+      result.push(toRow(r));
+    }
+  });
+  result.sort((a, b) => a.order - b.order);
+  result.forEach(r => delete r.order);
+  return result;
 }
 
 // ── Rebuild SUBJECT_COL from current data ─────────────────────────────────────
@@ -1232,6 +1371,7 @@ function renderBody() {
   }
 
   let html = '';
+  const firstSessionId = (ROWS.find(r => r.type === 'session') || {}).id;
 
   ROWS.forEach((row, ri) => {
     if (row.type === 'fixed') {
@@ -1267,7 +1407,7 @@ function renderBody() {
           const ownItems = isStaffView ? items : [];
           // After-school: show sheet events as read-only chips
           let afterEvents = '';
-          if (row.id === 'after') {
+          if (row.afterSchool) {
             const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + di);
             const dk = dateKey(cellDate);
             const evts = state.afterSchoolEvents[dk] || [];
@@ -1288,11 +1428,11 @@ function renderBody() {
           const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag" style="background:${s.colour}">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
           const contentPad = soList.length ? `margin-left:${soList.length * 5 + 3}px;` : '';
           const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
-          const overlay = n && row.id === 's1' ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
+          const overlay = n && row.id === firstSessionId ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
 
           // Build cell content
           let cellContent;
-          if (isStaffView && row.id !== 'after') {
+          if (isStaffView && !row.afterSchool) {
             cellContent = afterEvents;
             if (ownItems.length === 0 && !afterEvents && !n) cellContent = '<div class="drop-hint">drop here</div>';
             else cellContent += renderStaffCell(ownItems, wk, view, day, row.id);
@@ -1824,13 +1964,9 @@ function saveStaffModal() {
 }
 
 // ── Staff-out spans (PPA, Leadership, etc.) ────────────────────────────────
-const SESSION_OPTIONS = [
-  { id:'reg-am', label:'Morning Reg (08:45)' },
-  { id:'s1',     label:'Session 1 (09:00–10:45)' },
-  { id:'s2',     label:'Session 2 (11:00–12:00)' },
-  { id:'s3',     label:'Session 3 (13:20–15:00)' },
-  { id:'home',   label:'Home Time (15:15)' },
-];
+function getSessionOptions() {
+  return ROWS.map(r => ({ id: r.id, label: r.label + (r.time ? ` (${r.time})` : '') }));
+}
 const STAFF_OUT_COLOURS = ['#475569','#7c3aed','#dc2626','#16a34a','#d97706'];
 
 function getStaffOut(wk, view, day) {
@@ -1855,7 +1991,7 @@ function openStaffOutModal(dayIdx) {
   const existingHtml = existing.length ? existing.map((sp, i) => `
     <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9">
       <span style="background:${sp.colour || '#475569'};color:white;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:700">${escHtml(sp.label)}</span>
-      <span style="font-size:12px;color:#64748b">${SESSION_OPTIONS.find(s=>s.id===sp.start)?.label||sp.start} → ${SESSION_OPTIONS.find(s=>s.id===sp.end)?.label||sp.end}</span>
+      <span style="font-size:12px;color:#64748b">${getSessionOptions().find(s=>s.id===sp.start)?.label||sp.start} → ${getSessionOptions().find(s=>s.id===sp.end)?.label||sp.end}</span>
       ${sp.cover ? `<span style="font-size:12px;color:#94a3b8">Cover: ${escHtml(sp.cover)}</span>` : ''}
       <button style="margin-left:auto;background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px" onclick="removeStaffOut(${i})">×</button>
     </div>
@@ -1870,11 +2006,11 @@ function openStaffOutModal(dayIdx) {
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
         <select id="soStart" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:6px 8px;font-size:13px;font-family:Arial,sans-serif">
-          ${SESSION_OPTIONS.map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
+          ${getSessionOptions().map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
         </select>
         <span style="font-size:16px;color:#94a3b8;font-weight:700">→</span>
         <select id="soEnd" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:6px 8px;font-size:13px;font-family:Arial,sans-serif">
-          ${SESSION_OPTIONS.map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
+          ${getSessionOptions().map(s => `<option value="${s.id}">${s.label}</option>`).join('')}
         </select>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
@@ -2088,6 +2224,13 @@ function changeYearGroup(newYG) {
   }
   saveInterventionsLocal();
 
+  // Rebuild day structure
+  if (SHEET_DAY_STRUCTURES.length) {
+    ROWS = buildDayStructure(SHEET_DAY_STRUCTURES, YEAR_GROUP);
+  } else {
+    ROWS = fallbackDayStructure(YEAR_GROUP);
+  }
+
   // Rebuild colour lookup
   rebuildSubjectCol();
 
@@ -2151,13 +2294,14 @@ async function init() {
   renderGrid();
 
   try {
-    const [termsText, eventsText, schoolEventsText, staffText, subjectGroupsText, interventionsText] = await Promise.all([
+    const [termsText, eventsText, schoolEventsText, staffText, subjectGroupsText, interventionsText, dayStructureText] = await Promise.all([
       fetch(SHEET_BASE + encodeURIComponent('Terms')).then(r => { if (!r.ok) throw new Error('Terms tab not found'); return r.text(); }),
       fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => ''),
       fetch(SHEET_BASE + encodeURIComponent('SchoolEvents')).then(r => r.ok ? r.text() : '').catch(() => ''),
       fetch(SHEET_BASE + encodeURIComponent('Staff')).then(r => r.ok ? r.text() : '').catch(() => ''),
       fetch(SHEET_BASE + encodeURIComponent('SubjectGroups')).then(r => r.ok ? r.text() : '').catch(() => ''),
       fetch(SHEET_BASE + encodeURIComponent('Interventions')).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(SHEET_BASE + encodeURIComponent('DayStructure')).then(r => r.ok ? r.text() : '').catch(() => ''),
     ]);
     WEEKS = buildWeeks(csvToObjects(termsText));
     if (eventsText) {
@@ -2206,6 +2350,13 @@ async function init() {
       INTERVENTIONS = buildInterventions(intRows, YEAR_GROUP);
       saveInterventionsLocal();
       rebuildSubjectCol();
+    }
+
+    // NEW: DayStructure tab
+    if (dayStructureText) {
+      const dsRows = csvToObjects(dayStructureText);
+      SHEET_DAY_STRUCTURES = dsRows;
+      ROWS = buildDayStructure(dsRows, YEAR_GROUP);
     }
 
     migrateScheduleKeys();
