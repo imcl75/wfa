@@ -6,6 +6,7 @@
   <title>Learning Schedule · WFA</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
   <style>
+    :root { --brand: #1798d3; --brand-light: #f0f8fd; --brand-border: #bae0f5; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; background: #f1f5f9; min-height: 100vh; }
 
@@ -14,18 +15,18 @@
 
     /* ── Header ──────────────────────────────────────────────────── */
     .app-header {
-      background: white; border-bottom: 2px solid #1798d3;
+      background: white; border-bottom: 2px solid var(--brand);
       padding: 10px 16px; display: flex; align-items: center; gap: 12px;
     }
     .app-header img { height: 40px; }
-    .app-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; color: #1798d3; line-height: 1.2; }
+    .app-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; color: var(--brand); line-height: 1.2; }
     .app-subtitle { font-size: 11px; color: #94a3b8; }
     .header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
     .icon-btn { background: none; border: 1.5px solid #e2e8f0; border-radius: 5px; cursor: pointer; font-size: 16px; color: #64748b; padding: 5px 9px; line-height: 1; }
-    .icon-btn:hover { border-color: #1798d3; color: #1798d3; background: #f0f8fd; }
+    .icon-btn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-light); }
     .yg-select {
       font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 13px;
-      color: #1798d3; background: #f0f8fd; border: 1.5px solid #bae0f5;
+      color: var(--brand); background: var(--brand-light); border: 1.5px solid var(--brand-border);
       border-radius: 5px; padding: 5px 9px; cursor: pointer; line-height: 1;
     }
     .yg-select:hover { background: #dbeafe; }
@@ -41,10 +42,10 @@
       background: white; border-bottom: 1px solid #e2e8f0;
       padding: 6px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
     }
-    .nav-btn { background: #f0f8fd; border: 1.5px solid #bae0f5; border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: #1798d3; line-height: 1; }
+    .nav-btn { background: var(--brand-light); border: 1.5px solid var(--brand-border); border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: var(--brand); line-height: 1; }
     .nav-btn:hover { background: #dbeafe; }
     .nav-btn:disabled { opacity: .35; cursor: default; }
-    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 14px; color: #1798d3; min-width: 200px; text-align: center; }
+    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 14px; color: var(--brand); min-width: 200px; text-align: center; }
     .action-btn { background: white; border: 1.5px solid #cbd5e1; border-radius: 5px; padding: 5px 11px; font-size: 12px; cursor: pointer; color: #475569; }
     .action-btn:hover { background: #f8fafc; border-color: #94a3b8; }
     .action-btn.danger { color: #dc2626; border-color: #fca5a5; }
@@ -71,10 +72,10 @@
       color: #94a3b8; border-bottom: 3px solid transparent; margin-bottom: -2px;
       transition: color .12s, background .12s; white-space: nowrap; flex-shrink: 0;
     }
-    .view-tab:hover { color: #1798d3; background: #f8fafc; }
-    .view-tab.active { color: #1798d3; border-bottom-color: #1798d3; }
+    .view-tab:hover { color: var(--brand); background: #f8fafc; }
+    .view-tab.active { color: var(--brand); border-bottom-color: var(--brand); }
     .view-tab-name { font-size: 9px; font-weight: 600; color: #94a3b8; display: block; line-height: 1.2; }
-    .view-tab.active .view-tab-name { color: #1798d3; }
+    .view-tab.active .view-tab-name { color: var(--brand); }
     @media (max-width: 720px) {
       .view-tabs { padding: 0 12px; }
       .view-tab { padding: 8px 12px 7px; font-size: 12px; }
@@ -92,10 +93,10 @@
     .day-hd { width: 140px; }
     .day-hd-name { font-size: 13px; color: #1e293b; }
     .day-hd-date { font-size: 10px; font-weight: 600; color: #94a3b8; }
-    .day-hd.today .day-hd-name { color: #1798d3; }
-    .day-hd.today .day-hd-date { color: #1798d3; }
+    .day-hd.today .day-hd-name { color: var(--brand); }
+    .day-hd.today .day-hd-date { color: var(--brand); }
     .time-col { width: 90px; }
-    .slot-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px; color: #1798d3; display: block; }
+    .slot-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px; color: var(--brand); display: block; }
     .slot-time { font-size: 9px; color: #94a3b8; font-weight: 600; }
     .view-bar {
       height: 18px; border-radius: 4px; margin-bottom: 6px; padding: 0 6px;
@@ -104,7 +105,7 @@
     }
     .split-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
     .split-half { border-radius: 4px; padding: 5px 6px; font-size: 13px; font-weight: 700; min-height: 38px; }
-    .split-half.drop-over-half { outline: 2px dashed #1798d3; outline-offset: -2px; background: #dbeafe !important; }
+    .split-half.drop-over-half { outline: 2px dashed var(--brand); outline-offset: -2px; background: #dbeafe !important; }
 
     /* ── Staff cell split (TP/LP views) ─────────────────────────── */
     .staff-own-col { display: flex; flex-direction: column; padding: 2px; gap: 2px; flex: 1; }
@@ -180,7 +181,7 @@
 
     /* FAB row highlight */
     .sched-table .fixed-row.fab-row td { background: #f0f8fd; }
-    .sched-table .fixed-row.fab-row .fixed-label { color: #1798d3; }
+    .sched-table .fixed-row.fab-row .fixed-label { color: var(--brand); }
     .sched-table .fixed-row.story-row td { background: #fef2f2; }
     .sched-table .fixed-row.story-row .fixed-label { color: #e34234; }
 
@@ -191,7 +192,7 @@
       background: #f8fafc; vertical-align: top; white-space: nowrap;
       border-bottom: 2px solid #d1d5db;
     }
-    .session-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px; color: #1798d3; display: block; }
+    .session-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px; color: var(--brand); display: block; }
     .session-time { font-size: 9px; color: #94a3b8; font-weight: 600; }
 
     .sched-table .session-row td.view-cell {
@@ -201,7 +202,7 @@
     }
     .sched-table .session-row td.view-cell:last-child { border-right: none; }
     .sched-table .session-row td.view-cell.drop-over {
-      background: #dbeafe !important; outline: 2px dashed #1798d3; outline-offset: -3px;
+      background: #dbeafe !important; outline: 2px dashed var(--brand); outline-offset: -3px;
     }
     .drop-hint { font-size: 10px; color: #d1d5db; padding: 6px 4px; text-align: center; position: relative; z-index: 1; }
 
@@ -233,7 +234,7 @@
       background: none; border: none; cursor: pointer;
       font-size: 11px; color: rgba(0,0,0,.15); padding: 0 2px; line-height: 1; flex-shrink: 0;
     }
-    .chip-split:hover { color: #1798d3; }
+    .chip-split:hover { color: var(--brand); }
     .chip-note-wrap {
       padding: 3px 7px 4px; border-top: 1px solid rgba(0,0,0,.06);
       background: rgba(255,255,255,.55);
@@ -243,7 +244,7 @@
       font-size: 13px; font-weight: 800; color: rgba(0,0,0,.2); line-height: 1;
       padding: 0; font-family: 'Nunito', sans-serif;
     }
-    .chip-note-toggle:hover { color: #1798d3; }
+    .chip-note-toggle:hover { color: var(--brand); }
     .chip-note-toggle.has-note { display: none; }
     .chip-note {
       width: 100%; border: none; outline: none; background: transparent;
@@ -298,7 +299,7 @@
     }
     .day-hd-add {
       display: inline-block; font-size: 13px; font-weight: 800;
-      color: #1798d3; cursor: pointer; margin-left: 4px; line-height: 1;
+      color: var(--brand); cursor: pointer; margin-left: 4px; line-height: 1;
       vertical-align: middle; border-radius: 3px;
     }
     .day-hd-add:hover { background: #dbeafe; }
@@ -337,7 +338,7 @@
       width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,.3);
     }
-    .modal h3 { font-family: 'Nunito', sans-serif; font-weight: 900; color: #1798d3; font-size: 17px; margin-bottom: 4px; }
+    .modal h3 { font-family: 'Nunito', sans-serif; font-weight: 900; color: var(--brand); font-size: 17px; margin-bottom: 4px; }
     .modal-hint { font-size: 11px; color: #94a3b8; margin-bottom: 16px; }
     .staff-modal-row { padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
     .staff-modal-row:last-of-type { border-bottom: none; }
@@ -346,13 +347,13 @@
     .smr-role { font-size: 11px; color: #64748b; font-weight: 700; }
     .smr-fields { display: flex; gap: 8px; align-items: center; }
     .smr-fields input { flex: 1; border: 1px solid #e2e8f0; border-radius: 5px; padding: 6px 10px; font-size: 13px; font-family: Arial, sans-serif; }
-    .smr-fields input:focus { outline: none; border-color: #1798d3; }
+    .smr-fields input:focus { outline: none; border-color: var(--brand); }
     .colour-picker { display: flex; gap: 6px; flex-wrap: wrap; }
     .colour-swatch { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2.5px solid transparent; transition: transform .1s; }
     .colour-swatch:hover { transform: scale(1.15); }
     .colour-swatch.selected { border-color: #1e293b; }
     .modal-footer { display: flex; gap: 8px; margin-top: 18px; }
-    .modal-save { flex: 1; background: #1798d3; color: white; border: none; border-radius: 6px; padding: 11px; font-size: 14px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; }
+    .modal-save { flex: 1; background: var(--brand); color: white; border: none; border-radius: 6px; padding: 11px; font-size: 14px; font-weight: 800; cursor: pointer; font-family: 'Nunito', sans-serif; }
     .modal-save:hover { background: #1480b8; }
     .modal-cancel { background: #f1f5f9; color: #64748b; border: none; border-radius: 6px; padding: 11px 18px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Nunito', sans-serif; }
     .modal-cancel:hover { background: #e2e8f0; }
@@ -867,9 +868,32 @@ function rebuildSubjectCol() {
 }
 
 // ── Update title and UI ────────────────────────────────────────────────────────
+const YG_COLOURS = {
+  Reception: '#1798d3', Y1: '#f97316', Y2: '#22c55e', Y3: '#8b5cf6',
+  Y4: '#1798d3', Y5: '#f97316', Y6: '#22c55e',
+};
+const YG_COLOUR_LIGHTS = {
+  Reception: '#f0f8fd', Y1: '#fff7ed', Y2: '#f0fdf4', Y3: '#f5f3ff',
+  Y4: '#f0f8fd', Y5: '#fff7ed', Y6: '#f0fdf4',
+};
+const YG_COLOUR_BORDERS = {
+  Reception: '#bae0f5', Y1: '#fed7aa', Y2: '#bbf7d0', Y3: '#c4b5fd',
+  Y4: '#bae0f5', Y5: '#fed7aa', Y6: '#bbf7d0',
+};
+
+function applyBrandColour() {
+  const brand = YG_COLOURS[YEAR_GROUP] || '#1798d3';
+  const light = YG_COLOUR_LIGHTS[YEAR_GROUP] || '#f0f8fd';
+  const border = YG_COLOUR_BORDERS[YEAR_GROUP] || '#bae0f5';
+  document.documentElement.style.setProperty('--brand', brand);
+  document.documentElement.style.setProperty('--brand-light', light);
+  document.documentElement.style.setProperty('--brand-border', border);
+}
+
 function updateTitle() {
   document.getElementById('appTitle').textContent = `${YEAR_GROUP} Learning Schedule`;
   document.title = `${YEAR_GROUP} Learning Schedule · WFA`;
+  applyBrandColour();
 }
 
 function populateYearGroupSelect(yearGroups) {
