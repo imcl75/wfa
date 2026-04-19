@@ -468,9 +468,9 @@ const DEFAULT_ROWS = [
   { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:3 },
   { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:4 },
   { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:00', order:5 },
-  { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:00-12:05', order:6 },
+  { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'12:00-12:05', order:6 },
   { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:00-13:10', cls:'fab-row', order:7 },
-  { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:10-13:15', order:8 },
+  { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'13:10-13:15', order:8 },
   { type:'session', id:'s3',     label:'Session 3',              time:'13:15-15:00', order:9 },
   { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:10 },
   { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:11 },
@@ -483,9 +483,9 @@ const FALLBACK_DAY_STRUCTURES = {
     { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:15', order:2 },
     { type:'fixed',   id:'lrsnack',label:'Learning Review Snack', time:'10:15-10:30', cls:'fab-row', order:3 },
     { type:'session', id:'s2',     label:'Session 2',              time:'10:45-11:30', order:4 },
-    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'11:30-11:40', order:5 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'11:30-11:40', order:5 },
     { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'11:40-12:45', cls:'fab-row', order:6 },
-    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'12:45-12:50', order:7 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'12:45-12:50', order:7 },
     { type:'session', id:'s3',     label:'Session 3',              time:'12:50-15:00', order:8 },
     { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
     { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
@@ -496,9 +496,9 @@ const FALLBACK_DAY_STRUCTURES = {
     { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:30', order:2 },
     { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:30-10:45', cls:'fab-row', order:3 },
     { type:'session', id:'s2',     label:'Session 2',              time:'10:45-11:45', order:4 },
-    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'11:45-11:50', order:5 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'11:45-11:50', order:5 },
     { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'11:50-12:50', cls:'fab-row', order:6 },
-    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'12:50-12:55', order:7 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'12:50-12:55', order:7 },
     { type:'session', id:'s3',     label:'Session 3',              time:'12:55-15:00', order:8 },
     { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
     { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
@@ -509,9 +509,9 @@ const FALLBACK_DAY_STRUCTURES = {
     { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:30', order:2 },
     { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:30-10:45', cls:'fab-row', order:3 },
     { type:'session', id:'s2',     label:'Session 2',              time:'10:45-11:45', order:4 },
-    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'11:45-11:50', order:5 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'11:45-11:50', order:5 },
     { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'11:50-12:50', cls:'fab-row', order:6 },
-    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'12:50-12:55', order:7 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'12:50-12:55', order:7 },
     { type:'session', id:'s3',     label:'Session 3',              time:'12:55-15:00', order:8 },
     { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
     { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
@@ -522,9 +522,9 @@ const FALLBACK_DAY_STRUCTURES = {
     { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:30', order:2 },
     { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:30-10:45', cls:'fab-row', order:3 },
     { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:00', order:4 },
-    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:00-12:05', order:5 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'12:00-12:05', order:5 },
     { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:00-13:05', cls:'fab-row', order:6 },
-    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:05-13:10', order:7 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'13:05-13:10', order:7 },
     { type:'session', id:'s3',     label:'Session 3',              time:'13:10-15:00', order:8 },
     { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
     { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
@@ -536,9 +536,9 @@ const FALLBACK_DAY_STRUCTURES = {
     { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:2 },
     { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:3 },
     { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:15', order:4 },
-    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:15-12:20', order:5 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'12:15-12:20', order:5 },
     { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:15-13:20', cls:'fab-row', order:6 },
-    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:20-13:25', order:7 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'13:20-13:25', order:7 },
     { type:'session', id:'s3',     label:'Session 3',              time:'13:25-15:00', order:8 },
     { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
     { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
@@ -549,9 +549,9 @@ const FALLBACK_DAY_STRUCTURES = {
     { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:2 },
     { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:3 },
     { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:15', order:4 },
-    { type:'fixed',   id:'wash',   label:'Wash Hands',             time:'12:15-12:20', order:5 },
+    { type:'fixed',   id:'wash',   label:'Wash Hands', hideTime:true,             time:'12:15-12:20', order:5 },
     { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:15-13:20', cls:'fab-row', order:6 },
-    { type:'fixed',   id:'reg-pm', label:'PM Registration',        time:'13:20-13:25', order:7 },
+    { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'13:20-13:25', order:7 },
     { type:'session', id:'s3',     label:'Session 3',              time:'13:25-15:00', order:8 },
     { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:9 },
     { type:'fixed',   id:'home',   label:'Home Time',              time:'15:00', order:10 },
@@ -972,6 +972,7 @@ function buildDayStructure(rows, yearGroup) {
     time: (r.Time || '').trim(),
     cls: (r.Class || '').trim() || undefined,
     afterSchool: (r.ID || '').trim().toLowerCase() === 'after',
+    hideTime: (r.HideTime || '').trim().toLowerCase() === 'true',
     order: parseInt(r.Order) || 99,
   });
   // Process universal (blank YearGroup) first, then specific
@@ -1376,7 +1377,7 @@ function renderBody() {
   ROWS.forEach((row, ri) => {
     if (row.type === 'fixed') {
       html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
-        <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
+        <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time && !row.hideTime ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
         ${nsd.map((n, di) => {
           if (n) return `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
           const soList = staffOutMap[`${di}-${ri}`] || [];
@@ -1390,7 +1391,7 @@ function renderBody() {
           }).join('');
           const soTags = soList.filter(s => s.isFirst).map(s => `<div class="staff-out-tag" style="background:${s.colour}">${escHtml(s.label)}${s.cover ? `<span class="staff-out-cover"> · ${escHtml(s.cover)}</span>` : ''}</div>`).join('');
           const pad = soList.length ? `margin-left:${soList.length * 5 + 3}px;` : '';
-          return `<td class="view-cell">${strips}${soTags}<div style="${pad}"><div class="fixed-label">${row.label}</div>${row.time ? `<div class="fixed-sub">${row.time}</div>` : ''}</div></td>`;
+          return `<td class="view-cell">${strips}${soTags}<div style="${pad}"><div class="fixed-label">${row.label}</div>${row.time && !row.hideTime ? `<div class="fixed-sub">${row.time}</div>` : ''}</div></td>`;
         }).join('')}
       </tr>`;
     } else {
