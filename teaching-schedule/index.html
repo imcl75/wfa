@@ -737,10 +737,7 @@ function computeViews(staff) {
 // ── Build staff from sheet ────────────────────────────────────────────────────
 function buildTeachingStaff(rows, yearGroup) {
   const filtered = rows.filter(r => {
-    const yg = (r.YearGroup || '').trim();
-    // Normalise YR → Reception
-    const normalised = yg === 'YR' ? 'Reception' : yg;
-    return normalised === yearGroup;
+    return normaliseYG((r.YearGroup || '').trim()) === yearGroup;
   });
   const colours = ['#1798d3','#f97316','#22c55e','#8b5cf6','#ec4899','#0f766e'];
   let colourIdx = 0;
@@ -751,11 +748,13 @@ function buildTeachingStaff(rows, yearGroup) {
   });
 }
 
+function normaliseYG(yg) { return yg === 'YR' ? 'Reception' : yg; }
+
 // ── Build subjects from sheet ─────────────────────────────────────────────────
 function buildSubjectGroups(rows, yearGroup) {
   // Blank YearGroup = universal defaults; specific YearGroup = additions
   const defaults = rows.filter(r => !(r.YearGroup || '').trim());
-  const specific = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  const specific = rows.filter(r => normaliseYG((r.YearGroup || '').trim()) === yearGroup);
   const merged = [...defaults, ...specific];
   const groupMap = {};
   const groupOrder = [];
@@ -776,7 +775,7 @@ function buildSubjectGroups(rows, yearGroup) {
 function buildInterventions(rows, yearGroup) {
   // Blank YearGroup = universal defaults; specific YearGroup = additions
   const defaults = rows.filter(r => !(r.YearGroup || '').trim());
-  const specific = rows.filter(r => (r.YearGroup || '').trim() === yearGroup);
+  const specific = rows.filter(r => normaliseYG((r.YearGroup || '').trim()) === yearGroup);
   const merged = [...defaults, ...specific];
   const groupMap = {};
   const groupOrder = [];
@@ -2138,8 +2137,7 @@ async function init() {
       const staffRows = csvToObjects(staffText);
       ALL_SHEET_STAFF = staffRows;
       const yearGroups = [...new Set(staffRows.map(r => {
-        const yg = (r.YearGroup || '').trim();
-        return yg === 'YR' ? 'Reception' : yg;
+        return normaliseYG((r.YearGroup || '').trim());
       }).filter(Boolean))].sort();
       populateYearGroupSelect(yearGroups.length ? yearGroups : [YEAR_GROUP]);
       const oldIds = STAFF.map(s => s.id);
