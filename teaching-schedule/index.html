@@ -772,7 +772,7 @@ function buildSubjectGroups(rows, yearGroup) {
   const groupMap = {};
   const groupOrder = [];
   merged.forEach(r => {
-    const g = r.Group;
+    const g = (r.Group || '').trim() || 'Uncategorised';
     if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
     groupMap[g].subjects.push({ name: r.Subject, col: r.Colour || '#64748b', _order: parseInt(r.Order) || 99 });
   });
@@ -793,7 +793,7 @@ function buildInterventions(rows, yearGroup) {
   const groupMap = {};
   const groupOrder = [];
   merged.forEach(r => {
-    const g = r.Group;
+    const g = (r.Group || '').trim() || 'Uncategorised';
     if (!groupMap[g]) { groupMap[g] = { label: g, subjects: [] }; groupOrder.push(g); }
     groupMap[g].subjects.push({
       name: r.Activity,
