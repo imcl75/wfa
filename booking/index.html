@@ -1200,8 +1200,27 @@ async function init() {
     document.getElementById('sheetStatus').textContent = `● ${nsdCount} holidays marked`;
     document.getElementById('sheetStatus').className = 'sheet-status ok';
   } catch (err) {
+    // Generate fallback weeks (current term based on today)
+    const today = new Date();
+    const termStart = new Date(today.getFullYear(), 0, 6); // Approx start of Term 1
+    const weekNum = Math.floor((today - termStart) / (7*24*60*60*1000));
+    const termNum = Math.floor(weekNum / 6) + 1;
+    const weekInTerm = (weekNum % 6) + 1;
+
+    // Generate 30 weeks starting from current week
+    const fallbackStart = new Date(today);
+    fallbackStart.setDate(fallbackStart.getDate() - ((today.getDay() + 6) % 7)); // Monday of current week
+    for (let i = 0; i < 30; i++) {
+      const w = new Date(fallbackStart);
+      w.setDate(w.getDate() + i * 7);
+      const t = Math.floor(i / 6) + 1;
+      const wt = (i % 6) + 1;
+      WEEKS.push({ start: new Date(w), term: t, week: wt, key: `T${t}W${wt}`, label: `Term ${t} · Week ${wt}` });
+    }
+
+    state.weekIdx = 0;
     document.getElementById('weekLabel').textContent = weekLabel();
-    document.getElementById('sheetStatus').textContent = '● Offline';
+    document.getElementById('sheetStatus').textContent = '● Using fallback weeks';
     document.getElementById('sheetStatus').className = 'sheet-status err';
   }
 
