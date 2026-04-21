@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Resource Booking · WFA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --brand: #1798d3; --brand-light: #f0f8fd; --brand-border: #bae0f5; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f1f5f9; min-height: 100vh; }
+
+    /* ── Sticky top wrapper ──────────────────────────────────────── */
+    .sticky-top { position: sticky; top: 0; z-index: 200; background: white; will-change: transform; }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .app-header {
+      background: white; border-bottom: 2px solid var(--brand);
+      padding: 10px 16px; display: flex; align-items: center; gap: 12px;
+    }
+    .app-header img { height: 40px; }
+    .app-title { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 18px; color: var(--brand); line-height: 1.2; }
+    .app-subtitle { font-size: 11px; color: #94a3b8; }
+    .header-actions { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+    /* ── Week bar ────────────────────────────────────────────────── */
+    .top-bar {
+      background: white; border-bottom: 1px solid #e2e8f0;
+      padding: 6px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .nav-btn { background: var(--brand-light); border: 1.5px solid var(--brand-border); border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 16px; color: var(--brand); line-height: 1; }
+    .nav-btn:hover { background: #dbeafe; }
+    .nav-btn:disabled { opacity: .35; cursor: default; }
+    .week-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 14px; color: var(--brand); min-width: 200px; text-align: center; }
+    .sheet-status { font-size: 10px; color: #94a3b8; }
+    .sheet-status.ok { color: #22c55e; }
+    .sheet-status.err { color: #f97316; }
+
+    @media (max-width: 720px) {
+      .top-bar { padding: 8px 12px; }
+      .week-label { min-width: 100%; order: -1; text-align: left; }
+    }
+
+    /* ── Body ────────────────────────────────────────────────────── */
+    .app-body { display: flex; min-height: calc(100vh - 120px); align-items: stretch; }
+
+    /* ── Resources sidebar ────────────────────────────────────────── */
+    .resources-sidebar {
+      width: 140px; flex-shrink: 0; background: white;
+      border-right: 1px solid #e2e8f0; padding: 10px 7px;
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .sidebar-hd {
+      font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px;
+      color: #94a3b8; text-transform: uppercase; letter-spacing: .05em;
+      padding: 0 4px 8px;
+    }
+    .sidebar-subhd {
+      font-size: 8.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: #cbd5e1; padding: 8px 5px 4px;
+    }
+    .resource-chip {
+      display: flex; align-items: center; gap: 5px; padding: 5px 6px;
+      border-radius: 5px; margin-bottom: 2px; cursor: pointer;
+      user-select: none; touch-action: none; border: 1px solid rgba(0,0,0,.07);
+      transition: filter .1s, transform .1s, box-shadow .1s;
+    }
+    .resource-chip:hover { filter: brightness(.95); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(15,23,42,.06); }
+    .resource-chip.selected { outline: 2px solid var(--brand); outline-offset: -2px; }
+    .resource-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .resource-name { font-size: 11px; font-weight: 700; color: #1e293b; line-height: 1.25; flex: 1; }
+    .resource-avail { font-size: 9px; color: #64748b; font-weight: 600; }
+    .resource-avail.low { color: #dc2626; }
+    .resource-avail.full { color: #22c55e; }
+
+    @media (max-width: 720px) {
+      .resources-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 150px; }
+      .app-body { flex-direction: column; }
+    }
+
+    /* ── Grid area ───────────────────────────────────────────────── */
+    .grid-area { flex: 1; min-width: 0; padding: 12px; overflow-x: auto; }
+
+    .sched-table { width: 100%; border-collapse: collapse; min-width: 560px; background: white; table-layout: fixed; }
+
+    .sched-table th {
+      padding: 8px 10px; text-align: center; background: #f8fafc;
+      border-bottom: 2px solid #e2e8f0; border-right: 1px solid #e2e8f0;
+      font-family: 'Nunito', sans-serif; font-weight: 900;
+    }
+    .sched-table th:last-child { border-right: none; }
+    .sched-table th.time-hd { width: 90px; border-right: 2px solid #d1d5db; }
+    .day-hd { width: 140px; }
+    .day-hd-name { font-size: 13px; color: #1e293b; }
+    .day-hd-date { font-size: 10px; font-weight: 600; color: #94a3b8; }
+    .day-hd.today .day-hd-name { color: var(--brand); }
+    .day-hd.today .day-hd-date { color: var(--brand); }
+
+    .sched-table .fixed-row td {
+      background: var(--brand-light); padding: 7px 14px;
+      border-bottom: 1px solid var(--brand-border);
+    }
+    .sched-table .fixed-row td.time-cell {
+      font-size: 9.5px; color: var(--brand); font-weight: 700;
+      border-right: 2px solid var(--brand-border); white-space: nowrap;
+      padding: 7px 6px;
+    }
+    .fixed-label { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px; color: var(--brand); }
+    .fixed-sub { font-size: 9.5px; color: var(--brand); opacity: 0.6; }
+
+    .sched-table .session-row td.time-cell {
+      font-size: 9.5px; color: #64748b; font-weight: 700;
+      border-right: 2px solid #d1d5db; padding: 10px 6px;
+      background: #f8fafc; vertical-align: top; white-space: nowrap;
+      border-bottom: 2px solid #d1d5db;
+    }
+    .session-label { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 11px; color: var(--brand); display: block; }
+    .session-time { font-size: 9px; color: #94a3b8; font-weight: 600; }
+
+    .sched-table .session-row td.view-cell {
+      vertical-align: top; padding: 5px; border-right: 1px solid #e2e8f0;
+      border-bottom: 2px solid #d1d5db; min-height: 90px;
+      background: white;
+    }
+    .sched-table .session-row td.view-cell:last-child { border-right: none; }
+
+    .drop-hint { font-size: 10px; color: #d1d5db; padding: 6px 4px; text-align: center; cursor: pointer; }
+    .drop-hint:hover { color: var(--brand); background: var(--brand-light); border-radius: 4px; }
+
+    /* ── Booking chips ────────────────────────────────────────────── */
+    .booking-chip {
+      border-radius: 6px; margin-bottom: 3px; overflow: hidden;
+      border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
+      background: white; cursor: pointer;
+    }
+    .booking-chip:hover { box-shadow: 0 2px 6px rgba(15,23,42,.1); }
+    .booking-chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
+    .booking-chip-name { font-size: 11px; font-weight: 800; color: #1e293b; font-family: 'Nunito', sans-serif; }
+    .booking-chip-teacher { font-size: 10px; color: #64748b; margin-left: auto; }
+    .booking-chip-purpose { font-size: 9px; color: #94a3b8; padding: 2px 6px 3px; background: #f8fafc; }
+    .booking-chip.conflict { border-color: #fca5a5; background: #fef2f2; }
+    .booking-chip.conflict .booking-chip-name { color: #dc2626; }
+
+    /* ── Non-school day ───────────────────────────────────────────── */
+    .non-school-day { background: #f1f5f9 !important; position: relative; }
+    .non-school-day .session-label,
+    .non-school-day .session-time { color: #94a3b8; }
+    .non-school-day .view-cell { background: #f1f5f9 !important; min-height: 0 !important; }
+    .non-school-day .view-cell .drop-hint { display: none; }
+    .non-school-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      pointer-events: none; z-index: 5;
+    }
+    .non-school-badge {
+      background: #e2e8f0; color: #64748b; padding: 4px 10px; border-radius: 5px;
+      font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 12px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    th.non-school-day { background: #f1f5f9 !important; }
+    th.non-school-day .day-hd-name,
+    th.non-school-day .day-hd-date { color: #94a3b8 !important; }
+
+    /* ── Modal ────────────────────────────────────────────────────── */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 500; align-items: center; justify-content: center; }
+    .modal-bg.open { display: flex; }
+    .modal { background: white; border-radius: 10px; padding: 16px 20px; box-shadow: 0 10px 40px rgba(0,0,0,.2); max-width: 90vw; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 16px; color: #1e293b; margin-bottom: 4px; }
+    .modal-hint { font-size: 12px; color: #64748b; margin-bottom: 12px; }
+    .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+    .modal-cancel { background: #f1f5f9; border: 1px solid #d1d5db; border-radius: 5px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: #64748b; }
+    .modal-cancel:hover { background: #e2e8f0; }
+    .modal-save { background: var(--brand); border: none; border-radius: 5px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: white; font-weight: 700; }
+    .modal-save:hover { filter: brightness(1.1); }
+  </style>
+</head>
+<body>
+  <div class="sticky-top">
+    <div class="app-header">
+      <img src="https://imcl75.github.io/wfa/logo.png" alt="Wallscourt Farm Academy" onerror="this.style.display='none'">
+      <div>
+        <div class="app-title" id="appTitle">Resource Booking</div>
+        <div class="app-subtitle">Wallscourt Farm Academy</div>
+      </div>
+      <div class="header-actions">
+        <span id="sheetStatus" class="sheet-status">● Loading…</span>
+      </div>
+    </div>
+    <div class="top-bar">
+      <button class="nav-btn" id="btnPrev" onclick="changeWeek(-1)">‹</button>
+      <div class="week-label" id="weekLabel">Loading…</div>
+      <button class="nav-btn" id="btnNext" onclick="changeWeek(1)">›</button>
+      <button class="nav-btn" onclick="goToday()">Today</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="resources-sidebar">
+      <div class="sidebar-hd">Resources</div>
+      <div id="resourceList"></div>
+    </div>
+    <div class="grid-area">
+      <table class="sched-table">
+        <thead id="schedHead"></thead>
+        <tbody id="schedBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Booking modal -->
+  <div class="modal-bg" id="bookingModal">
+    <div class="modal" style="min-width:340px;max-width:420px">
+      <h3>Book Resource</h3>
+      <p class="modal-hint" id="bookingHint">Select a resource to book.</p>
+      <div id="bookingFields">
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Resource</label>
+          <select id="bookingResource" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+            <optgroup label="Spaces" id="spacesGroup"></optgroup>
+            <optgroup label="Equipment" id="equipmentGroup"></optgroup>
+          </select>
+        </div>
+        <div id="bookingQtyRow" style="margin-bottom:12px;display:none">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Quantity</label>
+          <input type="number" id="bookingQty" min="1" max="30" value="1" style="width:80px;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+          <span id="bookingQtyAvail" style="font-size:12px;color:#64748b;margin-left:8px"></span>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Year Group / Class</label>
+          <input type="text" id="bookingYearGroup" placeholder="e.g. Y4, Y1/2, Reception" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Teacher</label>
+          <input type="text" id="bookingTeacher" placeholder="e.g. Emma J" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Purpose (optional)</label>
+          <input type="text" id="bookingPurpose" placeholder="e.g. Music lesson, PE" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Repeat</label>
+          <select id="bookingRecurring" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+            <option value="">One-time only</option>
+            <option value="weekly">Every week this term</option>
+            <option value="consecutive">Consecutive days</option>
+          </select>
+        </div>
+        <div id="bookingRecurringOpts" style="display:none;margin-bottom:12px">
+          <div id="bookingUntilRow">
+            <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Until week</label>
+            <select id="bookingUntil" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif"></select>
+          </div>
+          <div id="bookingDaysRow" style="display:none">
+            <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Number of days</label>
+            <input type="number" id="bookingDays" min="2" max="5" value="2" style="width:80px;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+          </div>
+        </div>
+      </div>
+      <div id="bookingConflict" style="display:none;background:#fef2f2;border:1px solid #fca5a5;border-radius:5px;padding:8px;margin-bottom:12px;font-size:12px;color:#dc2626"></div>
+      <div class="modal-footer">
+        <button class="modal-cancel" onclick="closeBookingModal()">Cancel</button>
+        <button class="modal-save" onclick="saveBooking()">Book</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────────────
+const SHEET_ID   = '1XsP5yEGnf8sJyXk8iEXqHEtw-NtCsMUFZLaHW4TWNhw';
+const SHEET_BASE = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=`;
+const SYNC_URL   = 'https://script.google.com/macros/s/AKfycbwlNv08Z0cFSgKq_1zcrQw9I2I9ewg8Stj6kcQjSZaBm_uscbIC0V225ez6mVvg75sVfQ/exec';
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri'];
+
+// ── Resources (bookable spaces and equipment) ───────────────────────────────────
+const RESOURCES = [
+  { id: 'muga', name: 'MUGA', type: 'space', quantity: 1, colour: '#22c55e', order: 1 },
+  { id: 'cafe', name: 'Cafe', type: 'space', quantity: 1, colour: '#f97316', order: 2 },
+  { id: 'hall', name: 'Hall', type: 'space', quantity: 1, colour: '#8b5cf6', order: 3 },
+  { id: 'library', name: 'Library', type: 'space', quantity: 1, colour: '#0d9488', order: 4 },
+  { id: 'super', name: 'Super Classroom', type: 'space', quantity: 1, colour: '#ec4899', order: 5 },
+  { id: 'music', name: 'Music Room', type: 'space', quantity: 1, colour: '#6366f1', order: 6 },
+  { id: 'art', name: 'Art Room', type: 'space', quantity: 1, colour: '#f59e0b', order: 7 },
+  { id: 'ipads', name: 'iPads', type: 'equipment', quantity: 30, colour: '#64748b', order: 10 },
+  { id: 'ipads_y1', name: 'Y1 iPads', type: 'equipment', quantity: 15, colour: '#94a3b8', order: 11 },
+  { id: 'laptops', name: 'Laptops', type: 'equipment', quantity: 20, colour: '#78716c', order: 12 },
+  { id: 'microphones', name: 'Microphones', type: 'equipment', quantity: 10, colour: '#a78bfa', order: 13 },
+];
+
+// ── Day structure ────────────────────────────────────────────────────────────
+const ROWS = [
+  { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
+  { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:3 },
+  { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:4 },
+  { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:15', order:5 },
+  { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:15-13:20', cls:'fab-row', order:7 },
+  { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'13:20-13:25', order:8 },
+  { type:'session', id:'s3',     label:'Session 3',              time:'13:25-15:00', order:9 },
+  { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:10 },
+  { type:'fixed',   id:'home',   label:'Home Time',              time:'15:15', order:11 },
+];
+
+// ── State ───────────────────────────────────────────────────────────────────
+let state = {
+  weekIdx: 0,
+  bookings: {}, // weekKey → day → sessionId → [{ booking }]
+  nonSchoolDays: {},
+  schoolEvents: {},
+};
+let WEEKS = [];
+let selectedResource = null;
+
+// ── Persistence ─────────────────────────────────────────────────────────────
+function bookingsKeyLS() { return 'wfa_bookings'; }
+
+function loadBookings() {
+  try { return JSON.parse(localStorage.getItem(bookingsKeyLS())) || {}; }
+  catch { return {}; }
+}
+
+function saveBookingsLocal() {
+  try { localStorage.setItem(bookingsKeyLS(), JSON.stringify(state.bookings)); } catch {}
+}
+
+function getBookings(weekKey, day, session) {
+  if (!state.bookings[weekKey]) state.bookings[weekKey] = {};
+  if (!state.bookings[weekKey][day]) state.bookings[weekKey][day] = {};
+  if (!state.bookings[weekKey][day][session]) state.bookings[weekKey][day][session] = [];
+  return state.bookings[weekKey][day][session];
+}
+
+function getResourceAvailability(resourceId, weekKey, day, session) {
+  const resource = RESOURCES.find(r => r.id === resourceId);
+  if (!resource) return { available: 0, total: 0, booked: 0 };
+  const bookings = getBookings(weekKey, day, session);
+  const resourceBookings = bookings.filter(b => b.resourceId === resourceId);
+  const booked = resourceBookings.reduce((sum, b) => sum + (b.quantity || 1), 0);
+  return { available: resource.quantity - booked, total: resource.quantity, booked };
+}
+
+// ── Week helpers ─────────────────────────────────────────────────────────────
+function schedKey() {
+  if (WEEKS.length && WEEKS[state.weekIdx]) return WEEKS[state.weekIdx].key;
+  const d = weekMonday();
+  return dateKey(d);
+}
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const p = s.split('/');
+  if (p.length !== 3) return null;
+  const [d,m,y] = p.map(Number);
+  return new Date(y < 100 ? 2000+y : y, m-1, d);
+}
+
+function buildWeeks(rows) {
+  return rows
+    .filter(r => r.StartDate && r.Term && r.Week)
+    .map(r => {
+      const start = parseDate(r.StartDate.trim());
+      if (!start || isNaN(start)) return null;
+      const term = String(r.Term).trim();
+      const week = String(r.Week).trim();
+      return { start, term, week, key:`T${term}W${week}`, label:`Term ${term} · Week ${week}` };
+    })
+    .filter(Boolean)
+    .sort((a,b) => a.start - b.start);
+}
+
+function currentWeekIdx() {
+  if (!WEEKS.length) return 0;
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i=0; i<WEEKS.length; i++) {
+    const end = new Date(WEEKS[i].start); end.setDate(end.getDate()+6);
+    if (today >= WEEKS[i].start && today <= end) return i;
+  }
+  for (let i=0; i<WEEKS.length; i++) { if (WEEKS[i].start > today) return i; }
+  return WEEKS.length - 1;
+}
+
+function weekMonday() {
+  if (WEEKS.length && WEEKS[state.weekIdx]) return new Date(WEEKS[state.weekIdx].start);
+  const d = new Date(); d.setHours(0,0,0,0);
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day===0?-6:1-day) + state.weekIdx*7);
+  return d;
+}
+
+function weekLabel() {
+  const fmt = x => x.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  if (WEEKS.length && WEEKS[state.weekIdx]) {
+    const w = WEEKS[state.weekIdx];
+    const end = new Date(w.start); end.setDate(w.start.getDate()+4);
+    return `${w.label} · ${fmt(w.start)} – ${fmt(end)}`;
+  }
+  const d = weekMonday(), end = new Date(d); end.setDate(d.getDate()+4);
+  return `${fmt(d)} – ${fmt(end)}`;
+}
+
+function dayDate(di) {
+  const d = weekMonday(); d.setDate(d.getDate()+di);
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+
+function isToday(di) {
+  const d = weekMonday(); d.setDate(d.getDate()+di);
+  const t = new Date(); t.setHours(0,0,0,0);
+  return d.getTime()===t.getTime();
+}
+
+// ── Navigation ───────────────────────────────────────────────────────────────
+function changeWeek(dir) {
+  state.weekIdx = Math.max(0, Math.min((WEEKS.length||52)-1, state.weekIdx + dir));
+  document.getElementById('btnPrev').disabled = state.weekIdx === 0;
+  document.getElementById('btnNext').disabled = WEEKS.length && state.weekIdx === WEEKS.length-1;
+  document.getElementById('weekLabel').textContent = weekLabel();
+  renderGrid();
+  syncLoad(schedKey());
+}
+
+function goToday() {
+  if (WEEKS.length) state.weekIdx = currentWeekIdx();
+  document.getElementById('btnPrev').disabled = state.weekIdx === 0;
+  document.getElementById('btnNext').disabled = WEEKS.length && state.weekIdx === WEEKS.length-1;
+  document.getElementById('weekLabel').textContent = weekLabel();
+  renderGrid();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── CSV parsing ──────────────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = []; let inQ=false, cur='', cells=[];
+  for (let i=0; i<text.length; i++) {
+    const c=text[i];
+    if (c==='"') { inQ=!inQ; }
+    else if (c===',' && !inQ) { cells.push(cur.trim()); cur=''; }
+    else if ((c==='\n'||c==='\r') && !inQ) {
+      cells.push(cur.trim()); cur='';
+      if (cells.some(x=>x)) rows.push(cells);
+      cells=[];
+      if (c==='\r' && text[i+1]==='\n') i++;
+    } else cur+=c;
+  }
+  cells.push(cur.trim());
+  if (cells.some(x=>x)) rows.push(cells);
+  return rows;
+}
+
+function csvToObjects(text) {
+  text = text.replace(/^\ufeff/,'');
+  const rows = parseCSV(text);
+  if (rows.length < 2) return [];
+  const hdRow = rows[0];
+  const gvizRe = /^([A-Za-z]\w*)( .*)?$/;
+  const nonEmpty = hdRow.filter(h => h.length > 0);
+  const isGviz = nonEmpty.every(h => gvizRe.test(h)) && nonEmpty.some(h => { const m=h.match(gvizRe); return m&&m[2]&&m[2].trim(); });
+  let headers, dataRows;
+  if (isGviz) {
+    headers  = hdRow.map(h => { const m=h.match(gvizRe); return m?m[1]:h; });
+    const firstData = hdRow.map(h => { const m=h.match(gvizRe); return m&&m[2]?m[2].trim():''; });
+    dataRows = [firstData, ...rows.slice(1)];
+  } else {
+    headers = hdRow; dataRows = rows.slice(1);
+  }
+  return dataRows.map(r => {
+    const obj = {};
+    headers.forEach((h,i) => { if (h) obj[h]=(r[i]||'').trim(); });
+    return obj;
+  });
+}
+
+function buildNonSchoolDays(rows) {
+  const BLOCKING_TYPES = new Set([
+    'Half Term', 'Christmas', 'Easter', 'Summer Holiday',
+    'INSET 1', 'INSET 2', 'INSET 3', 'INSET 4', 'INSET 5',
+    'Bank Holiday', 'CLF Conference',
+  ]);
+  const days = {};
+  rows.forEach(r => {
+    if (!r.StartDate || (r.Session && String(r.Session).trim())) return;
+    const type = String(r.Type || '').trim();
+    if (!BLOCKING_TYPES.has(type)) return;
+    const start = parseDate(r.StartDate.trim());
+    if (!start || isNaN(start)) return;
+    const end = parseDate((r.EndDate || r.StartDate).trim()) || start;
+    const label = r.Label || type;
+    const cur = new Date(start);
+    while (cur <= end) {
+      if (cur.getDay() >= 1 && cur.getDay() <= 5) {
+        days[dateKey(cur)] = { label, type };
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return days;
+}
+
+function buildSchoolEvents(rows) {
+  const events = {};
+  rows.forEach(r => {
+    if (!r.StartDate) return;
+    if (r.Session && String(r.Session).trim()) return;
+    const type = String(r.Type || '').trim();
+    const BLOCKING_TYPES = new Set([
+      'Half Term', 'Christmas', 'Easter', 'Summer Holiday',
+      'INSET 1', 'INSET 2', 'INSET 3', 'INSET 4', 'INSET 5',
+      'Bank Holiday', 'CLF Conference',
+    ]);
+    if (BLOCKING_TYPES.has(type)) return;
+    const start = parseDate(r.StartDate.trim());
+    if (!start || isNaN(start)) return;
+    const end = parseDate((r.EndDate || r.StartDate).trim()) || start;
+    const label = r.Label || type;
+    const cur = new Date(start);
+    while (cur <= end) {
+      if (cur.getDay() >= 1 && cur.getDay() <= 5) {
+        const k = dateKey(cur);
+        if (!events[k]) events[k] = [];
+        events[k].push({ label, type });
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+  });
+  return events;
+}
+
+// ── Sync ─────────────────────────────────────────────────────────────────────
+async function syncLoad(weekKey) {
+  if (!SYNC_URL) return;
+  try {
+    const res = await fetch(`${SYNC_URL}?action=loadBookings&weekKey=${encodeURIComponent(weekKey)}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json && json.bookings) {
+        state.bookings[weekKey] = json.bookings;
+        renderSidebar();
+        renderGrid();
+      }
+    }
+  } catch {}
+}
+
+async function syncSave() {
+  if (!SYNC_URL) return;
+  try {
+    await fetch(SYNC_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'saveBookings', weekKey: schedKey(), bookings: state.bookings[schedKey()] || {} }),
+      headers: { 'Content-Type': 'text/plain' }
+    });
+    document.getElementById('sheetStatus').textContent = '● Synced';
+    document.getElementById('sheetStatus').className = 'sheet-status ok';
+  } catch {
+    document.getElementById('sheetStatus').textContent = '● Sync failed';
+    document.getElementById('sheetStatus').className = 'sheet-status err';
+  }
+}
+
+// ── Render: sidebar ─────────────────────────────────────────────────────────
+function renderSidebar() {
+  const el = document.getElementById('resourceList');
+  const wk = schedKey();
+
+  // Use first session for availability preview
+  const firstSession = ROWS.find(r => r.type === 'session');
+  const session = firstSession ? firstSession.id : 's1';
+
+  const spaces = RESOURCES.filter(r => r.type === 'space').sort((a, b) => a.order - b.order);
+  const equipment = RESOURCES.filter(r => r.type === 'equipment').sort((a, b) => a.order - b.order);
+
+  let html = '<div class="sidebar-subhd">Spaces</div>';
+  spaces.forEach(r => {
+    const selected = selectedResource === r.id ? ' selected' : '';
+    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" onclick="selectResource('${r.id}')">
+      <span class="resource-dot" style="background:${r.colour}"></span>
+      <span class="resource-name">${escHtml(r.name)}</span>
+    </div>`;
+  });
+
+  html += '<div class="sidebar-subhd">Equipment</div>';
+  equipment.forEach(r => {
+    // Show availability for Monday morning as preview
+    const { available, total } = getResourceAvailability(r.id, wk, 'monday', session);
+    const availClass = available === 0 ? ' low' : (available === total ? ' full' : '');
+    const selected = selectedResource === r.id ? ' selected' : '';
+    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" onclick="selectResource('${r.id}')">
+      <span class="resource-dot" style="background:${r.colour}"></span>
+      <span class="resource-name">${escHtml(r.name)}</span>
+      <span class="resource-avail${availClass}">${available}/${total}</span>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function selectResource(resourceId) {
+  selectedResource = resourceId;
+  renderSidebar();
+  // Find first session and open modal
+  const firstSession = ROWS.find(r => r.type === 'session');
+  if (firstSession) {
+    openBookingModal('monday', firstSession.id);
+  }
+}
+
+// ── Render: grid ─────────────────────────────────────────────────────────────
+function renderGrid() {
+  renderHead();
+  renderBody();
+}
+
+function renderHead() {
+  const mon = weekMonday();
+  const el = document.getElementById('schedHead');
+  el.innerHTML = `<tr>
+    <th class="time-hd"></th>
+    ${DAYS.map((d, i) => {
+      const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + i);
+      const dk = dateKey(cellDate);
+      const nsd = state.nonSchoolDays[dk];
+      const evts = state.schoolEvents[dk] || [];
+      const cls = `day-hd${isToday(i) ? ' today' : ''}${nsd ? ' non-school-day' : ''}`;
+      const tags = evts.map(e => `<span style="font-size:9px;background:${e.type==='Gathering'?'#1798d320':'#f1f5f9'};padding:1px 4px;border-radius:3px;margin-left:4px">${escHtml(e.label)}</span>`).join('');
+      return `<th class="${cls}"><span class="day-hd-name">${d}</span><br><span class="day-hd-date">${dayDate(i)}</span>${tags ? '<br>' + tags : ''}</th>`;
+    }).join('')}
+  </tr>`;
+}
+
+function renderBody() {
+  const el = document.getElementById('schedBody');
+  const wk = schedKey();
+  const mon = weekMonday();
+
+  const nsd = DAYS.map((_, di) => {
+    const cellDate = new Date(mon); cellDate.setDate(mon.getDate() + di);
+    return state.nonSchoolDays[dateKey(cellDate)] || null;
+  });
+
+  let html = '';
+  const firstSessionId = (ROWS.find(r => r.type === 'session') || {}).id;
+
+  ROWS.forEach((row, ri) => {
+    if (row.type === 'fixed') {
+      html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
+        <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time && !row.hideTime ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
+        ${nsd.map((n, di) => {
+          if (n) return `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
+          return `<td class="view-cell"><div class="fixed-label">${row.label}</div>${row.time && !row.hideTime ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
+        }).join('')}
+      </tr>`;
+    } else {
+      html += `<tr class="session-row">
+        <td class="time-cell">
+          <span class="session-label">${row.label}</span>
+          ${row.time ? `<span class="session-time">${row.time}</span>` : ''}
+        </td>
+        ${DAYS.map((d, di) => {
+          const day = d.toLowerCase();
+          const n = nsd[di];
+          const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
+          const overlay = n && row.id === firstSessionId ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
+
+          if (n) {
+            return `<td class="${cellCls}">${overlay}</td>`;
+          }
+
+          const bookings = getBookings(wk, day, row.id);
+          let cellContent = '';
+          if (bookings.length === 0) {
+            cellContent = `<div class="drop-hint" onclick="openBookingModal('${day}','${row.id}')">+ book</div>`;
+          } else {
+            cellContent = bookings.map(b => {
+              const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
+              const conflict = checkBookingConflict(b.resourceId, wk, day, row.id, b.quantity);
+              const conflictCls = conflict ? ' conflict' : '';
+              return `<div class="booking-chip${conflictCls}" onclick="deleteBooking('${wk}','${day}','${row.id}','${b.id}')" title="Click to remove" style="cursor:pointer">
+                <div class="booking-chip-top" style="background:${col}20">
+                  <span class="chip-colour" style="background:${col}"></span>
+                  <span class="booking-chip-name">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
+                  <span class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</span>
+                </div>
+                ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
+              </div>`;
+            }).join('');
+            cellContent += `<div style="font-size:10px;color:#94a3b8;cursor:pointer;padding:2px 4px" onclick="openBookingModal('${day}','${row.id}')">+ add</div>`;
+          }
+
+          return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}">${overlay}${cellContent}</td>`;
+        }).join('')}
+      </tr>`;
+    }
+  });
+
+  el.innerHTML = html;
+}
+
+// ── Booking modal ─────────────────────────────────────────────────────────────
+let _bookingDay = null;
+let _bookingSession = null;
+
+function openBookingModal(day, session) {
+  _bookingDay = day;
+  _bookingSession = session;
+
+  const dayLabel = DAYS[DAYS.findIndex(d => d.toLowerCase() === day)];
+  const sessionLabel = ROWS.find(r => r.id === session)?.label || session;
+  document.getElementById('bookingHint').textContent = `Booking for ${dayLabel} ${sessionLabel}`;
+
+  // Populate resource dropdowns
+  const spacesGroup = document.getElementById('spacesGroup');
+  const equipmentGroup = document.getElementById('equipmentGroup');
+  spacesGroup.innerHTML = RESOURCES.filter(r => r.type === 'space').map(r =>
+    `<option value="${r.id}">${r.name}</option>`
+  ).join('');
+  equipmentGroup.innerHTML = RESOURCES.filter(r => r.type === 'equipment').map(r =>
+    `<option value="${r.id}">${r.name} (${r.quantity} available)</option>`
+  ).join('');
+
+  // Pre-select from sidebar if clicked
+  if (selectedResource) {
+    document.getElementById('bookingResource').value = selectedResource;
+  } else {
+    document.getElementById('bookingResource').value = 'muga';
+  }
+
+  document.getElementById('bookingYearGroup').value = '';
+  document.getElementById('bookingTeacher').value = '';
+  document.getElementById('bookingPurpose').value = '';
+  document.getElementById('bookingRecurring').value = '';
+  document.getElementById('bookingUntilRow').style.display = 'none';
+  document.getElementById('bookingDaysRow').style.display = 'none';
+  document.getElementById('bookingRecurringOpts').style.display = 'none';
+  document.getElementById('bookingConflict').style.display = 'none';
+
+  // Populate week dropdown for recurring
+  const untilSelect = document.getElementById('bookingUntil');
+  untilSelect.innerHTML = WEEKS.map((w, i) => `<option value="${w.key}"${i === state.weekIdx ? ' selected' : ''}>${w.label}</option>`).join('');
+
+  updateBookingQty();
+  document.getElementById('bookingModal').classList.add('open');
+}
+
+function closeBookingModal() {
+  document.getElementById('bookingModal').classList.remove('open');
+  selectedResource = null;
+  renderSidebar();
+}
+
+function updateBookingQty() {
+  const resourceId = document.getElementById('bookingResource').value;
+  const resource = RESOURCES.find(r => r.id === resourceId);
+  const qtyRow = document.getElementById('bookingQtyRow');
+
+  if (resource && resource.type === 'equipment') {
+    qtyRow.style.display = 'block';
+    const { available, total } = getResourceAvailability(resourceId, schedKey(), _bookingDay, _bookingSession);
+    document.getElementById('bookingQty').max = total;
+    document.getElementById('bookingQty').value = Math.min(1, available);
+    const availSpan = document.getElementById('bookingQtyAvail');
+    availSpan.textContent = `(${available} available)`;
+    availSpan.className = 'resource-avail' + (available <= 5 ? (available === 0 ? ' low' : '') : ' full');
+  } else {
+    qtyRow.style.display = 'none';
+  }
+}
+
+document.getElementById('bookingResource').addEventListener('change', updateBookingQty);
+document.getElementById('bookingRecurring').addEventListener('change', function() {
+  const opts = document.getElementById('bookingRecurringOpts');
+  const untilRow = document.getElementById('bookingUntilRow');
+  const daysRow = document.getElementById('bookingDaysRow');
+  if (this.value === 'weekly') {
+    opts.style.display = 'block';
+    untilRow.style.display = 'block';
+    daysRow.style.display = 'none';
+  } else if (this.value === 'consecutive') {
+    opts.style.display = 'block';
+    untilRow.style.display = 'none';
+    daysRow.style.display = 'block';
+  } else {
+    opts.style.display = 'none';
+  }
+});
+
+function checkBookingConflict(resourceId, weekKey, day, session, quantity = 1) {
+  const resource = RESOURCES.find(r => r.id === resourceId);
+  if (!resource) return null;
+
+  const bookings = getBookings(weekKey, day, session);
+  const existingForResource = bookings.filter(b => b.resourceId === resourceId);
+
+  if (resource.type === 'space') {
+    if (existingForResource.length > 0) {
+      const existing = existingForResource[0];
+      return { conflict: true, message: `Already booked by ${existing.yearGroup || ''}${existing.teacher ? ' - ' + existing.teacher : ''}`, existing };
+    }
+  } else {
+    const totalBooked = existingForResource.reduce((sum, b) => sum + (b.quantity || 1), 0);
+    if (totalBooked + quantity > resource.quantity) {
+      const available = resource.quantity - totalBooked;
+      return { conflict: true, message: `Only ${available} available (requested: ${quantity})`, available, requested: quantity };
+    }
+  }
+  return null;
+}
+
+function saveBooking() {
+  const resourceId = document.getElementById('bookingResource').value;
+  const resource = RESOURCES.find(r => r.id === resourceId);
+  const qty = resource && resource.type === 'equipment' ? parseInt(document.getElementById('bookingQty').value) || 1 : 1;
+  const yearGroup = document.getElementById('bookingYearGroup').value.trim();
+  const teacher = document.getElementById('bookingTeacher').value.trim();
+  const purpose = document.getElementById('bookingPurpose').value.trim();
+  const recurring = document.getElementById('bookingRecurring').value;
+  const untilWeek = document.getElementById('bookingUntil').value;
+  const days = parseInt(document.getElementById('bookingDays').value) || 2;
+
+  // Check conflict for primary booking
+  const conflict = checkBookingConflict(resourceId, schedKey(), _bookingDay, _bookingSession, qty);
+  if (conflict) {
+    const conflictDiv = document.getElementById('bookingConflict');
+    conflictDiv.textContent = conflict.message;
+    conflictDiv.style.display = 'block';
+    return;
+  }
+
+  // Create booking
+  const booking = {
+    id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    resourceId,
+    resourceName: resource ? resource.name : resourceId,
+    resourceType: resource ? resource.type : 'space',
+    yearGroup,
+    teacher,
+    purpose,
+    quantity: qty,
+    created: new Date().toISOString(),
+  };
+
+  // Add to bookings
+  const bookings = getBookings(schedKey(), _bookingDay, _bookingSession);
+  bookings.push(booking);
+  saveBookingsLocal();
+  syncSave();
+
+  // Handle recurring
+  if (recurring === 'weekly' && untilWeek) {
+    const startIdx = state.weekIdx;
+    const endIdx = WEEKS.findIndex(w => w.key === untilWeek);
+    if (endIdx > startIdx) {
+      for (let i = startIdx + 1; i <= endIdx; i++) {
+        const wk = WEEKS[i].key;
+        const bs = getBookings(wk, _bookingDay, _bookingSession);
+        bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) });
+      }
+      saveBookingsLocal();
+      syncSave();
+    }
+  } else if (recurring === 'consecutive' && days > 1) {
+    const dayIdx = DAYS.findIndex(d => d.toLowerCase() === _bookingDay);
+    for (let i = 1; i < days && dayIdx + i < 5; i++) {
+      const nextDay = DAYS[dayIdx + i].toLowerCase();
+      const bs = getBookings(schedKey(), nextDay, _bookingSession);
+      bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) });
+    }
+    saveBookingsLocal();
+    syncSave();
+  }
+
+  closeBookingModal();
+  renderGrid();
+}
+
+function deleteBooking(weekKey, day, session, bookingId) {
+  const bookings = getBookings(weekKey, day, session);
+  const idx = bookings.findIndex(b => b.id === bookingId);
+  if (idx >= 0) {
+    bookings.splice(idx, 1);
+    saveBookingsLocal();
+    syncSave();
+    renderGrid();
+  }
+}
+
+// ── Utility ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  state.bookings = loadBookings();
+
+  document.getElementById('weekLabel').textContent = '…';
+  renderSidebar();
+  renderGrid();
+
+  try {
+    const [termsText, eventsText] = await Promise.all([
+      fetch(SHEET_BASE + encodeURIComponent('Terms')).then(r => { if (!r.ok) throw new Error('Terms tab not found'); return r.text(); }),
+      fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => ''),
+    ]);
+
+    WEEKS = buildWeeks(csvToObjects(termsText));
+    if (eventsText) {
+      const evtRows = csvToObjects(eventsText);
+      state.nonSchoolDays = buildNonSchoolDays(evtRows);
+      state.schoolEvents = buildSchoolEvents(evtRows);
+    }
+
+    state.weekIdx = currentWeekIdx();
+    document.getElementById('btnPrev').disabled = state.weekIdx === 0;
+    document.getElementById('btnNext').disabled = WEEKS.length && state.weekIdx === WEEKS.length-1;
+    document.getElementById('weekLabel').textContent = weekLabel();
+    const nsdCount = Object.keys(state.nonSchoolDays).length;
+    document.getElementById('sheetStatus').textContent = `● ${nsdCount} holidays marked`;
+    document.getElementById('sheetStatus').className = 'sheet-status ok';
+  } catch (err) {
+    document.getElementById('weekLabel').textContent = weekLabel();
+    document.getElementById('sheetStatus').textContent = '● Offline';
+    document.getElementById('sheetStatus').className = 'sheet-status err';
+  }
+
+  renderGrid();
+  await syncLoad(schedKey());
+}
+
+init();
+</script>
+</body>
+</html>
