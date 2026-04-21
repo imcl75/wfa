@@ -1083,12 +1083,18 @@ async function init() {
 
     // Load resources from sheet if available
     if (resourcesText) {
+      console.log('Resources raw text:', resourcesText.substring(0, 500));
       const resourceRows = csvToObjects(resourcesText);
+      console.log('Resources parsed:', resourceRows);
       const sheetResources = buildResources(resourceRows);
+      console.log('Resources built:', sheetResources);
       if (sheetResources.length > 0) {
         RESOURCES = sheetResources;
         renderSidebar(); // Re-render with sheet resources
+        document.getElementById('sheetStatus').textContent = `● ${RESOURCES.length} resources`;
       }
+    } else {
+      console.log('No resources text received');
     }
 
     WEEKS = buildWeeks(csvToObjects(termsText));
