@@ -139,15 +139,42 @@
     .booking-chip {
       border-radius: 6px; margin-bottom: 3px; overflow: hidden;
       border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
-      background: white; cursor: pointer;
+      background: white;
+      position: relative;
     }
     .booking-chip:hover { box-shadow: 0 2px 6px rgba(15,23,42,.1); }
     .booking-chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
     .booking-chip-name { font-size: 11px; font-weight: 800; color: #1e293b; font-family: 'Nunito', sans-serif; }
+    .booking-chip-time { font-size: 9px; color: #64748b; }
     .booking-chip-teacher { font-size: 10px; color: #64748b; margin-left: auto; }
     .booking-chip-purpose { font-size: 9px; color: #94a3b8; padding: 2px 6px 3px; background: #f8fafc; }
-    .booking-chip.conflict { border-color: #fca5a5; background: #fef2f2; }
-    .booking-chip.conflict .booking-chip-name { color: #dc2626; }
+    .booking-chip-del {
+      position: absolute; top: 2px; right: 2px;
+      background: rgba(0,0,0,.1); border: none; border-radius: 3px;
+      width: 18px; height: 18px; font-size: 12px; line-height: 1;
+      color: rgba(0,0,0,.4); cursor: pointer; display: none;
+    }
+    .booking-chip:hover .booking-chip-del { display: block; }
+    .booking-chip-del:hover { background: #dc2626; color: white; }
+
+    /* Spanning bookings */
+    .booking-span {
+      position: absolute; left: 5px; right: 5px; z-index: 10;
+      border-radius: 6px; overflow: hidden;
+      border: 1px solid rgba(0,0,0,.15); box-shadow: 0 2px 6px rgba(15,23,42,.1);
+      background: white;
+    }
+    .booking-span-content { padding: 6px 8px; }
+    .booking-span-name { font-size: 11px; font-weight: 800; color: #1e293b; font-family: 'Nunito', sans-serif; }
+    .booking-span-time { font-size: 9px; color: #64748b; }
+    .booking-span-teacher { font-size: 10px; color: #94a3b8; }
+    .booking-span-del {
+      position: absolute; top: 4px; right: 4px;
+      background: rgba(0,0,0,.15); border: none; border-radius: 3px;
+      width: 18px; height: 18px; font-size: 12px; line-height: 1;
+      color: rgba(0,0,0,.5); cursor: pointer;
+    }
+    .booking-span-del:hover { background: #dc2626; color: white; }
 
     /* ── Non-school day ───────────────────────────────────────────── */
     .non-school-day { background: #f1f5f9 !important; position: relative; }
@@ -230,9 +257,29 @@
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Time</label>
           <div style="display:flex;align-items:center;gap:8px">
-            <select id="bookingStart" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif"></select>
+            <select id="bookingStart" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+              <option value="08:45">08:45</option>
+              <option value="09:00">09:00</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="12:15">12:15</option>
+              <option value="13:20">13:20</option>
+              <option value="13:25">13:25</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+            </select>
             <span style="color:#94a3b8;font-weight:700">→</span>
-            <select id="bookingEnd" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif"></select>
+            <select id="bookingEnd" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+              <option value="09:00">09:00</option>
+              <option value="10:45">10:45</option>
+              <option value="11:00">11:00</option>
+              <option value="12:15">12:15</option>
+              <option value="13:20">13:20</option>
+              <option value="13:25">13:25</option>
+              <option value="15:00">15:00</option>
+              <option value="15:15">15:15</option>
+              <option value="17:00">17:00</option>
+            </select>
           </div>
         </div>
         <div id="bookingQtyRow" style="margin-bottom:12px;display:none">
@@ -256,7 +303,7 @@
         </div>
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Teacher</label>
-          <input type="text" id="bookingTeacher" placeholder="e.g. Emma J" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+          <input type="text" id="bookingTeacher" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
         </div>
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Purpose (optional)</label>
@@ -318,21 +365,39 @@ const RESOURCES = [
 
 // ── Day structure ────────────────────────────────────────────────────────────
 const ROWS = [
-  { type:'fixed',   id:'reg-am', label:'Morning Registration', time:'08:45-09:00', order:1 },
-  { type:'session', id:'s1',     label:'Session 1',              time:'09:00-10:45', order:3 },
-  { type:'fixed',   id:'fab',    label:'Fresh Air Break',        time:'10:45-11:00', cls:'fab-row', order:4 },
-  { type:'session', id:'s2',     label:'Session 2',              time:'11:00-12:15', order:5 },
-  { type:'fixed',   id:'lunch',  label:'Lunchtime',              time:'12:15-13:20', cls:'fab-row', order:7 },
-  { type:'fixed',   id:'reg-pm', label:'PM Registration', hideTime:true,        time:'13:20-13:25', order:8 },
-  { type:'session', id:'s3',     label:'Session 3',              time:'13:25-15:00', order:9 },
-  { type:'fixed',   id:'story',  label:'Story Time',             time:'15:00-15:15', cls:'story-row', order:10 },
-  { type:'fixed',   id:'home',   label:'Home Time',              time:'15:15', order:11 },
+  { id:'reg-am', label:'Reg', time:'08:45-09:00', start:'08:45', end:'09:00' },
+  { id:'s1',     label:'Session 1', time:'09:00-10:45', start:'09:00', end:'10:45' },
+  { id:'fab',    label:'FAB', time:'10:45-11:00', start:'10:45', end:'11:00' },
+  { id:'s2',     label:'Session 2', time:'11:00-12:15', start:'11:00', end:'12:15' },
+  { id:'lunch',  label:'Lunch', time:'12:15-13:20', start:'12:15', end:'13:20' },
+  { id:'reg-pm', label:'Reg', time:'13:20-13:25', start:'13:20', end:'13:25' },
+  { id:'s3',     label:'Session 3', time:'13:25-15:00', start:'13:25', end:'15:00' },
+  { id:'story',  label:'Story', time:'15:00-15:15', start:'15:00', end:'15:15' },
+  { id:'home',   label:'Home', time:'15:15-17:00', start:'15:15', end:'17:00' },
 ];
+
+// Convert time string (HH:MM) to minutes from midnight for comparison
+function timeToMins(t) {
+  if (!t) return 0;
+  const [h, m] = t.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+// Find which rows a time range spans
+function getRowsForTimeRange(startTime, endTime) {
+  const startMins = timeToMins(startTime);
+  const endMins = timeToMins(endTime);
+  return ROWS.filter(row => {
+    const rowStart = timeToMins(row.start);
+    const rowEnd = timeToMins(row.end);
+    return startMins < rowEnd && endMins > rowStart;
+  });
+}
 
 // ── State ───────────────────────────────────────────────────────────────────
 let state = {
   weekIdx: 0,
-  bookings: {}, // weekKey → day → sessionId → [{ booking }]
+  bookings: {}, // weekKey → day → [{ booking with startTime, endTime }]
   nonSchoolDays: {},
   schoolEvents: {},
 };
@@ -351,20 +416,10 @@ function saveBookingsLocal() {
   try { localStorage.setItem(bookingsKeyLS(), JSON.stringify(state.bookings)); } catch {}
 }
 
-function getBookings(weekKey, day, session) {
+function getBookings(weekKey, day) {
   if (!state.bookings[weekKey]) state.bookings[weekKey] = {};
-  if (!state.bookings[weekKey][day]) state.bookings[weekKey][day] = {};
-  if (!state.bookings[weekKey][day][session]) state.bookings[weekKey][day][session] = [];
-  return state.bookings[weekKey][day][session];
-}
-
-function getResourceAvailability(resourceId, weekKey, day, session) {
-  const resource = RESOURCES.find(r => r.id === resourceId);
-  if (!resource) return { available: 0, total: 0, booked: 0 };
-  const bookings = getBookings(weekKey, day, session);
-  const resourceBookings = bookings.filter(b => b.resourceId === resourceId);
-  const booked = resourceBookings.reduce((sum, b) => sum + (b.quantity || 1), 0);
-  return { available: resource.quantity - booked, total: resource.quantity, booked };
+  if (!state.bookings[weekKey][day]) state.bookings[weekKey][day] = [];
+  return state.bookings[weekKey][day];
 }
 
 // ── Week helpers ─────────────────────────────────────────────────────────────
@@ -592,11 +647,6 @@ async function syncSave() {
 // ── Render: sidebar ─────────────────────────────────────────────────────────
 function renderSidebar() {
   const el = document.getElementById('resourceList');
-  const wk = schedKey();
-
-  // Use first session for availability preview
-  const firstSession = ROWS.find(r => r.type === 'session');
-  const session = firstSession ? firstSession.id : 's1';
 
   const spaces = RESOURCES.filter(r => r.type === 'space').sort((a, b) => a.order - b.order);
   const equipment = RESOURCES.filter(r => r.type === 'equipment').sort((a, b) => a.order - b.order);
@@ -612,14 +662,11 @@ function renderSidebar() {
 
   html += '<div class="sidebar-subhd">Equipment</div>';
   equipment.forEach(r => {
-    // Show availability for Monday morning as preview
-    const { available, total } = getResourceAvailability(r.id, wk, 'monday', session);
-    const availClass = available === 0 ? ' low' : (available === total ? ' full' : '');
     const selected = selectedResource === r.id ? ' selected' : '';
     html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" data-resource-name="${escHtml(r.name)}" data-resource-colour="${r.colour}" draggable="true">
       <span class="resource-dot" style="background:${r.colour}"></span>
       <span class="resource-name">${escHtml(r.name)}</span>
-      <span class="resource-avail${availClass}">${available}/${total}</span>
+      <span class="resource-avail">${r.quantity}</span>
     </div>`;
   });
 
@@ -746,84 +793,60 @@ function renderBody() {
   });
 
   let html = '';
-  const firstSessionId = (ROWS.find(r => r.type === 'session') || {}).id;
-
-  // Track which bookings we've already shown (by groupId) to avoid duplicates
-  const shownGroupIds = {};
 
   ROWS.forEach((row, ri) => {
-    const rowId = row.id;
-    const isBookable = TIME_SLOTS.some(s => s.id === rowId);
+    html += `<tr class="session-row">
+      <td class="time-cell">
+        <span class="session-label">${row.label}</span>
+        <span class="session-time">${row.time}</span>
+      </td>
+      ${DAYS.map((d, di) => {
+        const day = d.toLowerCase();
+        const n = nsd[di];
+        const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
+        const cellId = `cell-${day}-${ri}`;
 
-    if (row.type === 'fixed' && !isBookable) {
-      // Non-bookable fixed rows (like Home Time)
-      html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
-        <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time && !row.hideTime ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
-        ${nsd.map((n, di) => {
-          if (n) return `<td class="view-cell non-school-day"><div class="fixed-label" style="color:#94a3b8">${escHtml(n.label)}</div></td>`;
-          return `<td class="view-cell"><div class="fixed-label">${row.label}</div>${row.time && !row.hideTime ? `<div class="fixed-sub">${row.time}</div>` : ''}</td>`;
-        }).join('')}
-      </tr>`;
-    } else {
-      // Bookable rows (sessions + breaks like FAB, lunch)
-      html += `<tr class="${row.type === 'session' ? 'session-row' : 'fixed-row'}${row.cls?' '+row.cls:''}">
-        <td class="time-cell">
-          <span class="${row.type === 'session' ? 'session-label' : 'fixed-label'}">${row.label}</span>
-          ${row.time ? `<span class="${row.type === 'session' ? 'session-time' : 'fixed-sub'}">${row.time}</span>` : ''}
-        </td>
-        ${DAYS.map((d, di) => {
-          const day = d.toLowerCase();
-          const n = nsd[di];
-          const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
-          const overlay = n && row.id === firstSessionId ? `<div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div>` : '';
+        if (n) {
+          return `<td class="${cellCls}"><div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div></td>`;
+        }
 
-          if (n) {
-            return `<td class="${cellCls}">${overlay}</td>`;
+        const rowStartMins = timeToMins(row.start);
+        const rowEndMins = timeToMins(row.end);
+
+        const dayBookings = getBookings(wk, day);
+        const overlapping = dayBookings.filter(b => {
+          const bStart = timeToMins(b.startTime);
+          const bEnd = timeToMins(b.endTime);
+          return bStart < rowEndMins && bEnd > rowStartMins;
+        });
+
+        let cellHtml = '';
+        overlapping.forEach(b => {
+          const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
+          const bStart = timeToMins(b.startTime);
+
+          // Only render in starting row
+          if (bStart >= rowStartMins && bStart < rowEndMins) {
+            const timeLabel = b.startTime === b.endTime ? '' : `${b.startTime}–${b.endTime}`;
+            cellHtml += `<div class="booking-chip" style="background:${col}15;border-left:3px solid ${col}">
+              <div class="booking-chip-top">
+                <span class="booking-chip-name" style="color:${col}">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
+                <button class="booking-chip-del" onclick="deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
+              </div>
+              ${timeLabel ? `<div class="booking-chip-time">${escHtml(timeLabel)}</div>` : ''}
+              <div class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</div>
+              ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
+            </div>`;
           }
+        });
 
-          const bookings = getBookings(wk, day, rowId);
-          let cellContent = '';
+        if (overlapping.length === 0) {
+          cellHtml = `<div class="drop-hint" onclick="openBookingModal('${day}','${row.start}')">+ book</div>`;
+        }
 
-          // Filter to show only bookings that start here (or have no timeRange)
-          const visibleBookings = bookings.filter(b => {
-            // Show if this is the start of the time range, or if no timeRange (legacy)
-            if (!b.timeRange) return true;
-            return b.timeRange.start === rowId;
-          });
-
-          if (visibleBookings.length === 0) {
-            cellContent = `<div class="drop-hint" onclick="openBookingModal('${day}','${rowId}')">+ book</div>`;
-          } else {
-            cellContent = visibleBookings.map(b => {
-              const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
-
-              // Show time range if applicable
-              let timeLabel = '';
-              if (b.timeRange) {
-                const startLabel = TIME_SLOTS.find(s => s.id === b.timeRange.start)?.label || b.timeRange.start;
-                const endLabel = TIME_SLOTS.find(s => s.id === b.timeRange.end)?.label || b.timeRange.end;
-                if (startLabel !== endLabel) {
-                  timeLabel = `${startLabel} → ${endLabel}`;
-                }
-              }
-
-              return `<div class="booking-chip" onclick="deleteBookingGroup('${b.groupId || b.id}')" title="Click to remove entire booking" style="cursor:pointer">
-                <div class="booking-chip-top" style="background:${col}20">
-                  <span class="chip-colour" style="background:${col}"></span>
-                  <span class="booking-chip-name">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
-                  <span class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</span>
-                </div>
-                ${timeLabel ? `<div class="booking-chip-purpose">${escHtml(timeLabel)}</div>` : ''}
-                ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
-              </div>`;
-            }).join('');
-            cellContent += `<div style="font-size:10px;color:#94a3b8;cursor:pointer;padding:2px 4px" onclick="openBookingModal('${day}','${rowId}')">+ add</div>`;
-          }
-
-          return `<td class="${cellCls}" data-day="${day}" data-session="${rowId}">${overlay}${cellContent}</td>`;
-        }).join('')}
-      </tr>`;
-    }
+        return `<td class="${cellCls}" data-day="${day}" data-row-idx="${ri}">${cellHtml}</td>`;
+      }).join('')}
+    </tr>`;
   });
 
   el.innerHTML = html;
@@ -832,46 +855,22 @@ function renderBody() {
 // ── Booking modal ─────────────────────────────────────────────────────────────
 let _bookingDay = null;
 
-// Time slot options for start/end selection
-const TIME_SLOTS = [
-  { id: 'reg-am', label: 'Reg (AM)', time: '08:45' },
-  { id: 's1', label: 'Session 1', time: '09:00' },
-  { id: 'fab', label: 'FAB', time: '10:45' },
-  { id: 's2', label: 'Session 2', time: '11:00' },
-  { id: 'lunch', label: 'Lunch', time: '12:15' },
-  { id: 'reg-pm', label: 'Reg (PM)', time: '13:20' },
-  { id: 's3', label: 'Session 3', time: '13:25' },
-  { id: 'story', label: 'Story Time', time: '15:00' },
-  { id: 'home', label: 'Home Time', time: '15:15' },
-];
-
-function getTimeSlotIndex(slotId) {
-  return TIME_SLOTS.findIndex(s => s.id === slotId);
-}
-
-function getSessionsInRange(startId, endId) {
-  const startIdx = getTimeSlotIndex(startId);
-  const endIdx = getTimeSlotIndex(endId);
-  if (startIdx < 0 || endIdx < 0 || startIdx > endIdx) return [];
-  return TIME_SLOTS.slice(startIdx, endIdx + 1).map(s => s.id);
-}
-
-function openBookingModal(day, startSlot) {
+function openBookingModal(day, startTime) {
   _bookingDay = day;
 
   const dayLabel = DAYS[DAYS.findIndex(d => d.toLowerCase() === day)];
   document.getElementById('bookingHint').textContent = `Booking for ${dayLabel}`;
 
-  // Populate time slot dropdowns
+  // Set start time from clicked row
   const startSelect = document.getElementById('bookingStart');
   const endSelect = document.getElementById('bookingEnd');
-  startSelect.innerHTML = TIME_SLOTS.map(s => `<option value="${s.id}">${s.label} (${s.time})</option>`).join('');
-  endSelect.innerHTML = TIME_SLOTS.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
 
-  // Pre-select the clicked slot as start, and the same or next as end
-  const clickedIdx = getTimeSlotIndex(startSlot);
-  startSelect.value = startSlot;
-  endSelect.value = TIME_SLOTS[Math.min(clickedIdx + 2, TIME_SLOTS.length - 1)].id; // Default to a few slots later
+  startSelect.value = startTime || '09:00';
+
+  // Default end time to 1 hour later
+  const startOptions = Array.from(startSelect.options);
+  const startIdx = startOptions.findIndex(o => o.value === startSelect.value);
+  endSelect.selectedIndex = Math.min(startIdx + 2, endSelect.options.length - 1);
 
   // Populate resource dropdowns
   const spacesGroup = document.getElementById('spacesGroup');
@@ -883,7 +882,6 @@ function openBookingModal(day, startSlot) {
     `<option value="${r.id}">${r.name} (${r.quantity} available)</option>`
   ).join('');
 
-  // Pre-select from sidebar if clicked
   if (selectedResource) {
     document.getElementById('bookingResource').value = selectedResource;
   } else {
@@ -899,11 +897,9 @@ function openBookingModal(day, startSlot) {
   document.getElementById('bookingRecurringOpts').style.display = 'none';
   document.getElementById('bookingConflict').style.display = 'none';
 
-  // Populate week dropdown for recurring
   const untilSelect = document.getElementById('bookingUntil');
   untilSelect.innerHTML = WEEKS.map((w, i) => `<option value="${w.key}"${i === state.weekIdx ? ' selected' : ''}>${w.label}</option>`).join('');
 
-  updateBookingQty();
   document.getElementById('bookingModal').classList.add('open');
 }
 
@@ -913,28 +909,6 @@ function closeBookingModal() {
   renderSidebar();
 }
 
-function updateBookingQty() {
-  const resourceId = document.getElementById('bookingResource').value;
-  const resource = RESOURCES.find(r => r.id === resourceId);
-  const qtyRow = document.getElementById('bookingQtyRow');
-
-  if (resource && resource.type === 'equipment') {
-    qtyRow.style.display = 'block';
-    // Get availability for the first slot in range
-    const startSlot = document.getElementById('bookingStart').value;
-    const { available, total } = getResourceAvailability(resourceId, schedKey(), _bookingDay, startSlot);
-    document.getElementById('bookingQty').max = total;
-    document.getElementById('bookingQty').value = Math.min(1, available);
-    const availSpan = document.getElementById('bookingQtyAvail');
-    availSpan.textContent = `(${available} available)`;
-    availSpan.className = 'resource-avail' + (available <= 5 ? (available === 0 ? ' low' : '') : ' full');
-  } else {
-    qtyRow.style.display = 'none';
-  }
-}
-
-document.getElementById('bookingResource').addEventListener('change', updateBookingQty);
-document.getElementById('bookingStart').addEventListener('change', updateBookingQty);
 document.getElementById('bookingRecurring').addEventListener('change', function() {
   const opts = document.getElementById('bookingRecurringOpts');
   const untilRow = document.getElementById('bookingUntilRow');
@@ -952,26 +926,30 @@ document.getElementById('bookingRecurring').addEventListener('change', function(
   }
 });
 
-function checkBookingConflict(resourceId, weekKey, day, sessions, quantity = 1) {
+function checkBookingConflict(resourceId, weekKey, day, startTime, endTime, quantity = 1) {
   const resource = RESOURCES.find(r => r.id === resourceId);
   if (!resource) return null;
 
-  // Check each session in the range
-  for (const session of sessions) {
-    const bookings = getBookings(weekKey, day, session);
-    const existingForResource = bookings.filter(b => b.resourceId === resourceId);
+  const startMins = timeToMins(startTime);
+  const endMins = timeToMins(endTime);
 
-    if (resource.type === 'space') {
-      if (existingForResource.length > 0) {
-        const existing = existingForResource[0];
-        return { conflict: true, message: `${existing.resourceName} already booked at ${ROWS.find(r => r.id === session)?.label || session} by ${existing.yearGroup || ''}${existing.teacher ? ' - ' + existing.teacher : ''}`, existing, session };
-      }
-    } else {
-      const totalBooked = existingForResource.reduce((sum, b) => sum + (b.quantity || 1), 0);
-      if (totalBooked + quantity > resource.quantity) {
-        const available = resource.quantity - totalBooked;
-        return { conflict: true, message: `Only ${available} available at ${ROWS.find(r => r.id === session)?.label || session} (requested: ${quantity})`, available, requested: quantity, session };
-      }
+  const dayBookings = getBookings(weekKey, day);
+  const overlapping = dayBookings.filter(b => {
+    const bStart = timeToMins(b.startTime);
+    const bEnd = timeToMins(b.endTime);
+    return bStart < endMins && bEnd > startMins && b.resourceId === resourceId;
+  });
+
+  if (resource.type === 'space') {
+    if (overlapping.length > 0) {
+      const existing = overlapping[0];
+      return { conflict: true, message: `${existing.resourceName} already booked ${existing.startTime}–${existing.endTime} by ${existing.yearGroup || ''}${existing.teacher ? ' · ' + existing.teacher : ''}` };
+    }
+  } else {
+    const totalBooked = overlapping.reduce((sum, b) => sum + (b.quantity || 1), 0);
+    if (totalBooked + quantity > resource.quantity) {
+      const available = resource.quantity - totalBooked;
+      return { conflict: true, message: `Only ${available} available at this time (requested: ${quantity})` };
     }
   }
   return null;
@@ -980,6 +958,92 @@ function checkBookingConflict(resourceId, weekKey, day, sessions, quantity = 1) 
 function saveBooking() {
   const resourceId = document.getElementById('bookingResource').value;
   const resource = RESOURCES.find(r => r.id === resourceId);
+  const qty = resource && resource.type === 'equipment' ? parseInt(document.getElementById('bookingQty').value) || 1 : 1;
+  const yearGroup = document.getElementById('bookingYearGroup').value;
+  const teacher = document.getElementById('bookingTeacher').value.trim();
+  const purpose = document.getElementById('bookingPurpose').value.trim();
+  const recurring = document.getElementById('bookingRecurring').value;
+  const untilWeek = document.getElementById('bookingUntil').value;
+  const days = parseInt(document.getElementById('bookingDays').value) || 2;
+  const startTime = document.getElementById('bookingStart').value;
+  const endTime = document.getElementById('bookingEnd').value;
+
+  if (timeToMins(startTime) >= timeToMins(endTime)) {
+    document.getElementById('bookingConflict').textContent = 'End time must be after start time';
+    document.getElementById('bookingConflict').style.display = 'block';
+    return;
+  }
+
+  const conflict = checkBookingConflict(resourceId, schedKey(), _bookingDay, startTime, endTime, qty);
+  if (conflict) {
+    document.getElementById('bookingConflict').textContent = conflict.message;
+    document.getElementById('bookingConflict').style.display = 'block';
+    return;
+  }
+
+  const groupId = 'bg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  const booking = {
+    id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+    groupId,
+    resourceId,
+    resourceName: resource ? resource.name : resourceId,
+    resourceType: resource ? resource.type : 'space',
+    yearGroup,
+    teacher,
+    purpose,
+    quantity: qty,
+    startTime,
+    endTime,
+    created: new Date().toISOString(),
+  };
+
+  const bookings = getBookings(schedKey(), _bookingDay);
+  bookings.push(booking);
+  saveBookingsLocal();
+  syncSave();
+
+  if (recurring === 'weekly' && untilWeek) {
+    const startIdx = state.weekIdx;
+    const endIdx = WEEKS.findIndex(w => w.key === untilWeek);
+    if (endIdx > startIdx) {
+      for (let i = startIdx + 1; i <= endIdx; i++) {
+        const bs = getBookings(WEEKS[i].key, _bookingDay);
+        bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), groupId: 'bg_' + Date.now() + '_' + i });
+      }
+      saveBookingsLocal();
+      syncSave();
+    }
+  } else if (recurring === 'consecutive' && days > 1) {
+    const dayIdx = DAYS.findIndex(d => d.toLowerCase() === _bookingDay);
+    for (let i = 1; i < days && dayIdx + i < 5; i++) {
+      const bs = getBookings(schedKey(), DAYS[dayIdx + i].toLowerCase());
+      bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), groupId: 'bg_' + Date.now() + '_' + i });
+    }
+    saveBookingsLocal();
+    syncSave();
+  }
+
+  closeBookingModal();
+  renderGrid();
+}
+
+function deleteBookingGroup(groupId) {
+  const weekKey = schedKey();
+  if (!state.bookings[weekKey]) return;
+
+  for (const day of Object.keys(state.bookings[weekKey])) {
+    const bookings = state.bookings[weekKey][day];
+    for (let i = bookings.length - 1; i >= 0; i--) {
+      if (bookings[i].groupId === groupId || bookings[i].id === groupId) {
+        bookings.splice(i, 1);
+      }
+    }
+  }
+
+  saveBookingsLocal();
+  syncSave();
+  renderGrid();
+}
   const qty = resource && resource.type === 'equipment' ? parseInt(document.getElementById('bookingQty').value) || 1 : 1;
   const yearGroup = document.getElementById('bookingYearGroup').value.trim();
   const teacher = document.getElementById('bookingTeacher').value.trim();
