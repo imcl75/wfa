@@ -690,91 +690,102 @@ function renderSidebar() {
 
   el.innerHTML = html;
 
-  // Add drag handlers to resource chips
+  // Add pointer handlers to resource chips (iOS Safari compatible)
   el.querySelectorAll('.resource-chip').forEach(chip => {
-    chip.addEventListener('dragstart', onResourceDragStart);
-    chip.addEventListener('dragend', onResourceDragEnd);
+    chip.addEventListener('pointerdown', onResourcePointerDown);
   });
 }
 
-// ── Drag and drop ───────────────────────────────────────────────────────────
-let draggedResource = null;
+// ── Drag and drop (Pointer Events for iOS Safari support) ─────────────────────
+let drag = null;
 
-function onResourceDragStart(e) {
-  draggedResource = this.dataset.resource;
-  this.classList.add('dragging');
+function onResourcePointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.preventDefault();
+  const chip = e.currentTarget;
+  const resourceId = chip.dataset.resource;
+  const resourceName = chip.dataset.resourceName;
+  const resourceColour = chip.dataset.resourceColour;
 
-  // Create drag ghost
+  drag = { resourceId, resourceName, resourceColour, sourceChip: chip };
+  chip.classList.add('dragging');
+  chip.setPointerCapture(e.pointerId);
+
   const ghost = document.getElementById('dragGhost');
-  ghost.textContent = this.dataset.resourceName;
-  ghost.style.background = this.dataset.resourceColour;
+  ghost.textContent = resourceName;
+  ghost.style.background = resourceColour;
   ghost.style.display = 'block';
-  document.body.appendChild(ghost);
+  moveGhost(e.clientX, e.clientY);
 
-  // Use ghost as drag image
-  e.dataTransfer.effectAllowed = 'copy';
-  e.dataTransfer.setDragImage(ghost, 0, 0);
-
-  // Add drop zones to cells
-  setTimeout(() => {
-    document.querySelectorAll('.view-cell').forEach(cell => {
-      cell.addEventListener('dragover', onCellDragOver);
-      cell.addEventListener('dragleave', onCellDragLeave);
-      cell.addEventListener('drop', onCellDrop);
-    });
-  }, 0);
+  chip.addEventListener('pointermove', onDragMove);
+  chip.addEventListener('pointerup', onDragEnd);
+  chip.addEventListener('pointercancel', onDragEnd);
 }
 
-function onResourceDragEnd() {
-  this.classList.remove('dragging');
-  draggedResource = null;
+function onDragMove(e) {
+  if (!drag) return;
+  moveGhost(e.clientX, e.clientY);
+  highlightCellAt(e.clientX, e.clientY);
+}
 
-  // Remove ghost
+function onDragEnd(e) {
+  if (!drag) return;
+  const target = dropTargetAt(e.clientX, e.clientY);
+  if (target) {
+    selectedResource = drag.resourceId;
+    openBookingModal(target.day, target.session);
+  }
+  endDrag();
+}
+
+function endDrag() {
+  if (!drag) return;
+  drag.sourceChip.classList.remove('dragging');
+  drag.sourceChip.removeEventListener('pointermove', onDragMove);
+  drag.sourceChip.removeEventListener('pointerup', onDragEnd);
+  drag.sourceChip.removeEventListener('pointercancel', onDragEnd);
+  document.getElementById('dragGhost').style.display = 'none';
+  clearDropHighlights();
+  drag = null;
+}
+
+function moveGhost(x, y) {
+  const ghost = document.getElementById('dragGhost');
+  ghost.style.left = x + 14 + 'px';
+  ghost.style.top = y + 10 + 'px';
+}
+
+function dropTargetAt(x, y) {
   const ghost = document.getElementById('dragGhost');
   ghost.style.display = 'none';
-
-  // Remove drop zone handlers
-  document.querySelectorAll('.view-cell').forEach(cell => {
-    cell.classList.remove('drop-over');
-    cell.removeEventListener('dragover', onCellDragOver);
-    cell.removeEventListener('dragleave', onCellDragLeave);
-    cell.removeEventListener('drop', onCellDrop);
-  });
+  const el = document.elementFromPoint(x, y);
+  ghost.style.display = 'block';
+  if (!el) return null;
+  const cell = el.closest('.view-cell');
+  if (!cell || cell.classList.contains('non-school-day')) return null;
+  const day = cell.dataset.day;
+  const rowIdx = parseInt(cell.dataset.rowIdx);
+  if (day === undefined || isNaN(rowIdx)) return null;
+  const row = ROWS[rowIdx];
+  if (!row) return null;
+  return { day, session: row.start };
 }
 
-function onCellDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  this.classList.add('drop-over');
-}
-
-function onCellDragLeave() {
-  this.classList.remove('drop-over');
-}
-
-function onCellDrop(e) {
-  e.preventDefault();
-  this.classList.remove('drop-over');
-
-  if (!draggedResource) return;
-
-  const day = this.dataset.day;
-  const session = this.dataset.session;
-
-  if (day && session) {
-    selectedResource = draggedResource;
-    openBookingModal(day, session);
+function highlightCellAt(x, y) {
+  clearDropHighlights();
+  const ghost = document.getElementById('dragGhost');
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  ghost.style.display = 'block';
+  if (!el) return;
+  const cell = el.closest('.view-cell');
+  if (cell && !cell.classList.contains('non-school-day')) {
+    cell.classList.add('drop-over');
   }
 }
 
-function selectResource(resourceId) {
-  selectedResource = resourceId;
-  renderSidebar();
-  // Find first session and open modal
-  const firstSession = ROWS.find(r => r.type === 'session');
-  if (firstSession) {
-    openBookingModal('monday', firstSession.id);
-  }
+function clearDropHighlights() {
+  document.querySelectorAll('.view-cell.drop-over').forEach(c => c.classList.remove('drop-over'));
 }
 
 // ── Render: grid ─────────────────────────────────────────────────────────────
