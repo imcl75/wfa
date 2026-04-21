@@ -67,11 +67,19 @@
     }
     .resource-chip:hover { filter: brightness(.95); transform: translateY(-1px); box-shadow: 0 2px 6px rgba(15,23,42,.06); }
     .resource-chip.selected { outline: 2px solid var(--brand); outline-offset: -2px; }
+    .resource-chip.dragging { opacity: 0.5; cursor: grabbing; }
     .resource-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .resource-name { font-size: 11px; font-weight: 700; color: #1e293b; line-height: 1.25; flex: 1; }
     .resource-avail { font-size: 9px; color: #64748b; font-weight: 600; }
     .resource-avail.low { color: #dc2626; }
     .resource-avail.full { color: #22c55e; }
+
+    /* Drop target highlighting */
+    .view-cell.drop-over { background: var(--brand-light) !important; outline: 2px dashed var(--brand); outline-offset: -2px; }
+    .drop-hint-drop { font-size: 10px; color: var(--brand); padding: 6px 4px; text-align: center; font-weight: 700; }
+
+    /* Drag ghost */
+    .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; opacity: 0.9; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
 
     @media (max-width: 720px) {
       .resources-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 150px; }
@@ -233,8 +241,18 @@
           <span id="bookingQtyAvail" style="font-size:12px;color:#64748b;margin-left:8px"></span>
         </div>
         <div style="margin-bottom:12px">
-          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Year Group / Class</label>
-          <input type="text" id="bookingYearGroup" placeholder="e.g. Y4, Y1/2, Reception" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Year Group</label>
+          <select id="bookingYearGroup" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+            <option value="">Select year group</option>
+            <option value="Reception">Reception</option>
+            <option value="Y1">Y1</option>
+            <option value="Y2">Y2</option>
+            <option value="Y3">Y3</option>
+            <option value="Y4">Y4</option>
+            <option value="Y5">Y5</option>
+            <option value="Y6">Y6</option>
+            <option value="Whole School">Whole School</option>
+          </select>
         </div>
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Teacher</label>
@@ -270,6 +288,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Drag ghost -->
+  <div id="dragGhost" class="drag-ghost" style="display:none"></div>
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
@@ -583,7 +604,7 @@ function renderSidebar() {
   let html = '<div class="sidebar-subhd">Spaces</div>';
   spaces.forEach(r => {
     const selected = selectedResource === r.id ? ' selected' : '';
-    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" onclick="selectResource('${r.id}')">
+    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" data-resource-name="${escHtml(r.name)}" data-resource-colour="${r.colour}" draggable="true">
       <span class="resource-dot" style="background:${r.colour}"></span>
       <span class="resource-name">${escHtml(r.name)}</span>
     </div>`;
@@ -595,7 +616,7 @@ function renderSidebar() {
     const { available, total } = getResourceAvailability(r.id, wk, 'monday', session);
     const availClass = available === 0 ? ' low' : (available === total ? ' full' : '');
     const selected = selectedResource === r.id ? ' selected' : '';
-    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" onclick="selectResource('${r.id}')">
+    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" data-resource-name="${escHtml(r.name)}" data-resource-colour="${r.colour}" draggable="true">
       <span class="resource-dot" style="background:${r.colour}"></span>
       <span class="resource-name">${escHtml(r.name)}</span>
       <span class="resource-avail${availClass}">${available}/${total}</span>
@@ -603,6 +624,82 @@ function renderSidebar() {
   });
 
   el.innerHTML = html;
+
+  // Add drag handlers to resource chips
+  el.querySelectorAll('.resource-chip').forEach(chip => {
+    chip.addEventListener('dragstart', onResourceDragStart);
+    chip.addEventListener('dragend', onResourceDragEnd);
+  });
+}
+
+// ── Drag and drop ───────────────────────────────────────────────────────────
+let draggedResource = null;
+
+function onResourceDragStart(e) {
+  draggedResource = this.dataset.resource;
+  this.classList.add('dragging');
+
+  // Create drag ghost
+  const ghost = document.getElementById('dragGhost');
+  ghost.textContent = this.dataset.resourceName;
+  ghost.style.background = this.dataset.resourceColour;
+  ghost.style.display = 'block';
+  document.body.appendChild(ghost);
+
+  // Use ghost as drag image
+  e.dataTransfer.effectAllowed = 'copy';
+  e.dataTransfer.setDragImage(ghost, 0, 0);
+
+  // Add drop zones to cells
+  setTimeout(() => {
+    document.querySelectorAll('.view-cell').forEach(cell => {
+      cell.addEventListener('dragover', onCellDragOver);
+      cell.addEventListener('dragleave', onCellDragLeave);
+      cell.addEventListener('drop', onCellDrop);
+    });
+  }, 0);
+}
+
+function onResourceDragEnd() {
+  this.classList.remove('dragging');
+  draggedResource = null;
+
+  // Remove ghost
+  const ghost = document.getElementById('dragGhost');
+  ghost.style.display = 'none';
+
+  // Remove drop zone handlers
+  document.querySelectorAll('.view-cell').forEach(cell => {
+    cell.classList.remove('drop-over');
+    cell.removeEventListener('dragover', onCellDragOver);
+    cell.removeEventListener('dragleave', onCellDragLeave);
+    cell.removeEventListener('drop', onCellDrop);
+  });
+}
+
+function onCellDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  this.classList.add('drop-over');
+}
+
+function onCellDragLeave() {
+  this.classList.remove('drop-over');
+}
+
+function onCellDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drop-over');
+
+  if (!draggedResource) return;
+
+  const day = this.dataset.day;
+  const session = this.dataset.session;
+
+  if (day && session) {
+    selectedResource = draggedResource;
+    openBookingModal(day, session);
+  }
 }
 
 function selectResource(resourceId) {
