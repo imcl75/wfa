@@ -208,7 +208,7 @@
 
   <!-- Booking modal -->
   <div class="modal-bg" id="bookingModal">
-    <div class="modal" style="min-width:340px;max-width:420px">
+    <div class="modal" style="min-width:360px;max-width:440px">
       <h3>Book Resource</h3>
       <p class="modal-hint" id="bookingHint">Select a resource to book.</p>
       <div id="bookingFields">
@@ -218,6 +218,14 @@
             <optgroup label="Spaces" id="spacesGroup"></optgroup>
             <optgroup label="Equipment" id="equipmentGroup"></optgroup>
           </select>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Time</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <select id="bookingStart" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif"></select>
+            <span style="color:#94a3b8;font-weight:700">→</span>
+            <select id="bookingEnd" style="flex:1;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif"></select>
+          </div>
         </div>
         <div id="bookingQtyRow" style="margin-bottom:12px;display:none">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Quantity</label>
@@ -643,8 +651,15 @@ function renderBody() {
   let html = '';
   const firstSessionId = (ROWS.find(r => r.type === 'session') || {}).id;
 
+  // Track which bookings we've already shown (by groupId) to avoid duplicates
+  const shownGroupIds = {};
+
   ROWS.forEach((row, ri) => {
-    if (row.type === 'fixed') {
+    const rowId = row.id;
+    const isBookable = TIME_SLOTS.some(s => s.id === rowId);
+
+    if (row.type === 'fixed' && !isBookable) {
+      // Non-bookable fixed rows (like Home Time)
       html += `<tr class="fixed-row${row.cls?' '+row.cls:''}">
         <td class="time-cell"><span class="fixed-label">${row.label}</span>${row.time && !row.hideTime ? `<br><span class="fixed-sub">${row.time}</span>` : ''}</td>
         ${nsd.map((n, di) => {
@@ -653,10 +668,11 @@ function renderBody() {
         }).join('')}
       </tr>`;
     } else {
-      html += `<tr class="session-row">
+      // Bookable rows (sessions + breaks like FAB, lunch)
+      html += `<tr class="${row.type === 'session' ? 'session-row' : 'fixed-row'}${row.cls?' '+row.cls:''}">
         <td class="time-cell">
-          <span class="session-label">${row.label}</span>
-          ${row.time ? `<span class="session-time">${row.time}</span>` : ''}
+          <span class="${row.type === 'session' ? 'session-label' : 'fixed-label'}">${row.label}</span>
+          ${row.time ? `<span class="${row.type === 'session' ? 'session-time' : 'fixed-sub'}">${row.time}</span>` : ''}
         </td>
         ${DAYS.map((d, di) => {
           const day = d.toLowerCase();
@@ -668,28 +684,46 @@ function renderBody() {
             return `<td class="${cellCls}">${overlay}</td>`;
           }
 
-          const bookings = getBookings(wk, day, row.id);
+          const bookings = getBookings(wk, day, rowId);
           let cellContent = '';
-          if (bookings.length === 0) {
-            cellContent = `<div class="drop-hint" onclick="openBookingModal('${day}','${row.id}')">+ book</div>`;
+
+          // Filter to show only bookings that start here (or have no timeRange)
+          const visibleBookings = bookings.filter(b => {
+            // Show if this is the start of the time range, or if no timeRange (legacy)
+            if (!b.timeRange) return true;
+            return b.timeRange.start === rowId;
+          });
+
+          if (visibleBookings.length === 0) {
+            cellContent = `<div class="drop-hint" onclick="openBookingModal('${day}','${rowId}')">+ book</div>`;
           } else {
-            cellContent = bookings.map(b => {
+            cellContent = visibleBookings.map(b => {
               const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
-              const conflict = checkBookingConflict(b.resourceId, wk, day, row.id, b.quantity);
-              const conflictCls = conflict ? ' conflict' : '';
-              return `<div class="booking-chip${conflictCls}" onclick="deleteBooking('${wk}','${day}','${row.id}','${b.id}')" title="Click to remove" style="cursor:pointer">
+
+              // Show time range if applicable
+              let timeLabel = '';
+              if (b.timeRange) {
+                const startLabel = TIME_SLOTS.find(s => s.id === b.timeRange.start)?.label || b.timeRange.start;
+                const endLabel = TIME_SLOTS.find(s => s.id === b.timeRange.end)?.label || b.timeRange.end;
+                if (startLabel !== endLabel) {
+                  timeLabel = `${startLabel} → ${endLabel}`;
+                }
+              }
+
+              return `<div class="booking-chip" onclick="deleteBookingGroup('${b.groupId || b.id}')" title="Click to remove entire booking" style="cursor:pointer">
                 <div class="booking-chip-top" style="background:${col}20">
                   <span class="chip-colour" style="background:${col}"></span>
                   <span class="booking-chip-name">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
                   <span class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</span>
                 </div>
+                ${timeLabel ? `<div class="booking-chip-purpose">${escHtml(timeLabel)}</div>` : ''}
                 ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
               </div>`;
             }).join('');
-            cellContent += `<div style="font-size:10px;color:#94a3b8;cursor:pointer;padding:2px 4px" onclick="openBookingModal('${day}','${row.id}')">+ add</div>`;
+            cellContent += `<div style="font-size:10px;color:#94a3b8;cursor:pointer;padding:2px 4px" onclick="openBookingModal('${day}','${rowId}')">+ add</div>`;
           }
 
-          return `<td class="${cellCls}" data-day="${day}" data-session="${row.id}">${overlay}${cellContent}</td>`;
+          return `<td class="${cellCls}" data-day="${day}" data-session="${rowId}">${overlay}${cellContent}</td>`;
         }).join('')}
       </tr>`;
     }
@@ -700,15 +734,47 @@ function renderBody() {
 
 // ── Booking modal ─────────────────────────────────────────────────────────────
 let _bookingDay = null;
-let _bookingSession = null;
 
-function openBookingModal(day, session) {
+// Time slot options for start/end selection
+const TIME_SLOTS = [
+  { id: 'reg-am', label: 'Reg (AM)', time: '08:45' },
+  { id: 's1', label: 'Session 1', time: '09:00' },
+  { id: 'fab', label: 'FAB', time: '10:45' },
+  { id: 's2', label: 'Session 2', time: '11:00' },
+  { id: 'lunch', label: 'Lunch', time: '12:15' },
+  { id: 'reg-pm', label: 'Reg (PM)', time: '13:20' },
+  { id: 's3', label: 'Session 3', time: '13:25' },
+  { id: 'story', label: 'Story Time', time: '15:00' },
+  { id: 'home', label: 'Home Time', time: '15:15' },
+];
+
+function getTimeSlotIndex(slotId) {
+  return TIME_SLOTS.findIndex(s => s.id === slotId);
+}
+
+function getSessionsInRange(startId, endId) {
+  const startIdx = getTimeSlotIndex(startId);
+  const endIdx = getTimeSlotIndex(endId);
+  if (startIdx < 0 || endIdx < 0 || startIdx > endIdx) return [];
+  return TIME_SLOTS.slice(startIdx, endIdx + 1).map(s => s.id);
+}
+
+function openBookingModal(day, startSlot) {
   _bookingDay = day;
-  _bookingSession = session;
 
   const dayLabel = DAYS[DAYS.findIndex(d => d.toLowerCase() === day)];
-  const sessionLabel = ROWS.find(r => r.id === session)?.label || session;
-  document.getElementById('bookingHint').textContent = `Booking for ${dayLabel} ${sessionLabel}`;
+  document.getElementById('bookingHint').textContent = `Booking for ${dayLabel}`;
+
+  // Populate time slot dropdowns
+  const startSelect = document.getElementById('bookingStart');
+  const endSelect = document.getElementById('bookingEnd');
+  startSelect.innerHTML = TIME_SLOTS.map(s => `<option value="${s.id}">${s.label} (${s.time})</option>`).join('');
+  endSelect.innerHTML = TIME_SLOTS.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
+
+  // Pre-select the clicked slot as start, and the same or next as end
+  const clickedIdx = getTimeSlotIndex(startSlot);
+  startSelect.value = startSlot;
+  endSelect.value = TIME_SLOTS[Math.min(clickedIdx + 2, TIME_SLOTS.length - 1)].id; // Default to a few slots later
 
   // Populate resource dropdowns
   const spacesGroup = document.getElementById('spacesGroup');
@@ -757,7 +823,9 @@ function updateBookingQty() {
 
   if (resource && resource.type === 'equipment') {
     qtyRow.style.display = 'block';
-    const { available, total } = getResourceAvailability(resourceId, schedKey(), _bookingDay, _bookingSession);
+    // Get availability for the first slot in range
+    const startSlot = document.getElementById('bookingStart').value;
+    const { available, total } = getResourceAvailability(resourceId, schedKey(), _bookingDay, startSlot);
     document.getElementById('bookingQty').max = total;
     document.getElementById('bookingQty').value = Math.min(1, available);
     const availSpan = document.getElementById('bookingQtyAvail');
@@ -769,6 +837,7 @@ function updateBookingQty() {
 }
 
 document.getElementById('bookingResource').addEventListener('change', updateBookingQty);
+document.getElementById('bookingStart').addEventListener('change', updateBookingQty);
 document.getElementById('bookingRecurring').addEventListener('change', function() {
   const opts = document.getElementById('bookingRecurringOpts');
   const untilRow = document.getElementById('bookingUntilRow');
@@ -786,23 +855,26 @@ document.getElementById('bookingRecurring').addEventListener('change', function(
   }
 });
 
-function checkBookingConflict(resourceId, weekKey, day, session, quantity = 1) {
+function checkBookingConflict(resourceId, weekKey, day, sessions, quantity = 1) {
   const resource = RESOURCES.find(r => r.id === resourceId);
   if (!resource) return null;
 
-  const bookings = getBookings(weekKey, day, session);
-  const existingForResource = bookings.filter(b => b.resourceId === resourceId);
+  // Check each session in the range
+  for (const session of sessions) {
+    const bookings = getBookings(weekKey, day, session);
+    const existingForResource = bookings.filter(b => b.resourceId === resourceId);
 
-  if (resource.type === 'space') {
-    if (existingForResource.length > 0) {
-      const existing = existingForResource[0];
-      return { conflict: true, message: `Already booked by ${existing.yearGroup || ''}${existing.teacher ? ' - ' + existing.teacher : ''}`, existing };
-    }
-  } else {
-    const totalBooked = existingForResource.reduce((sum, b) => sum + (b.quantity || 1), 0);
-    if (totalBooked + quantity > resource.quantity) {
-      const available = resource.quantity - totalBooked;
-      return { conflict: true, message: `Only ${available} available (requested: ${quantity})`, available, requested: quantity };
+    if (resource.type === 'space') {
+      if (existingForResource.length > 0) {
+        const existing = existingForResource[0];
+        return { conflict: true, message: `${existing.resourceName} already booked at ${ROWS.find(r => r.id === session)?.label || session} by ${existing.yearGroup || ''}${existing.teacher ? ' - ' + existing.teacher : ''}`, existing, session };
+      }
+    } else {
+      const totalBooked = existingForResource.reduce((sum, b) => sum + (b.quantity || 1), 0);
+      if (totalBooked + quantity > resource.quantity) {
+        const available = resource.quantity - totalBooked;
+        return { conflict: true, message: `Only ${available} available at ${ROWS.find(r => r.id === session)?.label || session} (requested: ${quantity})`, available, requested: quantity, session };
+      }
     }
   }
   return null;
@@ -819,8 +891,19 @@ function saveBooking() {
   const untilWeek = document.getElementById('bookingUntil').value;
   const days = parseInt(document.getElementById('bookingDays').value) || 2;
 
-  // Check conflict for primary booking
-  const conflict = checkBookingConflict(resourceId, schedKey(), _bookingDay, _bookingSession, qty);
+  const startSlot = document.getElementById('bookingStart').value;
+  const endSlot = document.getElementById('bookingEnd').value;
+  const sessions = getSessionsInRange(startSlot, endSlot);
+
+  if (sessions.length === 0) {
+    const conflictDiv = document.getElementById('bookingConflict');
+    conflictDiv.textContent = 'Please select a valid time range';
+    conflictDiv.style.display = 'block';
+    return;
+  }
+
+  // Check conflict for all sessions in range
+  const conflict = checkBookingConflict(resourceId, schedKey(), _bookingDay, sessions, qty);
   if (conflict) {
     const conflictDiv = document.getElementById('bookingConflict');
     conflictDiv.textContent = conflict.message;
@@ -828,8 +911,8 @@ function saveBooking() {
     return;
   }
 
-  // Create booking
-  const booking = {
+  // Create booking with time range info
+  const bookingBase = {
     id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
     resourceId,
     resourceName: resource ? resource.name : resourceId,
@@ -838,12 +921,16 @@ function saveBooking() {
     teacher,
     purpose,
     quantity: qty,
+    timeRange: { start: startSlot, end: endSlot },
     created: new Date().toISOString(),
   };
 
-  // Add to bookings
-  const bookings = getBookings(schedKey(), _bookingDay, _bookingSession);
-  bookings.push(booking);
+  // Add booking to each session in range (linked by bookingGroupId)
+  const bookingGroupId = 'bg_' + Date.now();
+  for (const session of sessions) {
+    const bookings = getBookings(schedKey(), _bookingDay, session);
+    bookings.push({ ...bookingBase, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), groupId: bookingGroupId, session });
+  }
   saveBookingsLocal();
   syncSave();
 
@@ -854,8 +941,11 @@ function saveBooking() {
     if (endIdx > startIdx) {
       for (let i = startIdx + 1; i <= endIdx; i++) {
         const wk = WEEKS[i].key;
-        const bs = getBookings(wk, _bookingDay, _bookingSession);
-        bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) });
+        const newGroupId = 'bg_' + Date.now() + '_' + i;
+        for (const session of sessions) {
+          const bs = getBookings(wk, _bookingDay, session);
+          bs.push({ ...bookingBase, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), groupId: newGroupId, session });
+        }
       }
       saveBookingsLocal();
       syncSave();
@@ -864,8 +954,11 @@ function saveBooking() {
     const dayIdx = DAYS.findIndex(d => d.toLowerCase() === _bookingDay);
     for (let i = 1; i < days && dayIdx + i < 5; i++) {
       const nextDay = DAYS[dayIdx + i].toLowerCase();
-      const bs = getBookings(schedKey(), nextDay, _bookingSession);
-      bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) });
+      const newGroupId = 'bg_' + Date.now() + '_' + i;
+      for (const session of sessions) {
+        const bs = getBookings(schedKey(), nextDay, session);
+        bs.push({ ...bookingBase, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), groupId: newGroupId, session });
+      }
     }
     saveBookingsLocal();
     syncSave();
@@ -880,6 +973,32 @@ function deleteBooking(weekKey, day, session, bookingId) {
   const idx = bookings.findIndex(b => b.id === bookingId);
   if (idx >= 0) {
     bookings.splice(idx, 1);
+    saveBookingsLocal();
+    syncSave();
+    renderGrid();
+  }
+}
+
+function deleteBookingGroup(groupId) {
+  // Find and remove all bookings with this groupId across all days and sessions
+  const weekKey = schedKey();
+  let deleted = false;
+
+  if (!state.bookings[weekKey]) return;
+
+  for (const day of Object.keys(state.bookings[weekKey])) {
+    for (const session of Object.keys(state.bookings[weekKey][day])) {
+      const bookings = state.bookings[weekKey][day][session];
+      for (let i = bookings.length - 1; i >= 0; i--) {
+        if (bookings[i].groupId === groupId || bookings[i].id === groupId) {
+          bookings.splice(i, 1);
+          deleted = true;
+        }
+      }
+    }
+  }
+
+  if (deleted) {
     saveBookingsLocal();
     syncSave();
     renderGrid();
