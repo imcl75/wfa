@@ -349,7 +349,8 @@ const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
 const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri'];
 
 // ── Resources (bookable spaces and equipment) ───────────────────────────────────
-const RESOURCES = [
+// Default fallback; will be replaced by sheet data if available
+let RESOURCES = [
   { id: 'muga', name: 'MUGA', type: 'space', quantity: 1, colour: '#22c55e', order: 1 },
   { id: 'cafe', name: 'Cafe', type: 'space', quantity: 1, colour: '#f97316', order: 2 },
   { id: 'hall', name: 'Hall', type: 'space', quantity: 1, colour: '#8b5cf6', order: 3 },
@@ -362,6 +363,21 @@ const RESOURCES = [
   { id: 'laptops', name: 'Laptops', type: 'equipment', quantity: 20, colour: '#78716c', order: 12 },
   { id: 'microphones', name: 'Microphones', type: 'equipment', quantity: 10, colour: '#a78bfa', order: 13 },
 ];
+
+function buildResources(rows) {
+  // Expected columns: Id, Name, Type, Quantity, Colour, Order
+  return rows
+    .filter(r => r.Id && r.Name)
+    .map(r => ({
+      id: String(r.Id).trim().toLowerCase().replace(/\s+/g, '-'),
+      name: String(r.Name).trim(),
+      type: (r.Type || 'space').trim().toLowerCase(),
+      quantity: parseInt(r.Quantity) || 1,
+      colour: (r.Colour || '#64748b').trim(),
+      order: parseInt(r.Order) || 99,
+    }))
+    .sort((a, b) => a.order - b.order);
+}
 
 // ── Day structure ────────────────────────────────────────────────────────────
 const ROWS = [
@@ -1059,10 +1075,21 @@ async function init() {
   renderGrid();
 
   try {
-    const [termsText, eventsText] = await Promise.all([
+    const [termsText, eventsText, resourcesText] = await Promise.all([
       fetch(SHEET_BASE + encodeURIComponent('Terms')).then(r => { if (!r.ok) throw new Error('Terms tab not found'); return r.text(); }),
       fetch(SHEET_BASE + encodeURIComponent('Events')).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(SHEET_BASE + encodeURIComponent('Resources')).then(r => r.ok ? r.text() : '').catch(() => ''),
     ]);
+
+    // Load resources from sheet if available
+    if (resourcesText) {
+      const resourceRows = csvToObjects(resourcesText);
+      const sheetResources = buildResources(resourceRows);
+      if (sheetResources.length > 0) {
+        RESOURCES = sheetResources;
+        renderSidebar(); // Re-render with sheet resources
+      }
+    }
 
     WEEKS = buildWeeks(csvToObjects(termsText));
     if (eventsText) {
