@@ -435,7 +435,9 @@ function saveBookingsLocal() {
 function getBookings(weekKey, day) {
   if (!state.bookings[weekKey]) state.bookings[weekKey] = {};
   if (!state.bookings[weekKey][day]) state.bookings[weekKey][day] = [];
-  return state.bookings[weekKey][day];
+  // Ensure it's always an array (sync might return object)
+  const bookings = state.bookings[weekKey][day];
+  return Array.isArray(bookings) ? bookings : [];
 }
 
 // ── Week helpers ─────────────────────────────────────────────────────────────
