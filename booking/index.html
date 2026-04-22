@@ -159,9 +159,10 @@
 
     /* Timeline-style booking bars (narrow, rotated text) */
     .booking-bar {
-      position: absolute; left: 0; right: 0;
+      position: absolute;
       border-radius: 3px; overflow: hidden;
       cursor: pointer; transition: filter .1s;
+      min-height: 20px;
     }
     .booking-bar:hover { filter: brightness(1.05); z-index: 20; }
     .booking-bar-inner {
