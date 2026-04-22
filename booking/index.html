@@ -127,7 +127,7 @@
 
     .sched-table .session-row td.view-cell {
       vertical-align: top; padding: 0; border-right: 1px solid #e2e8f0;
-      border-bottom: 2px solid #d1d5db; min-height: 90px;
+      border-bottom: 2px solid #d1d5db; height: 90px;
       background: white; position: relative; overflow: visible;
     }
     .sched-table .session-row td.view-cell:last-child { border-right: none; }
@@ -831,8 +831,31 @@ function renderBody() {
 
   let html = '';
 
-  // Pre-compute bookings per day with their row positions
-  // Each cell will render all bookings that overlap, positioned absolutely
+  // Calculate row heights (fixed at 90px per row)
+  const ROW_HEIGHT = 90;
+
+  // Pre-compute which bookings start in which row
+  const bookingStarts = {}; // day -> rowIdx -> [bookings]
+  DAYS.forEach((d, di) => {
+    const day = d.toLowerCase();
+    bookingStarts[day] = {};
+    const dayBookings = getBookings(wk, day);
+    dayBookings.forEach(b => {
+      const bStart = timeToMins(b.startTime);
+      const bEnd = timeToMins(b.endTime);
+      // Find which row this booking starts in
+      for (let ri = 0; ri < ROWS.length; ri++) {
+        const rowStart = timeToMins(ROWS[ri].start);
+        const rowEnd = timeToMins(ROWS[ri].end);
+        if (bStart >= rowStart && bStart < rowEnd) {
+          if (!bookingStarts[day][ri]) bookingStarts[day][ri] = [];
+          bookingStarts[day][ri].push(b);
+          break;
+        }
+      }
+    });
+  });
+
   ROWS.forEach((row, ri) => {
     html += `<tr class="session-row">
       <td class="time-cell">
@@ -850,8 +873,11 @@ function renderBody() {
 
         const rowStartMins = timeToMins(row.start);
         const rowEndMins = timeToMins(row.end);
-        const rowDuration = rowEndMins - rowStartMins;
 
+        // Get bookings that start in this row
+        const startingHere = bookingStarts[day][ri] || [];
+
+        // Get all bookings overlapping this row (for drop hints)
         const dayBookings = getBookings(wk, day);
         const overlapping = dayBookings.filter(b => {
           const bStart = timeToMins(b.startTime);
@@ -861,41 +887,35 @@ function renderBody() {
 
         let cellHtml = '';
 
-        // Position each booking as a vertical bar within the cell
-        // Multiple bookings in same slot are side-by-side (left percentage based on index)
-        overlapping.forEach((b, bi) => {
+        // Render bookings that start here (they will span multiple rows)
+        startingHere.forEach((b, bi) => {
           const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
           const bStart = timeToMins(b.startTime);
           const bEnd = timeToMins(b.endTime);
 
-          // Calculate position within this row
-          const visibleStart = Math.max(bStart, rowStartMins);
-          const visibleEnd = Math.min(bEnd, rowEndMins);
-          const visibleDuration = visibleEnd - visibleStart;
+          // Calculate position within the starting row
+          const startOffsetMins = bStart - rowStartMins;
+          const rowDuration = rowEndMins - rowStartMins;
+          const topPct = (startOffsetMins / rowDuration) * 100;
 
-          // Percentage position within the row
-          const topPct = ((visibleStart - rowStartMins) / rowDuration) * 100;
-          const heightPct = (visibleDuration / rowDuration) * 100;
+          // Calculate total height based on duration
+          // Total grid time: 08:45 to ~17:00
+          const totalMins = bEnd - bStart;
+          const totalRowsSpanned = Math.ceil(totalMins / 60); // rough estimate
+          const heightPx = (totalMins / 60) * ROW_HEIGHT; // px per minute based on 60min = 90px
 
-          // Width percentage based on number of overlapping bookings
-          const widthPct = 100 / overlapping.length;
-          const leftPct = bi * widthPct;
+          // Position within available width (narrow bars, side by side)
+          const barWidth = 12; // ~12% width for narrow bars
+          const leftPct = bi * barWidth;
 
-          // Only show full details in first row the booking appears
-          const isFirstRow = bStart >= rowStartMins && bStart < rowEndMins;
-
-          if (isFirstRow) {
-            cellHtml += `<div class="booking-bar" style="left:${leftPct}%;width:${widthPct}%;top:${topPct}%;height:${heightPct}%;background:${col}" onclick="event.stopPropagation()">
-              <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
-              <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
-              <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
-            </div>`;
-          } else {
-            // Continuation - just coloured bar, no text
-            cellHtml += `<div class="booking-bar" style="left:${leftPct}%;width:${widthPct}%;top:${topPct}%;height:${heightPct}%;background:${col}" onclick="event.stopPropagation()"></div>`;
-          }
+          cellHtml += `<div class="booking-bar" style="left:${leftPct}%;width:${barWidth - 1}%;top:${topPct}%;height:${heightPx}px;background:${col}" onclick="event.stopPropagation()">
+            <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
+            <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
+            <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
+          </div>`;
         });
 
+        // Drop hint only if no bookings overlap this cell
         if (overlapping.length === 0) {
           cellHtml = `<div class="drop-hint" onclick="openBookingModal('${day}','${row.start}')">+ book</div>`;
         }
