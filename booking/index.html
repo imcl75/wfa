@@ -81,6 +81,21 @@
     /* Drag ghost */
     .drag-ghost { position: fixed; pointer-events: none; z-index: 1000; opacity: 0.9; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
 
+    /* Drag placeholder on grid */
+    .drag-placeholder {
+      position: absolute;
+      border-radius: 3px;
+      background: var(--brand);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 50;
+      border: 2px dashed var(--brand);
+    }
+    .drag-placeholder.invalid {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+
     @media (max-width: 720px) {
       .resources-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; max-height: 150px; }
       .app-body { flex-direction: column; }
@@ -163,10 +178,13 @@
     .booking-bar {
       position: absolute;
       border-radius: 3px; overflow: hidden;
-      cursor: pointer; transition: filter .1s;
+      cursor: grab; transition: filter .1s;
       min-height: 20px;
+      touch-action: none;
+      user-select: none;
     }
     .booking-bar:hover { filter: brightness(1.05); z-index: 20; }
+    .booking-bar.dragging { opacity: 0.3; cursor: grabbing; }
     .booking-bar-inner {
       writing-mode: vertical-rl; text-orientation: mixed;
       font-size: 10px; font-weight: 700; color: white;
@@ -351,6 +369,8 @@
 
   <!-- Drag ghost -->
   <div id="dragGhost" class="drag-ghost" style="display:none"></div>
+  <!-- Drag placeholder for moving bookings -->
+  <div id="dragPlaceholder" class="drag-placeholder" style="display:none"></div>
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────────────
@@ -733,6 +753,7 @@ function renderSidebar() {
 
 // ── Drag and drop (Pointer Events for iOS Safari support) ─────────────────────
 let drag = null;
+let placeholderEl = null;
 
 function onResourcePointerDown(e) {
   if (e.button !== undefined && e.button !== 0) return;
@@ -742,7 +763,7 @@ function onResourcePointerDown(e) {
   const resourceName = chip.dataset.resourceName;
   const resourceColour = chip.dataset.resourceColour;
 
-  drag = { resourceId, resourceName, resourceColour, sourceChip: chip };
+  drag = { type: 'new', resourceId, resourceName, resourceColour, sourceChip: chip };
   chip.classList.add('dragging');
   chip.setPointerCapture(e.pointerId);
 
@@ -757,14 +778,81 @@ function onResourcePointerDown(e) {
   chip.addEventListener('pointercancel', onDragEnd);
 }
 
+function onBookingBarPointerDown(e) {
+  if (e.button !== undefined && e.button !== 0) return;
+  // Don't initiate drag if clicking delete button
+  if (e.target.classList.contains('booking-bar-del')) return;
+  e.preventDefault();
+  e.stopPropagation();
+
+  const bar = e.currentTarget;
+  const bookingId = bar.dataset.bookingId;
+  const day = bar.dataset.day;
+  const weekKey = schedKey();
+  const dayBookings = getBookings(weekKey, day);
+  const booking = dayBookings.find(b => b.id === bookingId || b.groupId === bookingId);
+
+  if (!booking) return;
+
+  const resource = RESOURCES.find(r => r.id === booking.resourceId);
+  const resourceName = resource ? resource.name : booking.resourceName;
+  const resourceColour = resource ? resource.colour : '#64748b';
+
+  // Calculate duration to preserve when moving
+  const durationMins = timeToMins(booking.endTime) - timeToMins(booking.startTime);
+
+  drag = {
+    type: 'move',
+    bookingId: booking.id,
+    groupId: booking.groupId,
+    resourceId: booking.resourceId,
+    resourceName,
+    resourceColour,
+    originalDay: day,
+    originalStartTime: booking.startTime,
+    originalEndTime: booking.endTime,
+    durationMins,
+    yearGroup: booking.yearGroup,
+    teacher: booking.teacher,
+    purpose: booking.purpose,
+    quantity: booking.quantity || 1,
+    sourceBar: bar,
+  };
+
+  bar.style.opacity = '0.3';
+  bar.setPointerCapture(e.pointerId);
+
+  const ghost = document.getElementById('dragGhost');
+  ghost.textContent = resourceName;
+  ghost.style.background = resourceColour;
+  ghost.style.display = 'block';
+  moveGhost(e.clientX, e.clientY);
+
+  bar.addEventListener('pointermove', onBookingDragMove);
+  bar.addEventListener('pointerup', onBookingDragEnd);
+  bar.addEventListener('pointercancel', onBookingDragEnd);
+
+  // Show placeholder immediately
+  placeholderEl = document.getElementById('dragPlaceholder');
+  placeholderEl.style.background = resourceColour;
+  updatePlaceholderPosition(e.clientX, e.clientY);
+}
+
 function onDragMove(e) {
-  if (!drag) return;
+  if (!drag || drag.type !== 'new') return;
   moveGhost(e.clientX, e.clientY);
   highlightCellAt(e.clientX, e.clientY);
 }
 
+function onBookingDragMove(e) {
+  if (!drag || drag.type !== 'move') return;
+  moveGhost(e.clientX, e.clientY);
+  updatePlaceholderPosition(e.clientX, e.clientY);
+  highlightCellAt(e.clientX, e.clientY);
+}
+
 function onDragEnd(e) {
-  if (!drag) return;
+  if (!drag || drag.type !== 'new') return;
   const target = dropTargetAt(e.clientX, e.clientY);
   if (target) {
     selectedResource = drag.resourceId;
@@ -773,8 +861,21 @@ function onDragEnd(e) {
   endDrag();
 }
 
+function onBookingDragEnd(e) {
+  if (!drag || drag.type !== 'move') return;
+  const target = dropTargetAt(e.clientX, e.clientY);
+  if (target) {
+    // Calculate new time based on vertical position
+    const newTime = calculateDropTime(e.clientX, e.clientY, target);
+    if (newTime) {
+      moveBookingTo(target.day, newTime.startTime, newTime.endTime);
+    }
+  }
+  endBookingDrag();
+}
+
 function endDrag() {
-  if (!drag) return;
+  if (!drag || drag.type !== 'new') return;
   drag.sourceChip.classList.remove('dragging');
   drag.sourceChip.removeEventListener('pointermove', onDragMove);
   drag.sourceChip.removeEventListener('pointerup', onDragEnd);
@@ -782,6 +883,214 @@ function endDrag() {
   document.getElementById('dragGhost').style.display = 'none';
   clearDropHighlights();
   drag = null;
+}
+
+function endBookingDrag() {
+  if (!drag || drag.type !== 'move') return;
+  if (drag.sourceBar) {
+    drag.sourceBar.style.opacity = '';
+    drag.sourceBar.removeEventListener('pointermove', onBookingDragMove);
+    drag.sourceBar.removeEventListener('pointerup', onBookingDragEnd);
+    drag.sourceBar.removeEventListener('pointercancel', onBookingDragEnd);
+  }
+  document.getElementById('dragGhost').style.display = 'none';
+  document.getElementById('dragPlaceholder').style.display = 'none';
+  clearDropHighlights();
+  drag = null;
+}
+
+function calculateDropTime(x, y, target) {
+  const ghost = document.getElementById('dragGhost');
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  ghost.style.display = 'block';
+  if (!el) return null;
+
+  const cell = el.closest('.view-cell');
+  if (!cell || cell.classList.contains('non-school-day')) return null;
+
+  const rowIdx = parseInt(cell.dataset.rowIdx);
+  const row = ROWS[rowIdx];
+  if (!row) return null;
+
+  // Find the closest time slot based on vertical position
+  const rect = cell.getBoundingClientRect();
+  const relY = y - rect.top;
+  const cellHeight = rect.height;
+  const progress = relY / cellHeight;
+
+  // Snap to row boundaries - find which row we're closest to
+  const sessionRows = document.querySelectorAll('.session-row');
+  let closestRowIdx = rowIdx;
+  let minDist = Infinity;
+
+  sessionRows.forEach((r, ri) => {
+    const rowCell = r.querySelector('.view-cell');
+    if (!rowCell) return;
+    const rowRect = rowCell.getBoundingClientRect();
+    const rowCenter = rowRect.top + rowRect.height / 2;
+    const dist = Math.abs(y - rowCenter);
+    if (dist < minDist) {
+      minDist = dist;
+      closestRowIdx = ri;
+    }
+  });
+
+  const newRow = ROWS[closestRowIdx];
+  if (!newRow) return null;
+
+  // Preserve duration
+  const startTime = newRow.start;
+  const startMins = timeToMins(startTime);
+  const endMins = startMins + drag.durationMins;
+
+  // Find matching end time from available slots
+  const endTime = findClosestEndTime(endMins);
+
+  return { day: target.day, startTime, endTime };
+}
+
+function findClosestEndTime(targetMins) {
+  const times = ['08:45','09:00','10:45','11:00','12:15','13:20','13:25','15:00','15:15','17:00'];
+  let closest = times[0];
+  let minDiff = Infinity;
+
+  times.forEach(t => {
+    const diff = Math.abs(timeToMins(t) - targetMins);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = t;
+    }
+  });
+
+  return closest;
+}
+
+function moveBookingTo(newDay, newStartTime, newEndTime) {
+  if (!drag || drag.type !== 'move') return;
+
+  const weekKey = schedKey();
+  const originalDayBookings = getBookings(weekKey, drag.originalDay);
+  const bookingIdx = originalDayBookings.findIndex(b => b.id === drag.bookingId);
+
+  if (bookingIdx === -1) return;
+
+  // Check for conflicts at new location (excluding the booking being moved)
+  if (newDay !== drag.originalDay || newStartTime !== drag.originalStartTime) {
+    const tempBooking = originalDayBookings.splice(bookingIdx, 1)[0];
+    const conflict = checkBookingConflict(drag.resourceId, weekKey, newDay, newStartTime, newEndTime, drag.quantity || 1);
+    originalDayBookings.splice(bookingIdx, 0, tempBooking); // Put it back for now
+
+    if (conflict) {
+      showConflictMessage(conflict.message);
+      return;
+    }
+  }
+
+  // Remove from original location
+  const booking = originalDayBookings.splice(bookingIdx, 1)[0];
+
+  // Update times and move to new day
+  booking.startTime = newStartTime;
+  booking.endTime = newEndTime;
+
+  // Add to new day
+  const newDayBookings = getBookings(weekKey, newDay);
+  newDayBookings.push(booking);
+
+  saveBookingsLocal();
+  syncSave();
+  renderGrid();
+}
+
+function showConflictMessage(message) {
+  const conflictEl = document.getElementById('bookingConflict');
+  if (conflictEl) {
+    conflictEl.textContent = message;
+    conflictEl.style.display = 'block';
+    conflictEl.style.position = 'fixed';
+    conflictEl.style.top = '20px';
+    conflictEl.style.left = '50%';
+    conflictEl.style.transform = 'translateX(-50%)';
+    conflictEl.style.zIndex = '1000';
+    setTimeout(() => {
+      conflictEl.style.display = 'none';
+      conflictEl.style.position = '';
+      conflictEl.style.top = '';
+      conflictEl.style.left = '';
+      conflictEl.style.transform = '';
+      conflictEl.style.zIndex = '';
+    }, 3000);
+  }
+}
+
+function updatePlaceholderPosition(x, y) {
+  if (!placeholderEl) return;
+
+  const ghost = document.getElementById('dragGhost');
+  ghost.style.display = 'none';
+  const el = document.elementFromPoint(x, y);
+  ghost.style.display = 'block';
+
+  if (!el) {
+    placeholderEl.style.display = 'none';
+    return;
+  }
+
+  const cell = el.closest('.view-cell');
+  if (!cell || cell.classList.contains('non-school-day')) {
+    placeholderEl.style.display = 'none';
+    return;
+  }
+
+  const day = cell.dataset.day;
+  const rowIdx = parseInt(cell.dataset.rowIdx);
+
+  // Check for conflicts at the target location (excluding the booking being moved)
+  let hasConflict = false;
+  if (drag && drag.type === 'move') {
+    const newRow = ROWS[rowIdx];
+    if (newRow) {
+      const endTime = findClosestEndTime(timeToMins(newRow.start) + drag.durationMins);
+      // Only show conflict if moving to a different time or day
+      if (day !== drag.originalDay || newRow.start !== drag.originalStartTime) {
+        // Temporarily exclude the booking being moved from conflict check
+        const weekKey = schedKey();
+        const originalDayBookings = getBookings(weekKey, drag.originalDay);
+        const bookingIdx = originalDayBookings.findIndex(b => b.id === drag.bookingId);
+        if (bookingIdx !== -1) {
+          const tempBooking = originalDayBookings.splice(bookingIdx, 1)[0];
+          const conflict = checkBookingConflict(drag.resourceId, weekKey, day, newRow.start, endTime, drag.quantity || 1);
+          originalDayBookings.splice(bookingIdx, 0, tempBooking);
+          hasConflict = !!conflict;
+        }
+      }
+    }
+  }
+
+  // Position placeholder over the target cell
+  const cellRect = cell.getBoundingClientRect();
+  const tableRect = document.querySelector('.sched-table').getBoundingClientRect();
+
+  // Calculate height based on duration
+  const sessionRows = document.querySelectorAll('.session-row');
+  let rowHeight = 90; // default
+  if (sessionRows[rowIdx]) {
+    const r = sessionRows[rowIdx].querySelector('.view-cell');
+    if (r) rowHeight = r.getBoundingClientRect().height;
+  }
+
+  // Height = number of rows spanned
+  const numRows = Math.ceil((drag.durationMins || 60) / 60); // rough approximation
+  const height = rowHeight * Math.max(1, numRows);
+
+  placeholderEl.style.display = 'block';
+  placeholderEl.style.left = (cellRect.left - tableRect.left) + 'px';
+  placeholderEl.style.top = (cellRect.top - tableRect.top) + 'px';
+  placeholderEl.style.width = cellRect.width + 'px';
+  placeholderEl.style.height = Math.min(height, cellRect.height) + 'px';
+  placeholderEl.style.background = drag.resourceColour;
+  placeholderEl.classList.toggle('invalid', hasConflict);
 }
 
 function moveGhost(x, y) {
@@ -821,6 +1130,8 @@ function highlightCellAt(x, y) {
 
 function clearDropHighlights() {
   document.querySelectorAll('.view-cell.drop-over').forEach(c => c.classList.remove('drop-over'));
+  const placeholder = document.getElementById('dragPlaceholder');
+  if (placeholder) placeholder.style.display = 'none';
 }
 
 // ── Render: grid ─────────────────────────────────────────────────────────────
@@ -998,7 +1309,9 @@ function renderBookingsOverlay() {
 
       const bar = document.createElement('div');
       bar.className = 'booking-bar';
-      bar.style.cssText = `position:absolute;left:${leftPx}px;width:${widthPx}px;top:${topPx}px;height:${heightPx}px;background:${col};pointer-events:auto;`;
+      bar.style.cssText = `position:absolute;left:${leftPx}px;width:${widthPx}px;top:${topPx}px;height:${heightPx}px;background:${col};pointer-events:auto;cursor:grab;`;
+      bar.dataset.bookingId = b.id;
+      bar.dataset.day = day;
       const ygDisplay = b.yearGroup ? `${b.yearGroup} · ` : '';
       bar.innerHTML = `
         <div class="booking-bar-inner"><strong>${ygDisplay}</strong>${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
@@ -1006,6 +1319,7 @@ function renderBookingsOverlay() {
         <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
       `;
       bar.onclick = (e) => e.stopPropagation();
+      bar.addEventListener('pointerdown', onBookingBarPointerDown);
       overlay.appendChild(bar);
     });
   });
