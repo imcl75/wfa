@@ -126,9 +126,9 @@
     .session-time { font-size: 9px; color: #94a3b8; font-weight: 600; }
 
     .sched-table .session-row td.view-cell {
-      vertical-align: top; padding: 5px; border-right: 1px solid #e2e8f0;
+      vertical-align: top; padding: 0; border-right: 1px solid #e2e8f0;
       border-bottom: 2px solid #d1d5db; min-height: 90px;
-      background: white; position: relative;
+      background: white; position: relative; overflow: visible;
     }
     .sched-table .session-row td.view-cell:last-child { border-right: none; }
 
@@ -137,51 +137,52 @@
 
     /* ── Booking chips ────────────────────────────────────────────── */
     .booking-chip {
-      border-radius: 6px; margin-bottom: 3px; overflow: hidden;
-      border: 1px solid rgba(0,0,0,.1); box-shadow: 0 1px 2px rgba(15,23,42,.04);
+      border-radius: 4px; overflow: hidden;
+      border: 1px solid rgba(0,0,0,.1);
       background: white;
       position: relative;
     }
-    .booking-chip:hover { box-shadow: 0 2px 6px rgba(15,23,42,.1); }
-    .booking-chip-top { display: flex; align-items: center; gap: 4px; padding: 4px 6px; }
+    .booking-chip:hover { box-shadow: 0 2px 6px rgba(15,23,42,.15); }
+    .booking-chip-top { display: flex; align-items: center; gap: 4px; padding: 3px 5px; }
     .booking-chip-name { font-size: 11px; font-weight: 800; color: #1e293b; font-family: 'Nunito', sans-serif; }
     .booking-chip-time { font-size: 9px; color: #64748b; }
-    .booking-chip-teacher { font-size: 10px; color: #64748b; margin-left: auto; }
-    .booking-chip-purpose { font-size: 9px; color: #94a3b8; padding: 2px 6px 3px; background: #f8fafc; }
+    .booking-chip-teacher { font-size: 10px; color: #64748b; }
+    .booking-chip-purpose { font-size: 9px; color: #94a3b8; padding: 2px 5px 3px; background: #f8fafc; }
     .booking-chip-del {
       position: absolute; top: 2px; right: 2px;
       background: rgba(0,0,0,.1); border: none; border-radius: 3px;
-      width: 18px; height: 18px; font-size: 12px; line-height: 1;
-      color: rgba(0,0,0,.4); cursor: pointer; display: none;
+      width: 16px; height: 16px; font-size: 11px; line-height: 1;
+      color: rgba(0,0,0,.4); cursor: pointer; display: none; z-index: 5;
     }
     .booking-chip:hover .booking-chip-del { display: block; }
     .booking-chip-del:hover { background: #dc2626; color: white; }
 
-    /* Continuation rows (multi-row bookings) */
-    .booking-cont {
-      height: 100%; min-height: 20px;
-      background: inherit; border-left: 3px solid;
-      border-radius: 0 0 4px 4px; margin-top: -2px;
+    /* Timeline-style booking bars (narrow, rotated text) */
+    .booking-bar {
+      position: absolute; left: 0; right: 0;
+      border-radius: 3px; overflow: hidden;
+      cursor: pointer; transition: filter .1s;
     }
-
-    /* Spanning bookings */
-    .booking-span {
-      position: absolute; left: 5px; right: 5px; z-index: 10;
-      border-radius: 6px; overflow: hidden;
-      border: 1px solid rgba(0,0,0,.15); box-shadow: 0 2px 6px rgba(15,23,42,.1);
-      background: white;
+    .booking-bar:hover { filter: brightness(1.05); z-index: 20; }
+    .booking-bar-inner {
+      writing-mode: vertical-rl; text-orientation: mixed;
+      font-size: 10px; font-weight: 700; color: white;
+      padding: 4px 2px; white-space: nowrap; overflow: hidden;
+      font-family: 'Nunito', sans-serif;
     }
-    .booking-span-content { padding: 6px 8px; }
-    .booking-span-name { font-size: 11px; font-weight: 800; color: #1e293b; font-family: 'Nunito', sans-serif; }
-    .booking-span-time { font-size: 9px; color: #64748b; }
-    .booking-span-teacher { font-size: 10px; color: #94a3b8; }
-    .booking-span-del {
-      position: absolute; top: 4px; right: 4px;
-      background: rgba(0,0,0,.15); border: none; border-radius: 3px;
-      width: 18px; height: 18px; font-size: 12px; line-height: 1;
-      color: rgba(0,0,0,.5); cursor: pointer;
+    .booking-bar-time {
+      writing-mode: vertical-rl; text-orientation: mixed;
+      font-size: 8px; color: rgba(255,255,255,.7);
+      padding: 2px;
     }
-    .booking-span-del:hover { background: #dc2626; color: white; }
+    .booking-bar-del {
+      position: absolute; top: 2px; right: 2px;
+      background: rgba(255,255,255,.3); border: none; border-radius: 3px;
+      width: 14px; height: 14px; font-size: 10px; line-height: 1;
+      color: white; cursor: pointer; display: none; z-index: 5;
+    }
+    .booking-bar:hover .booking-bar-del { display: block; }
+    .booking-bar-del:hover { background: #dc2626; color: white; }
 
     /* ── Non-school day ───────────────────────────────────────────── */
     .non-school-day { background: #f1f5f9 !important; position: relative; }
@@ -830,32 +831,8 @@ function renderBody() {
 
   let html = '';
 
-  // Pre-compute which rows each booking spans (by day)
-  const bookingRows = {};
-  DAYS.forEach((d, di) => {
-    const day = d.toLowerCase();
-    bookingRows[day] = {};
-    const dayBookings = getBookings(wk, day);
-    dayBookings.forEach(b => {
-      const bStart = timeToMins(b.startTime);
-      const bEnd = timeToMins(b.endTime);
-      const rowsSpanned = [];
-      ROWS.forEach((row, ri) => {
-        const rStart = timeToMins(row.start);
-        const rEnd = timeToMins(row.end);
-        if (bStart < rEnd && bEnd > rStart) {
-          rowsSpanned.push(ri);
-        }
-      });
-      bookingRows[day][b.id] = {
-        booking: b,
-        startRow: rowsSpanned[0],
-        endRow: rowsSpanned[rowsSpanned.length - 1],
-        rowsSpanned
-      };
-    });
-  });
-
+  // Pre-compute bookings per day with their row positions
+  // Each cell will render all bookings that overlap, positioned absolutely
   ROWS.forEach((row, ri) => {
     html += `<tr class="session-row">
       <td class="time-cell">
@@ -873,6 +850,7 @@ function renderBody() {
 
         const rowStartMins = timeToMins(row.start);
         const rowEndMins = timeToMins(row.end);
+        const rowDuration = rowEndMins - rowStartMins;
 
         const dayBookings = getBookings(wk, day);
         const overlapping = dayBookings.filter(b => {
@@ -882,29 +860,39 @@ function renderBody() {
         });
 
         let cellHtml = '';
-        overlapping.forEach(b => {
+
+        // Position each booking as a vertical bar within the cell
+        // Multiple bookings in same slot are side-by-side (left percentage based on index)
+        overlapping.forEach((b, bi) => {
           const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
           const bStart = timeToMins(b.startTime);
           const bEnd = timeToMins(b.endTime);
-          const info = bookingRows[day][b.id];
-          const isFirstRow = info && info.startRow === ri;
-          const isLastRow = info && info.endRow === ri;
 
-          // Render booking chip - show full info only in first row
+          // Calculate position within this row
+          const visibleStart = Math.max(bStart, rowStartMins);
+          const visibleEnd = Math.min(bEnd, rowEndMins);
+          const visibleDuration = visibleEnd - visibleStart;
+
+          // Percentage position within the row
+          const topPct = ((visibleStart - rowStartMins) / rowDuration) * 100;
+          const heightPct = (visibleDuration / rowDuration) * 100;
+
+          // Width percentage based on number of overlapping bookings
+          const widthPct = 100 / overlapping.length;
+          const leftPct = bi * widthPct;
+
+          // Only show full details in first row the booking appears
+          const isFirstRow = bStart >= rowStartMins && bStart < rowEndMins;
+
           if (isFirstRow) {
-            const timeLabel = b.startTime === b.endTime ? '' : `${b.startTime}–${b.endTime}`;
-            cellHtml += `<div class="booking-chip" style="background:${col}15;border-left:3px solid ${col}">
-              <div class="booking-chip-top">
-                <span class="booking-chip-name" style="color:${col}">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
-                <button class="booking-chip-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
-              </div>
-              ${timeLabel ? `<div class="booking-chip-time">${escHtml(timeLabel)}</div>` : ''}
-              <div class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</div>
-              ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
+            cellHtml += `<div class="booking-bar" style="left:${leftPct}%;width:${widthPct}%;top:${topPct}%;height:${heightPct}%;background:${col}" onclick="event.stopPropagation()">
+              <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
+              <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
+              <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
             </div>`;
           } else {
-            // Continuation row - just show a coloured bar
-            cellHtml += `<div class="booking-cont" style="background:${col}15;border-left:3px solid ${col}"></div>`;
+            // Continuation - just coloured bar, no text
+            cellHtml += `<div class="booking-bar" style="left:${leftPct}%;width:${widthPct}%;top:${topPct}%;height:${heightPct}%;background:${col}" onclick="event.stopPropagation()"></div>`;
           }
         });
 
