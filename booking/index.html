@@ -157,6 +157,13 @@
     .booking-chip:hover .booking-chip-del { display: block; }
     .booking-chip-del:hover { background: #dc2626; color: white; }
 
+    /* Continuation rows (multi-row bookings) */
+    .booking-cont {
+      height: 100%; min-height: 20px;
+      background: inherit; border-left: 3px solid;
+      border-radius: 0 0 4px 4px; margin-top: -2px;
+    }
+
     /* Spanning bookings */
     .booking-span {
       position: absolute; left: 5px; right: 5px; z-index: 10;
@@ -823,6 +830,32 @@ function renderBody() {
 
   let html = '';
 
+  // Pre-compute which rows each booking spans (by day)
+  const bookingRows = {};
+  DAYS.forEach((d, di) => {
+    const day = d.toLowerCase();
+    bookingRows[day] = {};
+    const dayBookings = getBookings(wk, day);
+    dayBookings.forEach(b => {
+      const bStart = timeToMins(b.startTime);
+      const bEnd = timeToMins(b.endTime);
+      const rowsSpanned = [];
+      ROWS.forEach((row, ri) => {
+        const rStart = timeToMins(row.start);
+        const rEnd = timeToMins(row.end);
+        if (bStart < rEnd && bEnd > rStart) {
+          rowsSpanned.push(ri);
+        }
+      });
+      bookingRows[day][b.id] = {
+        booking: b,
+        startRow: rowsSpanned[0],
+        endRow: rowsSpanned[rowsSpanned.length - 1],
+        rowsSpanned
+      };
+    });
+  });
+
   ROWS.forEach((row, ri) => {
     html += `<tr class="session-row">
       <td class="time-cell">
@@ -833,7 +866,6 @@ function renderBody() {
         const day = d.toLowerCase();
         const n = nsd[di];
         const cellCls = `view-cell${n ? ' non-school-day' : ''}`;
-        const cellId = `cell-${day}-${ri}`;
 
         if (n) {
           return `<td class="${cellCls}"><div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div></td>`;
@@ -854,45 +886,25 @@ function renderBody() {
           const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
           const bStart = timeToMins(b.startTime);
           const bEnd = timeToMins(b.endTime);
+          const info = bookingRows[day][b.id];
+          const isFirstRow = info && info.startRow === ri;
+          const isLastRow = info && info.endRow === ri;
 
-          // Only render in starting row
-          if (bStart >= rowStartMins && bStart < rowEndMins) {
-            // Calculate how many rows this booking spans
-            let spanRows = 0;
-            for (let i = ri; i < ROWS.length; i++) {
-              const rStart = timeToMins(ROWS[i].start);
-              const rEnd = timeToMins(ROWS[i].end);
-              if (bEnd > rStart && bStart < rEnd) spanRows++;
-              else break;
-            }
-
+          // Render booking chip - show full info only in first row
+          if (isFirstRow) {
             const timeLabel = b.startTime === b.endTime ? '' : `${b.startTime}–${b.endTime}`;
-
-            // If booking spans multiple rows, use spanning style
-            if (spanRows > 1) {
-              // Calculate height: ~90px per row (min-height), plus padding adjustments
-              const height = spanRows * 90 - 10; // Subtract 10px for overlap/spacing
-              cellHtml += `<div class="booking-span" style="height:${height}px;background:${col}15;border-left:3px solid ${col}" onclick="deleteBookingGroup('${b.groupId || b.id}')">
-                <div class="booking-span-content">
-                  <div class="booking-span-name" style="color:${col}">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
-                  <div class="booking-span-time">${escHtml(timeLabel)}</div>
-                  <div class="booking-span-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</div>
-                  ${b.purpose ? `<div class="booking-span-teacher">${escHtml(b.purpose)}</div>` : ''}
-                </div>
-                <button class="booking-span-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
-              </div>`;
-            } else {
-              // Single row booking - use regular chip style
-              cellHtml += `<div class="booking-chip" style="background:${col}15;border-left:3px solid ${col}">
-                <div class="booking-chip-top">
-                  <span class="booking-chip-name" style="color:${col}">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
-                  <button class="booking-chip-del" onclick="deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
-                </div>
-                ${timeLabel ? `<div class="booking-chip-time">${escHtml(timeLabel)}</div>` : ''}
-                <div class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</div>
-                ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
-              </div>`;
-            }
+            cellHtml += `<div class="booking-chip" style="background:${col}15;border-left:3px solid ${col}">
+              <div class="booking-chip-top">
+                <span class="booking-chip-name" style="color:${col}">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</span>
+                <button class="booking-chip-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
+              </div>
+              ${timeLabel ? `<div class="booking-chip-time">${escHtml(timeLabel)}</div>` : ''}
+              <div class="booking-chip-teacher">${escHtml(b.yearGroup || '')}${b.teacher ? ' · ' + escHtml(b.teacher) : ''}</div>
+              ${b.purpose ? `<div class="booking-chip-purpose">${escHtml(b.purpose)}</div>` : ''}
+            </div>`;
+          } else {
+            // Continuation row - just show a coloured bar
+            cellHtml += `<div class="booking-cont" style="background:${col}15;border-left:3px solid ${col}"></div>`;
           }
         });
 
