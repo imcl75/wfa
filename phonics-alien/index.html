@@ -116,8 +116,8 @@ const REAL_WORDS={
   "ng":["ring","sing","king","wing","long","song","bring","swing","flung","hung","rung","sung","bang","gang","rang","sang","thing","strong","spring","string"],
   "ck":["back","duck","kick","lock","luck","neck","pack","pick","rack","rock","sick","sock","tick","tuck","black","block","brick","click","clock","crack","trick","truck","check","stuck","stock","stack","track","flock","knock","pluck"],
   "qu":["quit","quiz","quick","queen","quite","quest","quill","quip","quack","quench"],
-  "ph":["graph","phone","photo","phase","physic","pheasant","sphere","orphan","trophy","dolphin"],
-  "wh":["when","which","whip","wheel","wheat","white","while","whale","where","whisk","whisp","whiff","whomp","whelp"],
+  "ph":["graph","phone","photo","phase","sphere","orphan","trophy","dolphin","pheasant","phantom"],
+  "wh":["when","which","whip","wheel","wheat","white","while","whale","where","whisk","whiff","whelp","whisper","whirl","whether"],
   "ai":["rain","tail","sail","mail","rail","snail","trail","train","paint","brain","chain","drain","grain","plain","stain","wait","bait","paid","maid","raid","claim","sprain","strain","quail","frail"],
   "ee":["feet","keep","meet","seed","tree","free","bee","deep","feel","heel","peel","reef","week","peek","seek","green","street","sleep","sweep","creek","bleed","speed","greed","breed","freed"],
   "igh":["night","light","might","right","sight","tight","bright","flight","fright","slight","high","sigh","thigh","knight","blight","plight"],
@@ -125,7 +125,7 @@ const REAL_WORDS={
   "oo":["food","moon","pool","cool","fool","tool","room","zoom","boot","hoot","root","loop","droop","troop","boost","roost","proof","stool","spool","drool"],
   "ar":["car","far","bar","jar","star","farm","harm","arm","art","cart","dart","part","park","bark","dark","lark","mark","spark","sharp","scarf","start","smart","charm","scar","shard"],
   "or":["for","born","corn","horn","torn","worn","fort","port","sort","short","sport","storm","form","cord","lord","fork","pork","torch","north","shore","store","score","snore"],
-  "ur":["fur","burn","turn","curl","hurl","hurt","burst","girl","shirt","stir","sir","firm","fern","term","verb","herd","herb","church","purse","nurse","curve"],
+  "ur":["fur","burn","turn","curl","hurl","hurt","burst","stir","sir","firm","fern","term","verb","herd","herb","church","purse","nurse","curve","surf"],
   "ow":["cow","how","now","bow","low","row","down","town","gown","crown","brown","frown","drown","grow","show","flow","blow","snow","crow","glow"],
   "oi":["oil","boil","coil","foil","soil","coin","join","point","joint","moist","hoist","voice","noise","choice","spoil","broil"],
   "er":["her","verb","fern","herd","term","germ","stern","clerk","perch","verse","merge","serve","nerve","swerve","berth"],
@@ -133,59 +133,59 @@ const REAL_WORDS={
   "ou":["out","our","loud","cloud","proud","shout","trout","south","mouth","round","sound","found","ground","mound","bound","count","mount","sprout","scout","pout"],
   "ie":["pie","tie","lie","die","tried","dried","cried","fried","flies","ties","lies","pies","cries","spied","plied"],
   "ea":["eat","sea","tea","pea","bead","read","heat","meat","seat","beat","neat","deal","heal","meal","seal","lean","bean","clean","cream","dream","steam","stream","speak","sneak","squeak"],
-  "oy":["boy","toy","joy","coy","ploy","annoy","enjoy","decoy","royal","loyal","Troy","buoy","alloy","employ"],
+  "oy":["boy","toy","joy","coy","ploy","annoy","enjoy","decoy","royal","loyal","buoy","alloy","employ","oyster","destroy"],
   "ir":["girl","bird","first","shirt","dirt","firm","sir","stir","birth","third","chirp","swirl","twirl","whirl","squirt","skirt","flirt"],
   "ue":["blue","clue","glue","true","flue","due","hue","cue","argue","issue","value","rescue","statue","venue"],
-  "aw":["jaw","paw","raw","saw","claw","draw","flaw","straw","thaw","crawl","drawl","shawl","sprawl","dawn","lawn","yawn","drawn","fawn","prawn","squaw"],
+  "aw":["jaw","paw","raw","saw","claw","draw","flaw","straw","thaw","crawl","drawl","shawl","sprawl","dawn","lawn","yawn","drawn","fawn","prawn"],
   "ew":["new","few","dew","blew","flew","grew","drew","stew","brew","crew","chew","threw","knew","skew","slew","screw"],
   "a_e":["cake","lake","make","take","wake","bake","rake","fame","game","name","came","same","tame","cape","tape","date","fate","gate","late","mate","wave","cave","gave","save","brave","grade","shade","shape","shake","blade"],
-  "e_e":["eve","here","these","theme","scene","gene","scheme","compete","extreme","complete","Steve","Eve"],
+  "e_e":["here","these","theme","scene","gene","scheme","complete","extreme","compete","eve"],
   "i_e":["bike","like","hike","kite","bite","five","hive","hide","ride","side","tide","wide","bride","glide","pride","slide","time","dime","lime","vine","fine","line","mine","pine","wine","shine","shrine","smile","while","white"],
   "o_e":["home","hope","hole","mole","pole","role","tone","bone","cone","zone","note","vote","woke","joke","poke","smoke","spoke","broke","code","rode","rope","cope","slope","stone","phone","globe","those","close","chose","whole"],
-  "u_e":["cube","tube","tune","dune","cute","mute","fuse","huge","rule","mule","flute","brute","rude","nude","lure","cure","pure","sure","duke","fluke","prune","June","use","Luke","tube"],
-  "bl":["black","bland","blank","blast","bleed","blend","bless","bliss","block","blood","bloom","blown","blue","blunt","blur","blaze","blade","blame","blare","blink"],
-  "br":["brag","brain","brake","brand","brave","bray","bred","brew","bride","brim","bring","brisk","broil","broke","brood","brook","brown","brush","brute","bread"],
-  "cl":["clam","clap","clash","class","claw","clay","clean","clear","cleft","click","cliff","climb","cling","clip","clock","clone","cloth","cloud","club","clue"],
-  "cr":["crab","crack","craft","cram","crane","crash","crawl","creak","creek","creep","crest","crisp","crop","cross","crown","crude","cruel","crush","crust","cry"],
-  "dr":["drag","drain","draw","dread","dream","dress","drift","drill","drink","drip","drive","drop","drove","drum","drunk","dry","drape","drake","dread","drew"],
-  "fl":["flag","flap","flash","flat","flaw","flea","fled","flesh","flick","flip","float","flock","flood","floor","flop","flow","flu","flung","flute","fly"],
-  "fr":["frog","from","front","frost","frown","fry","frame","frank","fresh","freed","fret","frisk","froth","fraud","frail","frill","fringe","freeze","freight","free"],
-  "gl":["glad","glare","glass","gleam","glee","glide","glint","glow","glue","glum","glaze","gland","gloss","gloves","globe","gloat","gloom","glitch","glen","glib"],
-  "gr":["grab","grace","grade","grain","grand","grant","grasp","grass","grate","gray","greed","green","greet","grew","grip","groan","grope","ground","group","grow"],
-  "pl":["place","plan","plane","plant","plate","play","plea","plead","pleat","plot","plow","pluck","plug","plum","plumb","plump","plunge","plus","plod","plain"],
-  "pr":["pray","press","prick","pride","print","prize","probe","prod","proof","prop","proud","prove","prank","praise","prone","prune","prime","price","preach","prep"],
-  "sk":["skid","skill","skin","skip","skull","skunk","sky","ski","sketch","skew","skate","skim","skit","slab","slam","slap","slat","slave","sled","skin"],
-  "sl":["slam","slap","slash","slate","sleep","sleet","slept","slice","slide","slim","slip","slit","slope","slot","slug","slump","slunk","sly","slow","sleek"],
-  "sm":["smack","small","smart","smash","smear","smell","smile","smock","smoke","smooth","smug","smith","smother","smudge","smelt","smite","smoky","smash","smell","smart"],
+  "u_e":["cube","tube","tune","dune","cute","mute","fuse","huge","rule","mule","flute","brute","rude","lure","cure","pure","sure","duke","fluke","prune","use"],
+  "bl":["black","bland","blank","blast","bleed","blend","bless","block","blood","bloom","blown","blue","blunt","blur","blaze","blade","blame","blink","blow","blast"],
+  "br":["brag","brain","brake","brand","brave","bray","bred","brew","bride","brim","bring","brisk","broke","brood","brook","brown","brush","brute","bread","brief"],
+  "cl":["clam","clap","clash","class","claw","clay","clean","clear","click","cliff","climb","cling","clip","clock","cloth","cloud","club","clue","clown","claim"],
+  "cr":["crab","crack","craft","cram","crane","crash","crawl","creak","creek","creep","crest","crisp","crop","cross","crown","crush","crust","cry","crave","crew"],
+  "dr":["drag","drain","draw","dread","dream","dress","drift","drill","drink","drip","drive","drop","drum","drunk","dry","drape","drew","drool","drone","droll"],
+  "fl":["flag","flap","flash","flat","flaw","flea","fled","flesh","flick","flip","float","flock","flood","floor","flop","flow","flung","flute","fly","flare"],
+  "fr":["frog","from","front","frost","frown","fry","frame","frank","fresh","fret","frisk","froth","frail","free","freeze","friend","fright","frock","fringe","fruit"],
+  "gl":["glad","glare","glass","gleam","glee","glide","glint","glow","glue","glum","glaze","gland","globe","gloat","gloom","glen","glib","gloss","gloves","glimpse"],
+  "gr":["grab","grace","grade","grain","grand","grant","grasp","grass","grate","gray","greed","green","greet","grew","grip","groan","ground","group","grow","grin"],
+  "pl":["place","plan","plane","plant","plate","play","plea","plead","plot","pluck","plug","plum","plump","plunge","plus","plod","plain","plait","plank","plaque"],
+  "pr":["pray","press","prick","pride","print","prize","probe","prod","proof","prop","proud","prove","prank","praise","prune","prime","price","prep","prom","preen"],
+  "sk":["skid","skill","skin","skip","skull","skunk","sky","ski","sketch","skate","skim","skit","skill","skip","skull","skid","skew","skirt","sketch","sky"],
+  "sl":["slam","slap","slash","slate","sleep","sleet","slept","slice","slide","slim","slip","slit","slope","slot","slug","slump","sly","slow","sleek","slick"],
+  "sm":["smack","small","smart","smash","smear","smell","smile","smock","smoke","smooth","smug","smith","smudge","smelt","smoky","smirk","smote","smother","smear","smart"],
   "sn":["snack","snap","snare","snarl","sneak","sneer","sniff","snip","snob","snoop","snore","snort","snout","snow","snug","snub","snag","snake","snipe","snatch"],
   "sp":["span","spare","spark","speak","spear","speed","spell","spend","spill","spin","spine","spit","splash","split","spoil","spoke","spool","sport","spot","spray"],
-  "st":["stack","staff","stain","stair","stake","stale","stall","stamp","stand","star","stare","stark","start","stay","steal","steep","steer","stem","step","stick"],
-  "sw":["swam","swamp","swan","swap","swear","sweat","sweep","sweet","swept","swift","swim","swing","swipe","swirl","swoop","sway","swore","sworn","swung","Swiss"],
-  "tr":["track","trade","trail","train","trap","trash","tray","tread","treat","tree","trek","trick","trim","trip","trod","tromp","troop","trot","trout","truck"],
-  "tw":["tweak","tweed","tweet","twig","twill","twin","twine","twirl","twist","twitch","twice","twelve","twenty","twerp","twang","tweeze","twit","two","tween","twelfth"],
+  "st":["stack","staff","stain","stair","stake","stale","stall","stamp","stand","star","stare","start","stay","steal","steep","steer","stem","step","stick","still"],
+  "sw":["swam","swamp","swan","swap","swear","sweat","sweep","sweet","swept","swift","swim","swing","swipe","swirl","swoop","sway","swore","sworn","swung","swell"],
+  "tr":["track","trade","trail","train","trap","trash","tray","tread","treat","tree","trek","trick","trim","trip","trot","trout","truck","true","truce","trust"],
+  "tw":["tweak","twig","twin","twine","twirl","twist","twitch","twice","twelve","twenty","twang","two","tweet","tweed","twill"],
   "str":["strap","straw","stray","stream","street","stress","stretch","strict","string","strip","stripe","stroke","strong","struck","strum","strung","strut","strength","stride","straight"],
-  "scr":["scram","scrap","scrape","scratch","scrawl","scream","screen","screw","script","scroll","scrub","scruff","scrum","scribble","scramble","scrappy","scrawny","scrape","scream","scroll"],
+  "scr":["scram","scrap","scrape","scratch","scrawl","scream","screen","screw","script","scroll","scrub","scruff","scrum","scribble","scramble","scrappy","scrawny","scroll","scrub","screen"],
   "spl":["splash","splat","splatter","spleen","split","splinter","splodge","splurge","splendid","splice"],
-  "spr":["spray","spread","spring","sprint","sprout","spruce","sprig","spree","sprightly","sprinkle"],
-  "thr":["three","threw","thrill","throat","throne","throb","through","thrust","thread","thresh","thrash","thrift","throng","throttle","throw","thrush","thrive","thriller","thrilling","throbbing"],
+  "spr":["spray","spread","spring","sprint","sprout","spruce","sprig","spree","sprinkle","sprightly"],
+  "thr":["three","threw","thrill","throat","throne","throb","through","thrust","thread","thresh","thrash","thrift","throng","throw","thrush","thrive","thriller","throttle","thrall","thriving"],
   "shr":["shred","shriek","shrill","shrimp","shrink","shrub","shrug","shrunk","shroud","shrine","shrew","shrewd","shrivel","shrank","shrewish"],
 };
 const GRAPHEME_GROUPS=[
   {label:"Short Vowels (Phase 2)",color:"#E8F5E9",border:"#56A85A",graphemes:["a","e","i","o","u"]},
-  {label:"Consonant Digraphs (Phase 2\u20133)",color:"#FFF3E0",border:"#E08A00",graphemes:["ch","sh","th","ng","ck","qu","ph","wh"]},
+  {label:"Consonant Digraphs (Phase 2-3)",color:"#FFF3E0",border:"#E08A00",graphemes:["ch","sh","th","ng","ck","qu","ph","wh"]},
   {label:"Vowel Digraphs (Phase 3)",color:"#E3F2FD",border:"#1B88D4",graphemes:["ai","ee","igh","oa","oo","ar","or","ur","ow","oi","er"]},
   {label:"Phase 5 Vowel Spellings",color:"#FCE4EC",border:"#D63070",graphemes:["ay","ou","ie","ea","oy","ir","ue","aw","ew"]},
   {label:"Split Digraphs",color:"#F3E5F5",border:"#9B35B5",graphemes:["a_e","e_e","i_e","o_e","u_e"]},
   {label:"2-Letter Clusters (Phase 4)",color:"#E0F2F1",border:"#1A9A8A",graphemes:["bl","br","cl","cr","dr","fl","fr","gl","gr","pl","pr","sk","sl","sm","sn","sp","st","sw","tr","tw"]},
-  {label:"3-Letter Clusters (Phase 4\u20135)",color:"#FFF8E1",border:"#D09500",graphemes:["str","scr","spl","spr","thr","shr"]},
+  {label:"3-Letter Clusters (Phase 4-5)",color:"#FFF8E1",border:"#D09500",graphemes:["str","scr","spl","spr","thr","shr"]},
 ];
 function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function AlienCard({word,grapheme,seed}){
-  const display=grapheme.replace("_e","\u2013e");
+  const display=grapheme.replace("_e","-e");
   return(
     <div style={{display:"flex",alignItems:"center",background:"#fff",border:"3.5px solid #1a1a1a",borderRadius:"8px",padding:"12px 14px",position:"relative",minHeight:"108px",gap:"6px"}}>
       <div style={{position:"absolute",top:"7px",left:"9px",background:"#7B3F9E",color:"#fff",fontFamily:"'Nunito',sans-serif",fontWeight:800,fontSize:"11px",padding:"2px 8px",borderRadius:"20px",letterSpacing:"0.5px"}}>
-        \u{1F47E} {display}
+        {"👾 "+display}
       </div>
       <div style={{flex:1,fontFamily:"'Fredoka One',cursive",fontSize:"clamp(26px,4vw,48px)",color:"#1a1a1a",letterSpacing:"1px",paddingTop:"18px",paddingLeft:"4px",lineHeight:1.1}}>{word}</div>
       <div style={{flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}><MonsterDisplay seed={seed}/></div>
@@ -193,22 +193,20 @@ function AlienCard({word,grapheme,seed}){
   );
 }
 function RealCard({word,grapheme}){
-  const display=grapheme.replace("_e","\u2013e");
+  const display=grapheme.replace("_e","-e");
   return(
     <div style={{display:"flex",alignItems:"center",background:"#FFFBEB",border:"3.5px solid #1a1a1a",borderRadius:"8px",padding:"12px 14px",position:"relative",minHeight:"108px",gap:"6px"}}>
       <div style={{position:"absolute",top:"7px",left:"9px",background:"#D97706",color:"#fff",fontFamily:"'Nunito',sans-serif",fontWeight:800,fontSize:"11px",padding:"2px 8px",borderRadius:"20px",letterSpacing:"0.5px"}}>
-        \u2713 {display}
+        {"✓ "+display}
       </div>
       <div style={{flex:1,fontFamily:"'Fredoka One',cursive",fontSize:"clamp(26px,4vw,48px)",color:"#1a1a1a",letterSpacing:"1px",paddingTop:"18px",paddingLeft:"4px",lineHeight:1.1}}>{word}</div>
-      <div style={{flexShrink:0,width:"90px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-        <div style={{fontSize:"52px",lineHeight:1}}>\u{1F4D6}</div>
-      </div>
+      <div style={{flexShrink:0,width:"90px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"52px",lineHeight:1}}>{"📖"}</div>
     </div>
   );
 }
 const MODE_OPTS=[
-  {id:"alien",label:"\u{1F47E} Alien only"},
-  {id:"real",label:"\u2713 Real only"},
+  {id:"alien",label:"👾 Alien only"},
+  {id:"real",label:"✓ Real only"},
   {id:"mixed",label:"Mix"},
 ];
 function App(){
@@ -249,32 +247,32 @@ function App(){
   return(
     <div style={{minHeight:"100vh",background:"#E8DAEF",fontFamily:"'Nunito',sans-serif",display:"flex",flexDirection:"column"}}>
       <div style={{background:"#7B3F9E",padding:"12px 20px",display:"flex",alignItems:"center",gap:"14px",boxShadow:"0 3px 10px rgba(0,0,0,0.25)"}}>
-        <div style={{fontSize:"26px"}}>\u{1F47E}</div>
+        <div style={{fontSize:"26px"}}>{"👾"}</div>
         <div>
           <div style={{fontFamily:"'Fredoka One',cursive",fontSize:"clamp(16px,2.8vw,24px)",color:"#fff",lineHeight:1.1}}>Phonics Word Generator</div>
-          <div style={{color:"#D8B8F0",fontSize:"11px",marginTop:"2px",fontWeight:700}}>Screening check practice \u00B7 WFA</div>
+          <div style={{color:"#D8B8F0",fontSize:"11px",marginTop:"2px",fontWeight:700}}>Screening check practice · WFA</div>
         </div>
       </div>
       <div style={{display:"flex",flex:1,overflow:"hidden",height:"calc(100vh - 58px)"}}>
         <div style={{width:"272px",minWidth:"220px",background:"#fff",borderRight:"2px solid #C3A0D8",overflowY:"auto",padding:"10px 0",flexShrink:0}}>
           <div style={{padding:"8px 14px 10px",borderBottom:"1px solid #E8DAEF"}}>
             <div style={{fontWeight:900,fontSize:"12px",color:"#7B3F9E",letterSpacing:"0.5px",textTransform:"uppercase"}}>Select Graphemes</div>
-            <div style={{color:"#aaa",fontSize:"11px",marginTop:"2px"}}>{totalSel} selected \u00B7 {cards.length} words shown</div>
+            <div style={{color:"#aaa",fontSize:"11px",marginTop:"2px"}}>{totalSel} selected · {cards.length} words shown</div>
           </div>
           {GRAPHEME_GROUPS.map(group=>{
             const isOpen=openGroups.has(group.label),allSel=group.graphemes.every(g=>selected.has(g)),someSel=group.graphemes.some(g=>selected.has(g));
             return(
               <div key={group.label} style={{borderBottom:"1px solid #EDE5F0"}}>
                 <div style={{display:"flex",alignItems:"center",padding:"8px 10px",cursor:"pointer",gap:"6px",background:isOpen?group.color:"transparent"}} onClick={()=>toggleOpen(group.label)}>
-                  <span style={{fontSize:"10px",color:"#bbb",userSelect:"none",flexShrink:0}}>{isOpen?"\u25BC":"\u25B6"}</span>
+                  <span style={{fontSize:"10px",color:"#bbb",userSelect:"none",flexShrink:0}}>{isOpen?"v":">"}</span>
                   <span style={{flex:1,fontWeight:800,fontSize:"11.5px",color:"#444",lineHeight:1.3}}>{group.label}</span>
-                  <button onClick={e=>{e.stopPropagation();toggleGroup(group);}} style={{fontSize:"10px",padding:"2px 7px",border:`1.5px solid ${group.border}`,borderRadius:"20px",background:allSel?group.border:"transparent",color:allSel?"#fff":group.border,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Nunito',sans-serif",flexShrink:0}}>
-                    {allSel?"All \u2713":someSel?"Some":"All"}
+                  <button onClick={e=>{e.stopPropagation();toggleGroup(group);}} style={{fontSize:"10px",padding:"2px 7px",border:"1.5px solid "+group.border,borderRadius:"20px",background:allSel?group.border:"transparent",color:allSel?"#fff":group.border,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Nunito',sans-serif",flexShrink:0}}>
+                    {allSel?"All ✓":someSel?"Some":"All"}
                   </button>
                 </div>
                 {isOpen&&(
                   <div style={{display:"flex",flexWrap:"wrap",gap:"5px",padding:"6px 10px 10px",background:group.color+"99"}}>
-                    {group.graphemes.map(g=>{const isSel=selected.has(g),disp=g.replace("_e","\u2013e");return(<button key={g} onClick={()=>toggleGrapheme(g)} style={{padding:"3px 10px",border:`2px solid ${isSel?group.border:"#ccc"}`,borderRadius:"20px",background:isSel?group.border:"#fff",color:isSel?"#fff":"#555",fontWeight:800,fontSize:"13px",cursor:"pointer",fontFamily:"'Fredoka One',cursive",letterSpacing:"0.5px"}}>{disp}</button>);})}
+                    {group.graphemes.map(g=>{const isSel=selected.has(g),disp=g.replace("_e","-e");return(<button key={g} onClick={()=>toggleGrapheme(g)} style={{padding:"3px 10px",border:"2px solid "+(isSel?group.border:"#ccc"),borderRadius:"20px",background:isSel?group.border:"#fff",color:isSel?"#fff":"#555",fontWeight:800,fontSize:"13px",cursor:"pointer",fontFamily:"'Fredoka One',cursive",letterSpacing:"0.5px"}}>{disp}</button>);})}
                   </div>
                 )}
               </div>
@@ -284,35 +282,35 @@ function App(){
         <div style={{flex:1,overflowY:"auto",padding:"14px"}}>
           <div style={{display:"flex",alignItems:"center",gap:"8px",background:"#fff",borderRadius:"10px",padding:"10px 14px",marginBottom:"12px",border:"2px solid #C3A0D8",flexWrap:"wrap",rowGap:"8px"}}>
             <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
-              {MODE_OPTS.map(m=>(<button key={m.id} onClick={()=>setMode(m.id)} style={{padding:"4px 12px",border:`2px solid ${mode===m.id?"#1a1a1a":"#ccc"}`,borderRadius:"20px",background:mode===m.id?"#1a1a1a":"#fff",color:mode===m.id?"#fff":"#555",fontWeight:800,fontSize:"13px",cursor:"pointer",whiteSpace:"nowrap"}}>{m.label}</button>))}
+              {MODE_OPTS.map(m=>(<button key={m.id} onClick={()=>setMode(m.id)} style={{padding:"4px 12px",border:"2px solid "+(mode===m.id?"#1a1a1a":"#ccc"),borderRadius:"20px",background:mode===m.id?"#1a1a1a":"#fff",color:mode===m.id?"#fff":"#555",fontWeight:800,fontSize:"13px",cursor:"pointer",whiteSpace:"nowrap"}}>{m.label}</button>))}
             </div>
             <div style={{width:"1px",height:"28px",background:"#E8DAEF",margin:"0 4px",flexShrink:0}}/>
             <div style={{fontWeight:800,fontSize:"13px",color:"#7B3F9E",whiteSpace:"nowrap"}}>Words:</div>
             {[4,6,8,10,12].map(n=>(<button key={n} onClick={()=>setCount(n)} style={{padding:"4px 12px",border:"2px solid #7B3F9E",borderRadius:"20px",background:count===n?"#7B3F9E":"#fff",color:count===n?"#fff":"#7B3F9E",fontWeight:800,fontSize:"14px",cursor:"pointer"}}>{n}</button>))}
             <div style={{flex:1}}/>
-            {generated&&(<button onClick={generate} style={{padding:"6px 16px",border:"2px solid #7B3F9E",borderRadius:"20px",background:"#fff",color:"#7B3F9E",fontWeight:800,fontSize:"13px",cursor:"pointer",whiteSpace:"nowrap"}}>\u{1F500} New Set</button>)}
-            <button onClick={generate} disabled={totalSel===0} style={{padding:"6px 20px",border:"none",borderRadius:"20px",background:totalSel===0?"#ccc":"#7B3F9E",color:"#fff",fontWeight:800,fontSize:"14px",cursor:totalSel===0?"not-allowed":"pointer",boxShadow:totalSel>0?"0 3px 8px rgba(123,63,158,0.4)":"none",whiteSpace:"nowrap"}}>\u2728 Generate!</button>
+            {generated&&(<button onClick={generate} style={{padding:"6px 16px",border:"2px solid #7B3F9E",borderRadius:"20px",background:"#fff",color:"#7B3F9E",fontWeight:800,fontSize:"13px",cursor:"pointer",whiteSpace:"nowrap"}}>🔀 New Set</button>)}
+            <button onClick={generate} disabled={totalSel===0} style={{padding:"6px 20px",border:"none",borderRadius:"20px",background:totalSel===0?"#ccc":"#7B3F9E",color:"#fff",fontWeight:800,fontSize:"14px",cursor:totalSel===0?"not-allowed":"pointer",boxShadow:totalSel>0?"0 3px 8px rgba(123,63,158,0.4)":"none",whiteSpace:"nowrap"}}>✨ Generate!</button>
           </div>
           {generated&&cards.length>0&&mode==="mixed"&&(
             <div style={{display:"flex",gap:"12px",marginBottom:"10px",flexWrap:"wrap"}}>
-              <div style={{display:"flex",alignItems:"center",gap:"6px",background:"#fff",border:"2px solid #7B3F9E",borderRadius:"20px",padding:"3px 12px",fontSize:"12px",fontWeight:700,color:"#7B3F9E"}}><span>\u{1F47E}</span><span>Alien word</span></div>
-              <div style={{display:"flex",alignItems:"center",gap:"6px",background:"#FFFBEB",border:"2px solid #D97706",borderRadius:"20px",padding:"3px 12px",fontSize:"12px",fontWeight:700,color:"#D97706"}}><span>\u2713</span><span>Real word</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",background:"#fff",border:"2px solid #7B3F9E",borderRadius:"20px",padding:"3px 12px",fontSize:"12px",fontWeight:700,color:"#7B3F9E"}}>{"👾 Alien word"}</div>
+              <div style={{display:"flex",alignItems:"center",gap:"6px",background:"#FFFBEB",border:"2px solid #D97706",borderRadius:"20px",padding:"3px 12px",fontSize:"12px",fontWeight:700,color:"#D97706"}}>{"✓ Real word"}</div>
             </div>
           )}
           {cards.length>0?(
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(290px,1fr))",gap:"11px"}}>
-              {cards.map((card,i)=>card.type==="real"?<RealCard key={`${card.word}-${i}`} {...card}/>:<AlienCard key={`${card.word}-${card.seed}`} {...card}/>)}
+              {cards.map((card,i)=>card.type==="real"?<RealCard key={card.word+i} {...card}/>:<AlienCard key={card.word+card.seed} {...card}/>)}
             </div>
           ):(
             <div style={{border:"3px dashed #C3A0D8",borderRadius:"16px",padding:"56px 24px",textAlign:"center",background:"rgba(255,255,255,0.5)"}}>
-              <div style={{fontSize:"52px",marginBottom:"10px"}}>\u{1F47E}</div>
+              <div style={{fontSize:"52px",marginBottom:"10px"}}>{"👾"}</div>
               <div style={{fontFamily:"'Fredoka One',cursive",fontSize:"22px",color:"#7B3F9E",marginBottom:"6px"}}>Ready to practise?</div>
               <div style={{color:"#9B59B6",fontSize:"13px",fontWeight:600}}>Pick graphemes from the left panel, choose your word type, then press Generate!</div>
             </div>
           )}
           {cards.length>0&&(
             <div style={{marginTop:"14px",background:"rgba(255,255,255,0.7)",border:"1.5px solid #C3A0D8",borderRadius:"8px",padding:"9px 13px",fontSize:"12px",color:"#7B3F9E",fontWeight:700}}>
-              \u{1F47E} Alien words have a monster badge \u00B7 \u2713 Real words have an amber badge \u00B7 Press "New Set" for a fresh selection
+              {"👾 Alien words have a monster badge · ✓ Real words have an amber badge · Press New Set for a fresh selection"}
             </div>
           )}
         </div>
