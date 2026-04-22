@@ -87,9 +87,11 @@
     }
 
     /* ── Grid area ───────────────────────────────────────────────── */
-    .grid-area { flex: 1; min-width: 0; padding: 12px; overflow-x: auto; }
+    .grid-area { flex: 1; min-width: 0; padding: 12px; overflow-x: auto; position: relative; }
 
     .sched-table { width: 100%; border-collapse: collapse; min-width: 560px; background: white; table-layout: fixed; }
+    .bookings-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; }
+    .bookings-overlay > * { pointer-events: auto; }
 
     .sched-table th {
       padding: 8px 10px; text-align: center; background: #f8fafc;
@@ -801,6 +803,7 @@ function clearDropHighlights() {
 function renderGrid() {
   renderHead();
   renderBody();
+  renderBookingsOverlay();
 }
 
 function renderHead() {
@@ -832,24 +835,6 @@ function renderBody() {
 
   let html = '';
 
-  // Fixed row height for calculations
-  const ROW_HEIGHT = 90;
-
-  // Pre-compute all bookings' positions across rows
-  // Each booking gets a consistent horizontal position
-  const bookingSlots = {}; // day -> booking.id -> { leftPct, widthPct }
-  DAYS.forEach((d, di) => {
-    const day = d.toLowerCase();
-    bookingSlots[day] = {};
-    const dayBookings = getBookings(wk, day);
-
-    // Assign horizontal positions to each booking
-    dayBookings.forEach((b, bi) => {
-      const barWidth = Math.min(100 / Math.max(dayBookings.length, 1), 12);
-      bookingSlots[day][b.id] = { leftPct: bi * barWidth, widthPct: barWidth - 1 };
-    });
-  });
-
   ROWS.forEach((row, ri) => {
     html += `<tr class="session-row">
       <td class="time-cell">
@@ -865,57 +850,90 @@ function renderBody() {
           return `<td class="${cellCls}"><div class="non-school-overlay"><span class="non-school-badge">${escHtml(n.label)}</span></div></td>`;
         }
 
-        const rowStartMins = timeToMins(row.start);
-        const rowEndMins = timeToMins(row.end);
-        const rowDuration = rowEndMins - rowStartMins;
-
-        const dayBookings = getBookings(wk, day);
-        const overlapping = dayBookings.filter(b => {
-          const bStart = timeToMins(b.startTime);
-          const bEnd = timeToMins(b.endTime);
-          return bStart < rowEndMins && bEnd > rowStartMins;
-        });
-
-        let cellHtml = '';
-
-        // Render each booking as a segment within this row
-        overlapping.forEach((b) => {
-          const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
-          const bStart = timeToMins(b.startTime);
-          const bEnd = timeToMins(b.endTime);
-          const slot = bookingSlots[day][b.id] || { leftPct: 0, widthPct: 12 };
-
-          // Calculate position within this row
-          const visibleStart = Math.max(bStart, rowStartMins);
-          const visibleEnd = Math.min(bEnd, rowEndMins);
-          const topPct = ((visibleStart - rowStartMins) / rowDuration) * 100;
-          const heightPct = ((visibleEnd - visibleStart) / rowDuration) * 100;
-
-          // First row shows text, subsequent rows just show colour
-          const isFirstRow = bStart >= rowStartMins && bStart < rowEndMins;
-
-          if (isFirstRow) {
-            cellHtml += `<div class="booking-bar" style="left:${slot.leftPct}%;width:${slot.widthPct}%;top:${topPct}%;height:${heightPct}%;background:${col}" onclick="event.stopPropagation()">
-              <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
-              <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
-              <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
-            </div>`;
-          } else {
-            // Continuation - just coloured segment
-            cellHtml += `<div class="booking-bar" style="left:${slot.leftPct}%;width:${slot.widthPct}%;top:${topPct}%;height:${heightPct}%;background:${col}" onclick="event.stopPropagation()"></div>`;
-          }
-        });
-
-        if (overlapping.length === 0) {
-          cellHtml = `<div class="drop-hint" onclick="openBookingModal('${day}','${row.start}')">+ book</div>`;
-        }
-
-        return `<td class="${cellCls}" data-day="${day}" data-row-idx="${ri}">${cellHtml}</td>`;
+        return `<td class="${cellCls}" data-day="${day}" data-row-idx="${ri}"><div class="drop-hint" onclick="openBookingModal('${day}','${row.start}')">+ book</div></td>`;
       }).join('')}
     </tr>`;
   });
 
   el.innerHTML = html;
+}
+
+function renderBookingsOverlay() {
+  const wk = schedKey();
+
+  // Get table dimensions for positioning
+  const table = document.querySelector('.sched-table');
+  const headerRow = table.querySelector('thead tr');
+  const timeHd = table.querySelector('.time-hd');
+  const headerHeight = headerRow ? headerRow.offsetHeight : 36;
+  const timeColWidth = timeHd ? timeHd.offsetWidth : 90;
+  const tableWidth = table.offsetWidth;
+  const dayColWidth = (tableWidth - timeColWidth) / DAYS.length;
+
+  // Calculate total grid height (all rows)
+  const rows = table.querySelectorAll('.session-row');
+  let gridHeight = 0;
+  rows.forEach(r => gridHeight += r.offsetHeight);
+
+  // Time range: 08:45 to 17:00 = 495 minutes
+  const dayStartMins = timeToMins('08:45');
+  const dayEndMins = timeToMins('17:00');
+  const totalMins = dayEndMins - dayStartMins;
+
+  // Get or create overlay
+  let overlay = document.getElementById('bookingsOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'bookingsOverlay';
+    overlay.className = 'bookings-overlay';
+    overlay.style.cssText = `position:absolute;top:${headerHeight}px;left:${timeColWidth}px;right:0;bottom:0;pointer-events:none;`;
+    table.parentElement.appendChild(overlay);
+  }
+  overlay.innerHTML = '';
+
+  // Pre-compute horizontal positions for each day's bookings
+  const bookingSlots = {};
+  DAYS.forEach((d, di) => {
+    const day = d.toLowerCase();
+    bookingSlots[day] = {};
+    const dayBookings = getBookings(wk, day);
+    const barWidth = Math.min(100 / Math.max(dayBookings.length, 1), 12);
+    dayBookings.forEach((b, bi) => {
+      bookingSlots[day][b.id] = { leftPct: bi * barWidth + 1, widthPct: barWidth - 2 };
+    });
+  });
+
+  // Render each booking as absolutely positioned bar
+  DAYS.forEach((d, di) => {
+    const day = d.toLowerCase();
+    const dayBookings = getBookings(wk, day);
+
+    dayBookings.forEach(b => {
+      const bStart = timeToMins(b.startTime);
+      const bEnd = timeToMins(b.endTime);
+      if (bEnd <= bStart) return;
+
+      const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
+      const slot = bookingSlots[day][b.id] || { leftPct: 1, widthPct: 11 };
+
+      // Calculate position
+      const topPct = ((bStart - dayStartMins) / totalMins) * 100;
+      const heightPct = ((bEnd - bStart) / totalMins) * 100;
+      const leftPct = (di * 20) + (slot.leftPct * 0.2); // 20% per day column
+      const widthPct = slot.widthPct * 0.2; // scale to day column
+
+      const bar = document.createElement('div');
+      bar.className = 'booking-bar';
+      bar.style.cssText = `position:absolute;left:calc(${leftPct}%);width:calc(${widthPct}% - 2px);top:${topPct}%;height:${heightPct}%;background:${col};pointer-events:auto;`;
+      bar.innerHTML = `
+        <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
+        <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
+        <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
+      `;
+      bar.onclick = (e) => e.stopPropagation();
+      overlay.appendChild(bar);
+    });
+  });
 }
 
 // ── Booking modal ─────────────────────────────────────────────────────────────
