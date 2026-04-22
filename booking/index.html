@@ -1544,9 +1544,23 @@ function saveBooking() {
       syncSave();
     }
   } else if (recurring === 'consecutive' && days > 1) {
+    // Handle consecutive school days, skipping weekends
     const dayIdx = DAYS.findIndex(d => d.toLowerCase() === _bookingDay);
-    for (let i = 1; i < days && dayIdx + i < 5; i++) {
-      const bs = getBookings(schedKey(), DAYS[dayIdx + i].toLowerCase());
+    let currentWeekIdx = state.weekIdx;
+    let currentDayIdx = dayIdx;
+
+    for (let i = 1; i < days; i++) {
+      // Move to next school day
+      currentDayIdx++;
+      if (currentDayIdx >= 5) {
+        // Wrap to next week (Monday)
+        currentDayIdx = 0;
+        currentWeekIdx++;
+        if (currentWeekIdx >= WEEKS.length) break; // No more weeks
+      }
+
+      const weekKey = WEEKS[currentWeekIdx]?.key || schedKey();
+      const bs = getBookings(weekKey, DAYS[currentDayIdx].toLowerCase());
       bs.push({ ...booking, id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), groupId: 'bg_' + Date.now() + '_' + i });
     }
     saveBookingsLocal();
