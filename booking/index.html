@@ -948,8 +948,8 @@ function renderBookingsOverlay() {
       const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
       const slot = bookingSlots[day][b.id] || { leftPct: 1, widthPct: 11 };
 
-      // Calculate position based on actual cell positions
-      const topPx = headerHeight + ((bStart - dayStartMins) / totalMins) * gridHeight;
+      // Calculate position relative to overlay (which starts below header)
+      const topPx = ((bStart - dayStartMins) / totalMins) * gridHeight;
       const heightPx = ((bEnd - bStart) / totalMins) * gridHeight;
       const leftPx = cellLeft + (slot.leftPct / 100) * cellWidth;
       const widthPx = (slot.widthPct / 100) * cellWidth;
