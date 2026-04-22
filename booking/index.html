@@ -999,8 +999,9 @@ function renderBookingsOverlay() {
       const bar = document.createElement('div');
       bar.className = 'booking-bar';
       bar.style.cssText = `position:absolute;left:${leftPx}px;width:${widthPx}px;top:${topPx}px;height:${heightPx}px;background:${col};pointer-events:auto;`;
+      const ygDisplay = b.yearGroup ? `${b.yearGroup} · ` : '';
       bar.innerHTML = `
-        <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
+        <div class="booking-bar-inner"><strong>${ygDisplay}</strong>${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
         <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
         <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
       `;
