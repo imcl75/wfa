@@ -147,7 +147,7 @@
 
 <script>
     const YEAR = new URLSearchParams(window.location.search).get('year') || 'year1';
-    const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+    const YEAR_LABELS = { reception: 'Level 1', year1: 'Level 2', year2: 'Level 3' };
     document.getElementById('year-badge').textContent = YEAR_LABELS[YEAR];
     document.getElementById('back-link').href = `../index.html?year=${YEAR}`;
     document.getElementById('home-link').href = `../index.html?year=${YEAR}`;

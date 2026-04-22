@@ -52,16 +52,16 @@
     <div class="header">
         <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
         <h1>Mastering Number</h1>
-        <p class="tagline">Select a year group to see the games</p>
+        <p class="tagline">Select a level to see the games</p>
     </div>
 
     <div class="year-selector">
-        <button class="year-btn" data-year="reception" onclick="selectYear('reception', this)">Reception</button>
-        <button class="year-btn" data-year="year1" onclick="selectYear('year1', this)">Year 1</button>
-        <button class="year-btn" data-year="year2" onclick="selectYear('year2', this)">Year 2</button>
+        <button class="year-btn" data-year="reception" onclick="selectYear('reception', this)">Level 1</button>
+        <button class="year-btn" data-year="year1" onclick="selectYear('year1', this)">Level 2</button>
+        <button class="year-btn" data-year="year2" onclick="selectYear('year2', this)">Level 3</button>
     </div>
 
-    <p id="prompt" class="prompt">Choose a year group above, then tap a game to play.</p>
+    <p id="prompt" class="prompt">Choose a level above, then tap a game to play.</p>
 
     <div id="games-section">
         <p class="section-label" id="section-label"></p>
@@ -83,7 +83,7 @@
             { id: 'rekenrek-read',    icon: '🧮',  name: 'Read the Rekenrek',     desc: 'Look at the beads pushed across — how many are there?',                       years: ['reception','year1','year2'] },
             { id: 'rekenrek-build',   icon: '🧮',  name: 'Build the Rekenrek',    desc: 'Tap the beads to push across the right number!',                              years: ['reception','year1','year2'] }
         ];
-        const YEAR_LABELS = { reception: 'Reception', year1: 'Year 1', year2: 'Year 2' };
+        const YEAR_LABELS = { reception: 'Level 1', year1: 'Level 2', year2: 'Level 3' };
 
         function selectYear(year, btn) {
             document.querySelectorAll('.year-btn').forEach(b => b.classList.remove('selected'));
