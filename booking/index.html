@@ -730,7 +730,7 @@ function renderSidebar() {
   });
 
   let html = '';
-  ['outside', 'learning space', 'work space', 'equipment'].forEach(cat => {
+  ['equipment', 'learning space', 'outside', 'work space'].forEach(cat => {
     if (!grouped[cat] || grouped[cat].length === 0) return;
     html += `<div class="sidebar-subhd">${typeCategories[cat] || cat}</div>`;
     grouped[cat].forEach(r => {
