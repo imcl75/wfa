@@ -890,17 +890,10 @@ function renderBookingsOverlay() {
   if (!table) return;
 
   const headerRow = table.querySelector('thead tr');
-  const firstDataRow = table.querySelector('.session-row');
-  if (!firstDataRow) return;
+  const gridBody = table.querySelector('tbody');
+  if (!gridBody) return;
 
   const headerHeight = headerRow ? headerRow.offsetHeight : 36;
-  const gridBody = table.querySelector('tbody');
-  const gridHeight = gridBody ? gridBody.offsetHeight : 810; // 9 rows * 90px default
-
-  // Time range: 08:45 to 17:00 = 495 minutes
-  const dayStartMins = timeToMins('08:45');
-  const dayEndMins = timeToMins('17:00');
-  const totalMins = dayEndMins - dayStartMins;
 
   // Get or create overlay
   let overlay = document.getElementById('bookingsOverlay');
@@ -908,16 +901,57 @@ function renderBookingsOverlay() {
     overlay = document.createElement('div');
     overlay.id = 'bookingsOverlay';
     overlay.className = 'bookings-overlay';
-    overlay.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;height:${gridHeight}px;pointer-events:none;`;
     table.parentElement.appendChild(overlay);
   }
+  overlay.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;bottom:0;pointer-events:none;`;
   overlay.innerHTML = '';
 
   // Get actual day column widths from the first data row
+  const sessionRows = table.querySelectorAll('.session-row');
+  if (!sessionRows.length) return;
+
+  const firstDataRow = sessionRows[0];
   const dayCells = firstDataRow.querySelectorAll('.view-cell');
-  const timeCell = firstDataRow.querySelector('.time-cell');
-  const timeColWidth = timeCell ? timeCell.offsetWidth : 90;
-  const overlayLeft = timeColWidth;
+
+  // Map time to pixel position by measuring actual row positions
+  // Build a lookup: for each row start/end time, what's the pixel offset?
+  const timeToPx = [];
+  sessionRows.forEach((row, ri) => {
+    const rowDef = ROWS[ri];
+    if (!rowDef) return;
+    const timeCell = row.querySelector('.time-cell');
+    const viewCell = row.querySelector('.view-cell');
+    if (!timeCell || !viewCell) return;
+
+    const rowTop = row.offsetTop; // offset from tbody top
+    const rowHeight = row.offsetHeight;
+
+    timeToPx.push({
+      startMins: timeToMins(rowDef.start),
+      endMins: timeToMins(rowDef.end),
+      topPx: rowTop,
+      heightPx: rowHeight
+    });
+  });
+
+  // Helper: convert time to pixel position within overlay
+  const timeToPosition = (timeStr) => {
+    const mins = timeToMins(timeStr);
+    // Find the row this time falls within
+    for (const row of timeToPx) {
+      if (mins >= row.startMins && mins < row.endMins) {
+        // Interpolate within this row
+        const progress = (mins - row.startMins) / (row.endMins - row.startMins);
+        return row.topPx + progress * row.heightPx;
+      }
+    }
+    // If past last row, return bottom
+    if (timeToPx.length > 0) {
+      const lastRow = timeToPx[timeToPx.length - 1];
+      if (mins >= lastRow.endMins) return lastRow.topPx + lastRow.heightPx;
+    }
+    return 0;
+  };
 
   // Pre-compute horizontal positions for each day's bookings
   const bookingSlots = {};
@@ -948,9 +982,11 @@ function renderBookingsOverlay() {
       const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
       const slot = bookingSlots[day][b.id] || { leftPct: 1, widthPct: 11 };
 
-      // Calculate position relative to overlay (which starts below header)
-      const topPx = ((bStart - dayStartMins) / totalMins) * gridHeight;
-      const heightPx = ((bEnd - bStart) / totalMins) * gridHeight;
+      // Calculate position using actual row positions
+      const topPx = timeToPosition(b.startTime);
+      const bottomPx = timeToPosition(b.endTime);
+      const heightPx = Math.max(bottomPx - topPx, 20); // minimum 20px height
+
       const leftPx = cellLeft + (slot.leftPct / 100) * cellWidth;
       const widthPx = (slot.widthPct / 100) * cellWidth;
 
