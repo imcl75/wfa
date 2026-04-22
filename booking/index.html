@@ -1391,8 +1391,47 @@ function openBookingModal(day, startTime) {
   const untilSelect = document.getElementById('bookingUntil');
   untilSelect.innerHTML = WEEKS.map((w, i) => `<option value="${w.key}"${i === state.weekIdx ? ' selected' : ''}>${w.label}</option>`).join('');
 
+  // Show/hide quantity field based on resource type
+  updateQuantityField();
+
   document.getElementById('bookingModal').classList.add('open');
 }
+
+function updateQuantityField() {
+  const resourceId = document.getElementById('bookingResource').value;
+  const resource = RESOURCES.find(r => r.id === resourceId);
+  const qtyRow = document.getElementById('bookingQtyRow');
+  const qtyInput = document.getElementById('bookingQty');
+  const qtyAvail = document.getElementById('bookingQtyAvail');
+
+  if (resource && resource.type === 'equipment' && resource.quantity > 1) {
+    qtyRow.style.display = 'block';
+    qtyInput.max = resource.quantity;
+    qtyInput.value = 1;
+    // Calculate availability for the selected time
+    const startTime = document.getElementById('bookingStart').value;
+    const endTime = document.getElementById('bookingEnd').value;
+    const dayBookings = getBookings(schedKey(), _bookingDay);
+    const startMins = timeToMins(startTime);
+    const endMins = timeToMins(endTime);
+    const overlapping = dayBookings.filter(b => {
+      if (b.resourceId !== resourceId) return false;
+      const bStart = timeToMins(b.startTime);
+      const bEnd = timeToMins(b.endTime);
+      return bStart < endMins && bEnd > startMins;
+    });
+    const totalBooked = overlapping.reduce((sum, b) => sum + (b.quantity || 1), 0);
+    const available = resource.quantity - totalBooked;
+    qtyAvail.textContent = `of ${resource.quantity} (${available} available)`;
+  } else {
+    qtyRow.style.display = 'none';
+  }
+}
+
+// Update availability when time changes
+document.getElementById('bookingStart').addEventListener('change', updateQuantityField);
+document.getElementById('bookingEnd').addEventListener('change', updateQuantityField);
+document.getElementById('bookingResource').addEventListener('change', updateQuantityField);
 
 function closeBookingModal() {
   document.getElementById('bookingModal').classList.remove('open');
