@@ -261,7 +261,9 @@
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Resource</label>
           <select id="bookingResource" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
-            <optgroup label="Spaces" id="spacesGroup"></optgroup>
+            <optgroup label="Outside" id="outsideGroup"></optgroup>
+            <optgroup label="Learning Spaces" id="learningGroup"></optgroup>
+            <optgroup label="Work Spaces" id="workGroup"></optgroup>
             <optgroup label="Equipment" id="equipmentGroup"></optgroup>
           </select>
         </div>
@@ -677,26 +679,48 @@ async function syncSave() {
 function renderSidebar() {
   const el = document.getElementById('resourceList');
 
-  const spaces = RESOURCES.filter(r => r.type === 'space').sort((a, b) => a.order - b.order);
-  const equipment = RESOURCES.filter(r => r.type === 'equipment').sort((a, b) => a.order - b.order);
+  // Group resources by type category
+  const typeCategories = {
+    'outside': 'Outside',
+    'learning space': 'Learning Spaces',
+    'work space': 'Work Spaces',
+    'equipment': 'Equipment'
+  };
 
-  let html = '<div class="sidebar-subhd">Spaces</div>';
-  spaces.forEach(r => {
-    const selected = selectedResource === r.id ? ' selected' : '';
-    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" data-resource-name="${escHtml(r.name)}" data-resource-colour="${r.colour}" draggable="true">
-      <span class="resource-dot" style="background:${r.colour}"></span>
-      <span class="resource-name">${escHtml(r.name)}</span>
-    </div>`;
+  // Normalize types for grouping
+  const getTypeCategory = (type) => {
+    const t = type.toLowerCase();
+    if (t === 'equipment') return 'equipment';
+    if (t.includes('learning')) return 'learning space';
+    if (t.includes('work')) return 'work space';
+    if (t === 'outside') return 'outside';
+    return 'learning space'; // default
+  };
+
+  const grouped = {};
+  RESOURCES.forEach(r => {
+    const cat = getTypeCategory(r.type);
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(r);
   });
 
-  html += '<div class="sidebar-subhd">Equipment</div>';
-  equipment.forEach(r => {
-    const selected = selectedResource === r.id ? ' selected' : '';
-    html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" data-resource-name="${escHtml(r.name)}" data-resource-colour="${r.colour}" draggable="true">
-      <span class="resource-dot" style="background:${r.colour}"></span>
-      <span class="resource-name">${escHtml(r.name)}</span>
-      <span class="resource-avail">${r.quantity}</span>
-    </div>`;
+  // Sort within each group
+  Object.keys(grouped).forEach(cat => {
+    grouped[cat].sort((a, b) => a.order - b.order);
+  });
+
+  let html = '';
+  ['outside', 'learning space', 'work space', 'equipment'].forEach(cat => {
+    if (!grouped[cat] || grouped[cat].length === 0) return;
+    html += `<div class="sidebar-subhd">${typeCategories[cat] || cat}</div>`;
+    grouped[cat].forEach(r => {
+      const selected = selectedResource === r.id ? ' selected' : '';
+      html += `<div class="resource-chip${selected}" style="background:${r.colour}20" data-resource="${r.id}" data-resource-name="${escHtml(r.name)}" data-resource-colour="${r.colour}">
+        <span class="resource-dot" style="background:${r.colour}"></span>
+        <span class="resource-name">${escHtml(r.name)}</span>
+        ${r.quantity > 1 ? `<span class="resource-avail">${r.quantity}</span>` : ''}
+      </div>`;
+    });
   });
 
   el.innerHTML = html;
@@ -863,17 +887,15 @@ function renderBookingsOverlay() {
 
   // Get table dimensions for positioning
   const table = document.querySelector('.sched-table');
-  const headerRow = table.querySelector('thead tr');
-  const timeHd = table.querySelector('.time-hd');
-  const headerHeight = headerRow ? headerRow.offsetHeight : 36;
-  const timeColWidth = timeHd ? timeHd.offsetWidth : 90;
-  const tableWidth = table.offsetWidth;
-  const dayColWidth = (tableWidth - timeColWidth) / DAYS.length;
+  if (!table) return;
 
-  // Calculate total grid height (all rows)
-  const rows = table.querySelectorAll('.session-row');
-  let gridHeight = 0;
-  rows.forEach(r => gridHeight += r.offsetHeight);
+  const headerRow = table.querySelector('thead tr');
+  const firstDataRow = table.querySelector('.session-row');
+  if (!firstDataRow) return;
+
+  const headerHeight = headerRow ? headerRow.offsetHeight : 36;
+  const gridBody = table.querySelector('tbody');
+  const gridHeight = gridBody ? gridBody.offsetHeight : 810; // 9 rows * 90px default
 
   // Time range: 08:45 to 17:00 = 495 minutes
   const dayStartMins = timeToMins('08:45');
@@ -886,10 +908,16 @@ function renderBookingsOverlay() {
     overlay = document.createElement('div');
     overlay.id = 'bookingsOverlay';
     overlay.className = 'bookings-overlay';
-    overlay.style.cssText = `position:absolute;top:${headerHeight}px;left:${timeColWidth}px;right:0;bottom:0;pointer-events:none;`;
+    overlay.style.cssText = `position:absolute;top:${headerHeight}px;left:0;right:0;height:${gridHeight}px;pointer-events:none;`;
     table.parentElement.appendChild(overlay);
   }
   overlay.innerHTML = '';
+
+  // Get actual day column widths from the first data row
+  const dayCells = firstDataRow.querySelectorAll('.view-cell');
+  const timeCell = firstDataRow.querySelector('.time-cell');
+  const timeColWidth = timeCell ? timeCell.offsetWidth : 90;
+  const overlayLeft = timeColWidth;
 
   // Pre-compute horizontal positions for each day's bookings
   const bookingSlots = {};
@@ -897,9 +925,9 @@ function renderBookingsOverlay() {
     const day = d.toLowerCase();
     bookingSlots[day] = {};
     const dayBookings = getBookings(wk, day);
-    const barWidth = Math.min(100 / Math.max(dayBookings.length, 1), 12);
+    const barWidthPct = Math.min(100 / Math.max(dayBookings.length, 1), 12);
     dayBookings.forEach((b, bi) => {
-      bookingSlots[day][b.id] = { leftPct: bi * barWidth + 1, widthPct: barWidth - 2 };
+      bookingSlots[day][b.id] = { leftPct: bi * barWidthPct + 1, widthPct: barWidthPct - 2 };
     });
   });
 
@@ -907,6 +935,10 @@ function renderBookingsOverlay() {
   DAYS.forEach((d, di) => {
     const day = d.toLowerCase();
     const dayBookings = getBookings(wk, day);
+    if (!dayCells[di]) return;
+
+    const cellLeft = dayCells[di].offsetLeft;
+    const cellWidth = dayCells[di].offsetWidth;
 
     dayBookings.forEach(b => {
       const bStart = timeToMins(b.startTime);
@@ -916,15 +948,15 @@ function renderBookingsOverlay() {
       const col = (RESOURCES.find(r => r.id === b.resourceId) || {}).colour || '#64748b';
       const slot = bookingSlots[day][b.id] || { leftPct: 1, widthPct: 11 };
 
-      // Calculate position
-      const topPct = ((bStart - dayStartMins) / totalMins) * 100;
-      const heightPct = ((bEnd - bStart) / totalMins) * 100;
-      const leftPct = (di * 20) + (slot.leftPct * 0.2); // 20% per day column
-      const widthPct = slot.widthPct * 0.2; // scale to day column
+      // Calculate position based on actual cell positions
+      const topPx = headerHeight + ((bStart - dayStartMins) / totalMins) * gridHeight;
+      const heightPx = ((bEnd - bStart) / totalMins) * gridHeight;
+      const leftPx = cellLeft + (slot.leftPct / 100) * cellWidth;
+      const widthPx = (slot.widthPct / 100) * cellWidth;
 
       const bar = document.createElement('div');
       bar.className = 'booking-bar';
-      bar.style.cssText = `position:absolute;left:calc(${leftPct}%);width:calc(${widthPct}% - 2px);top:${topPct}%;height:${heightPct}%;background:${col};pointer-events:auto;`;
+      bar.style.cssText = `position:absolute;left:${leftPx}px;width:${widthPx}px;top:${topPx}px;height:${heightPx}px;background:${col};pointer-events:auto;`;
       bar.innerHTML = `
         <div class="booking-bar-inner">${escHtml(b.resourceName || b.resourceId)}${b.quantity > 1 ? ' ×' + b.quantity : ''}</div>
         <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
@@ -956,15 +988,33 @@ function openBookingModal(day, startTime) {
   const startIdx = startOptions.findIndex(o => o.value === startSelect.value);
   endSelect.selectedIndex = Math.min(startIdx + 2, endSelect.options.length - 1);
 
-  // Populate resource dropdowns
-  const spacesGroup = document.getElementById('spacesGroup');
-  const equipmentGroup = document.getElementById('equipmentGroup');
-  spacesGroup.innerHTML = RESOURCES.filter(r => r.type === 'space').map(r =>
-    `<option value="${r.id}">${r.name}</option>`
-  ).join('');
-  equipmentGroup.innerHTML = RESOURCES.filter(r => r.type === 'equipment').map(r =>
-    `<option value="${r.id}">${r.name} (${r.quantity} available)</option>`
-  ).join('');
+  // Populate resource dropdowns by type category
+  const getTypeCategory = (type) => {
+    const t = type.toLowerCase();
+    if (t === 'equipment') return 'equipment';
+    if (t.includes('learning')) return 'learning';
+    if (t.includes('work')) return 'work';
+    if (t === 'outside') return 'outside';
+    return 'learning';
+  };
+
+  const groups = {
+    outside: document.getElementById('outsideGroup'),
+    learning: document.getElementById('learningGroup'),
+    work: document.getElementById('workGroup'),
+    equipment: document.getElementById('equipmentGroup')
+  };
+
+  Object.keys(groups).forEach(g => { if (groups[g]) groups[g].innerHTML = ''; });
+
+  RESOURCES.forEach(r => {
+    const cat = getTypeCategory(r.type);
+    const group = groups[cat];
+    if (group) {
+      const label = r.quantity > 1 ? `${r.name} (${r.quantity} available)` : r.name;
+      group.innerHTML += `<option value="${r.id}">${label}</option>`;
+    }
+  });
 
   if (selectedResource) {
     document.getElementById('bookingResource').value = selectedResource;
