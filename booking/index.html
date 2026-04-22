@@ -913,18 +913,22 @@ function renderBookingsOverlay() {
   const firstDataRow = sessionRows[0];
   const dayCells = firstDataRow.querySelectorAll('.view-cell');
 
+  // Get overlay's position for relative calculations
+  const overlayRect = overlay.getBoundingClientRect();
+
   // Map time to pixel position by measuring actual row positions
   // Build a lookup: for each row start/end time, what's the pixel offset?
   const timeToPx = [];
   sessionRows.forEach((row, ri) => {
     const rowDef = ROWS[ri];
     if (!rowDef) return;
-    const timeCell = row.querySelector('.time-cell');
     const viewCell = row.querySelector('.view-cell');
-    if (!timeCell || !viewCell) return;
+    if (!viewCell) return;
 
-    const rowTop = row.offsetTop; // offset from tbody top
-    const rowHeight = row.offsetHeight;
+    // Use getBoundingClientRect for reliable positioning
+    const cellRect = viewCell.getBoundingClientRect();
+    const rowTop = cellRect.top - overlayRect.top; // position relative to overlay
+    const rowHeight = cellRect.height;
 
     timeToPx.push({
       startMins: timeToMins(rowDef.start),
@@ -971,8 +975,10 @@ function renderBookingsOverlay() {
     const dayBookings = getBookings(wk, day);
     if (!dayCells[di]) return;
 
-    const cellLeft = dayCells[di].offsetLeft;
-    const cellWidth = dayCells[di].offsetWidth;
+    // Use getBoundingClientRect for horizontal positioning too
+    const cellRect = dayCells[di].getBoundingClientRect();
+    const cellLeft = cellRect.left - overlayRect.left;
+    const cellWidth = cellRect.width;
 
     dayBookings.forEach(b => {
       const bStart = timeToMins(b.startTime);
