@@ -1342,10 +1342,10 @@ function openBookingModal(day, startTime) {
 
   startSelect.value = startTime || '09:00';
 
-  // Default end time to 1 hour later
-  const startOptions = Array.from(startSelect.options);
-  const startIdx = startOptions.findIndex(o => o.value === startSelect.value);
-  endSelect.selectedIndex = Math.min(startIdx + 2, endSelect.options.length - 1);
+  // Default end time to end of the session
+  const sessionRow = ROWS.find(r => r.start === startSelect.value);
+  const defaultEnd = sessionRow ? sessionRow.end : '10:45';
+  endSelect.value = defaultEnd;
 
   // Populate resource dropdowns by type category
   const getTypeCategory = (type) => {
