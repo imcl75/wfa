@@ -1314,7 +1314,11 @@ function renderBookingsOverlay() {
         <div class="booking-bar-time">${b.startTime}–${b.endTime}</div>
         <button class="booking-bar-del" onclick="event.stopPropagation();deleteBookingGroup('${b.groupId || b.id}')" title="Remove">×</button>
       `;
-      bar.onclick = (e) => e.stopPropagation();
+      // Click to edit (but not if dragging)
+      bar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditBookingModal(day, b.id);
+      });
       bar.addEventListener('pointerdown', onBookingBarPointerDown);
       overlay.appendChild(bar);
     });
@@ -1323,9 +1327,11 @@ function renderBookingsOverlay() {
 
 // ── Booking modal ─────────────────────────────────────────────────────────────
 let _bookingDay = null;
+let _editingBookingId = null; // Track if we're editing an existing booking
 
 function openBookingModal(day, startTime) {
   _bookingDay = day;
+  _editingBookingId = null; // New booking
 
   const dayLabel = DAYS[DAYS.findIndex(d => d.toLowerCase() === day)];
   document.getElementById('bookingHint').textContent = `Booking for ${dayLabel}`;
@@ -1390,6 +1396,51 @@ function openBookingModal(day, startTime) {
   // Show/hide quantity field based on resource type
   updateQuantityField();
 
+  document.getElementById('bookingModal').classList.add('open');
+}
+
+function openEditBookingModal(day, bookingId) {
+  _bookingDay = day;
+  _editingBookingId = bookingId;
+
+  // Find the booking
+  const weekKey = schedKey();
+  const dayBookings = getBookings(weekKey, day);
+  const booking = dayBookings.find(b => b.id === bookingId || b.groupId === bookingId);
+  if (!booking) return;
+
+  const dayLabel = DAYS[DAYS.findIndex(d => d.toLowerCase() === day)];
+  document.getElementById('bookingHint').textContent = `Edit booking for ${dayLabel}`;
+
+  // Set resource
+  document.getElementById('bookingResource').value = booking.resourceId;
+
+  // Set times
+  document.getElementById('bookingStart').value = booking.startTime;
+  document.getElementById('bookingEnd').value = booking.endTime;
+
+  // Set year group
+  const yearRadio = document.querySelector(`#bookingYearGroup input[value="${booking.yearGroup}"]`);
+  if (yearRadio) yearRadio.checked = true;
+
+  // Set purpose
+  document.getElementById('bookingPurpose').value = booking.purpose || '';
+
+  // Set quantity for equipment
+  if (booking.quantity && booking.quantity > 1) {
+    document.getElementById('bookingQty').value = booking.quantity;
+  }
+
+  // Hide recurring options when editing
+  document.getElementById('bookingRecurring').value = '';
+  document.getElementById('bookingRecurringOpts').style.display = 'none';
+  document.getElementById('bookingUntilRow').style.display = 'none';
+  document.getElementById('bookingDaysRow').style.display = 'none';
+
+  // Update quantity field visibility
+  updateQuantityField();
+
+  document.getElementById('bookingConflict').style.display = 'none';
   document.getElementById('bookingModal').classList.add('open');
 }
 
@@ -1507,13 +1558,46 @@ function saveBooking() {
     return;
   }
 
-  const conflict = checkBookingConflict(resourceId, schedKey(), _bookingDay, startTime, endTime, qty);
+  // Check for conflicts (exclude the booking being edited)
+  const weekKey = schedKey();
+  const dayBookings = getBookings(weekKey, _bookingDay);
+  const editIdx = _editingBookingId ? dayBookings.findIndex(b => b.id === _editingBookingId) : -1;
+  const tempBooking = editIdx !== -1 ? dayBookings.splice(editIdx, 1)[0] : null;
+
+  const conflict = checkBookingConflict(resourceId, weekKey, _bookingDay, startTime, endTime, qty);
+
+  // Restore the booking if there was a conflict
+  if (tempBooking) {
+    dayBookings.splice(editIdx, 0, tempBooking);
+  }
+
   if (conflict) {
     document.getElementById('bookingConflict').textContent = conflict.message;
     document.getElementById('bookingConflict').style.display = 'block';
     return;
   }
 
+  // Editing existing booking
+  if (_editingBookingId) {
+    const booking = dayBookings.find(b => b.id === _editingBookingId);
+    if (booking) {
+      booking.resourceId = resourceId;
+      booking.resourceName = resource ? resource.name : resourceId;
+      booking.resourceType = resource ? resource.type : 'space';
+      booking.yearGroup = yearGroup;
+      booking.purpose = purpose;
+      booking.quantity = qty;
+      booking.startTime = startTime;
+      booking.endTime = endTime;
+    }
+    saveBookingsLocal();
+    syncSave();
+    closeBookingModal();
+    renderGrid();
+    return;
+  }
+
+  // Creating new booking
   const groupId = 'bg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
   const booking = {
     id: 'b_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
