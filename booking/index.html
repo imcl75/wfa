@@ -232,6 +232,7 @@
     .modal-hint { font-size: 12px; color: #64748b; margin-bottom: 12px; }
     .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px; }
     .modal-cancel { background: #f1f5f9; border: 1px solid #d1d5db; border-radius: 5px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: #64748b; }
+    #bookingYearGroup label:has(input:checked) { background: var(--brand); border-color: var(--brand); color: white; }
     .modal-cancel:hover { background: #e2e8f0; }
     .modal-save { background: var(--brand); border: none; border-radius: 5px; padding: 8px 16px; font-size: 13px; cursor: pointer; color: white; font-weight: 700; }
     .modal-save:hover { filter: brightness(1.1); }
@@ -272,17 +273,17 @@
 
   <!-- Booking modal -->
   <div class="modal-bg" id="bookingModal">
-    <div class="modal" style="min-width:360px;max-width:440px">
+    <div class="modal" style="min-width:420px;max-width:520px">
       <h3>Book Resource</h3>
       <p class="modal-hint" id="bookingHint">Select a resource to book.</p>
       <div id="bookingFields">
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Resource</label>
           <select id="bookingResource" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
-            <optgroup label="Outside" id="outsideGroup"></optgroup>
-            <optgroup label="Learning Spaces" id="learningGroup"></optgroup>
-            <optgroup label="Work Spaces" id="workGroup"></optgroup>
             <optgroup label="Equipment" id="equipmentGroup"></optgroup>
+            <optgroup label="Learning Spaces" id="learningGroup"></optgroup>
+            <optgroup label="Outside" id="outsideGroup"></optgroup>
+            <optgroup label="Work Spaces" id="workGroup"></optgroup>
           </select>
         </div>
         <div style="margin-bottom:12px">
@@ -319,22 +320,17 @@
           <span id="bookingQtyAvail" style="font-size:12px;color:#64748b;margin-left:8px"></span>
         </div>
         <div style="margin-bottom:12px">
-          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Year Group</label>
-          <select id="bookingYearGroup" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
-            <option value="">Select year group</option>
-            <option value="Reception">Reception</option>
-            <option value="Y1">Y1</option>
-            <option value="Y2">Y2</option>
-            <option value="Y3">Y3</option>
-            <option value="Y4">Y4</option>
-            <option value="Y5">Y5</option>
-            <option value="Y6">Y6</option>
-            <option value="Whole School">Whole School</option>
-          </select>
-        </div>
-        <div style="margin-bottom:12px">
-          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Teacher</label>
-          <input type="text" id="bookingTeacher" style="width:100%;border:1px solid #e2e8f0;border-radius:5px;padding:8px;font-size:13px;font-family:Arial,sans-serif">
+          <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px">Year Group</label>
+          <div id="bookingYearGroup" style="display:flex;flex-wrap:wrap;gap:4px">
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Rec" style="margin:0">Rec</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Y1" style="margin:0">Y1</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Y2" style="margin:0">Y2</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Y3" style="margin:0">Y3</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Y4" style="margin:0">Y4</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Y5" style="margin:0">Y5</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Y6" style="margin:0">Y6</label>
+            <label style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:4px;cursor:pointer;font-size:12px"><input type="radio" name="yearGroup" value="Whole School" style="margin:0">Whole</label>
+          </div>
         </div>
         <div style="margin-bottom:12px">
           <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">Purpose (optional)</label>
@@ -1379,8 +1375,8 @@ function openBookingModal(day, startTime) {
     document.getElementById('bookingResource').value = 'muga';
   }
 
-  document.getElementById('bookingYearGroup').value = '';
-  document.getElementById('bookingTeacher').value = '';
+  // Clear year group radio buttons
+  document.querySelectorAll('#bookingYearGroup input[type="radio"]').forEach(r => r.checked = false);
   document.getElementById('bookingPurpose').value = '';
   document.getElementById('bookingRecurring').value = '';
   document.getElementById('bookingUntilRow').style.display = 'none';
@@ -1489,14 +1485,21 @@ function saveBooking() {
   const resourceId = document.getElementById('bookingResource').value;
   const resource = RESOURCES.find(r => r.id === resourceId);
   const qty = resource && resource.type === 'equipment' ? parseInt(document.getElementById('bookingQty').value) || 1 : 1;
-  const yearGroup = document.getElementById('bookingYearGroup').value;
-  const teacher = document.getElementById('bookingTeacher').value.trim();
+  const yearGroupRadio = document.querySelector('#bookingYearGroup input[type="radio"]:checked');
+  const yearGroup = yearGroupRadio ? yearGroupRadio.value : '';
   const purpose = document.getElementById('bookingPurpose').value.trim();
   const recurring = document.getElementById('bookingRecurring').value;
   const untilWeek = document.getElementById('bookingUntil').value;
   const days = parseInt(document.getElementById('bookingDays').value) || 2;
   const startTime = document.getElementById('bookingStart').value;
   const endTime = document.getElementById('bookingEnd').value;
+
+  // Validate year group is selected
+  if (!yearGroup) {
+    document.getElementById('bookingConflict').textContent = 'Please select a year group';
+    document.getElementById('bookingConflict').style.display = 'block';
+    return;
+  }
 
   if (timeToMins(startTime) >= timeToMins(endTime)) {
     document.getElementById('bookingConflict').textContent = 'End time must be after start time';
@@ -1519,7 +1522,6 @@ function saveBooking() {
     resourceName: resource ? resource.name : resourceId,
     resourceType: resource ? resource.type : 'space',
     yearGroup,
-    teacher,
     purpose,
     quantity: qty,
     startTime,
