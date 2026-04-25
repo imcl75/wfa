@@ -683,11 +683,11 @@ async function generateEtiwDocx() {
     // A4: 11905 wide, margins 567 each side => content 10771 DXA
     const PAGE_W    = 11905;
     const MARGIN_LR = 567;
-    const MARGIN_TB = 400;
+    const MARGIN_TB = 300;
     const CONTENT_W = PAGE_W - MARGIN_LR * 2; // 10771 DXA = 718px
 
-    // 6 labels: (16837 - 2*400) / 6 = 2673 DXA each
-    const LABEL_H   = 2673;
+    // 6 labels: (16838 - 2*300) / 6 = 2706 DXA each
+    const LABEL_H   = 2706;
 
     // Column widths (DXA)
     // Logo col: wide enough for ~60px logo + "LKS2" label underneath
@@ -704,10 +704,12 @@ async function generateEtiwDocx() {
     const WRITER_PX_W = 44;
     const WRITER_PX_H = 43;
 
-    // Strip: 1862x282 source, display at full content width: 718x109px
+    // Strip dimensions vary per phase - must use correct values for each
+    const STRIP_DIMS = {"EYFS":[2174,332],"Y1":[2174,328],"Y2":[2158,314],"LKS2":[1862,282],"UKS2":[1902,292]};
+    const [SRC_W, SRC_H] = STRIP_DIMS[phase] || [1862, 282];
     // Content width in px = 10771 * 96/1440 = 718px
     const STRIP_PX_W = 718;
-    const STRIP_PX_H = 109;  // 718 * 282/1862 = 108.7
+    const STRIP_PX_H = Math.round(718 * SRC_H / SRC_W);
 
     // Pre-compute masked strip: hide excluded icons with white rectangles
     const etiwAllLabels = ETIW_ICON_LABELS[phase] || ETIW_ICON_LABELS['LKS2'];
@@ -721,19 +723,19 @@ async function generateEtiwDocx() {
     if (stripBytes && etiwHiddenIndices.length > 0) {
       finalStripBytes = await new Promise(function(resolve, reject) {
         const cvs = document.createElement('canvas');
-        cvs.width = 1862; cvs.height = 282;
+        cvs.width = SRC_W; cvs.height = SRC_H;
         const ctx = cvs.getContext('2d');
         ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, 1862, 282);
+        ctx.fillRect(0, 0, SRC_W, SRC_H);
         const img = new Image();
         img.onerror = function() { console.error('Strip image load failed'); resolve(stripBytes); };
         img.onload = function() {
           try {
-            ctx.drawImage(img, 0, 0, 1862, 282);
-            const slotW = 1862 / etiwAllLabels.length;
+            ctx.drawImage(img, 0, 0, SRC_W, SRC_H);
+            const slotW = SRC_W / etiwAllLabels.length;
             etiwHiddenIndices.forEach(function(idx) {
               ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(idx * slotW, 0, slotW, 282);
+              ctx.fillRect(idx * slotW, 0, slotW, SRC_H);
             });
             var dataUrl = cvs.toDataURL('image/png');
             var raw = dataUrl.replace(/^data:image\/[a-z]+;base64,/, '');
