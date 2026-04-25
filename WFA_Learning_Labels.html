@@ -756,19 +756,23 @@ async function generateEtiwDocx() {
     const LABEL_H   = 2706;
 
     // Column widths (DXA)
-    const LOGO_COL   = 1100;  // ~73px
-    const WRITER_COL = 750;   // ~50px
-    const TEXT_COL   = CONTENT_W - LOGO_COL - WRITER_COL; // 8921 DXA
+    // Logo col: wide enough for ~60px logo + "LKS2" label underneath
+    const LOGO_COL   = 1350;  // ~90px
+    const WRITER_COL = 900;   // ~60px
+    const TEXT_COL   = CONTENT_W - LOGO_COL - WRITER_COL; // 8521 DXA
 
-    // Image sizes (screen pixels, 96dpi) — reduced to fit 6 per page
-    const LOGO_PX_W  = 38;
-    const LOGO_PX_H  = 42;
+    // Image sizes (screen pixels, 96dpi)
+    // Logo PNG is 1018x1124 => display at 54x60px
+    const LOGO_PX_W  = 54;
+    const LOGO_PX_H  = 60;
 
-    const WRITER_PX_W = 30;
-    const WRITER_PX_H = 29;
+    // Writer icon: ICON_DIMS has [38,37] for writer
+    const WRITER_PX_W = 44;
+    const WRITER_PX_H = 43;
 
-    // Icon row height in DXA — must fit within LABEL_H minus top row
-    const iconRowH = 1200;
+    // Content width in px = 10771 * 96/1440 = 718px
+    // Icon row height in DXA (~1.04 inches) — must fit within LABEL_H minus top row
+    const iconRowH = 1500;
 
     const etiwAllLabels = ETIW_ICON_LABELS[phase] || ETIW_ICON_LABELS['LKS2'];
     const etiwVisibleLabels = getVisibleIcons(phase);
@@ -779,35 +783,35 @@ async function generateEtiwDocx() {
       if (logoBytes) {
         logoParas.push(new Paragraph({
           alignment: AlignmentType.CENTER,
-          spacing: { before: 0, after: 0, line: 200 },
+          spacing: { before: 0, after: 20, line: 240 },
           children: [new ImageRun({ data: logoBytes, transformation: { width: LOGO_PX_W, height: LOGO_PX_H }, type: 'png' })],
         }));
       }
       if (date) {
         logoParas.push(new Paragraph({
           alignment: AlignmentType.CENTER,
-          spacing: { before: 0, after: 0, line: 180 },
-          children: [new TextRun({ text: date, size: 14, font: 'Calibri' })],
+          spacing: { before: 0, after: 0, line: 220 },
+          children: [new TextRun({ text: date, size: 16, font: 'Calibri' })],
         }));
       }
 
       // ── Text cell: KQ + LF + date ──
       const textParas = [];
       textParas.push(new Paragraph({
-        spacing: { before: 0, after: 0, line: 220 },
+        spacing: { before: 0, after: 20, line: 240 },
         children: [
-          new TextRun({ text: 'Key Question:  ', bold: true, size: 22, font: 'Calibri' }),
-          new TextRun({ text: kq || '', bold: true, size: 22, font: 'Calibri' }),
+          new TextRun({ text: 'Key Question:  ', bold: true, size: 24, font: 'Calibri' }),
+          new TextRun({ text: kq || '', bold: true, size: 24, font: 'Calibri' }),
         ],
       }));
       const lfChildren = [
-        new TextRun({ text: 'Learning Focus:  ', bold: true, underline: {}, size: 22, font: 'Calibri' }),
+        new TextRun({ text: 'Learning Focus:  ', bold: true, underline: {}, size: 24, font: 'Calibri' }),
       ];
       if (lf) {
-        lfChildren.push(new TextRun({ text: lf, bold: true, underline: {}, size: 22, font: 'Calibri' }));
+        lfChildren.push(new TextRun({ text: lf, bold: true, underline: {}, size: 24, font: 'Calibri' }));
       }
       textParas.push(new Paragraph({
-        spacing: { before: 0, after: 0, line: 220 },
+        spacing: { before: 0, after: 20, line: 240 },
         children: lfChildren,
       }));
       // date is shown under logo instead
@@ -817,39 +821,39 @@ async function generateEtiwDocx() {
       if (writerBytes) {
         writerParas.push(new Paragraph({
           alignment: AlignmentType.CENTER,
-          spacing: { before: 0, after: 0, line: 200 },
+          spacing: { before: 0, after: 20, line: 240 },
           children: [new ImageRun({ data: writerBytes, transformation: { width: WRITER_PX_W, height: WRITER_PX_H }, type: 'png' })],
         }));
       }
       writerParas.push(new Paragraph({
         alignment: AlignmentType.CENTER,
-        spacing: { before: 0, after: 0, line: 180 },
-        children: [new TextRun({ text: 'Writer', size: 12, font: 'Calibri' })],
+        spacing: { before: 0, after: 0, line: 220 },
+        children: [new TextRun({ text: 'Writer', size: 14, font: 'Calibri' })],
       }));
 
       // ── Top row: 3-column nested table ──
       const topTable = new Table({
         width: { size: CONTENT_W, type: WidthType.DXA },
         columnWidths: [LOGO_COL, TEXT_COL, WRITER_COL],
-        rows: [new TableRow({ height: { value: 700, rule: HeightRule.ATLEAST }, children: [
+        rows: [new TableRow({ height: { value: 1000, rule: HeightRule.ATLEAST }, children: [
           new TableCell({
             width: { size: LOGO_COL, type: WidthType.DXA },
             borders: allNone,
-            margins: { top: 40, bottom: 0, left: 0, right: 40 },
+            margins: { top: 60, bottom: 0, left: 0, right: 60 },
             verticalAlign: VerticalAlign.CENTER,
             children: logoParas,
           }),
           new TableCell({
             width: { size: TEXT_COL, type: WidthType.DXA },
             borders: allNone,
-            margins: { top: 40, bottom: 0, left: 0, right: 40 },
+            margins: { top: 60, bottom: 0, left: 0, right: 60 },
             verticalAlign: VerticalAlign.CENTER,
             children: textParas,
           }),
           new TableCell({
             width: { size: WRITER_COL, type: WidthType.DXA },
             borders: allNone,
-            margins: { top: 40, bottom: 0, left: 0, right: 0 },
+            margins: { top: 60, bottom: 0, left: 0, right: 0 },
             verticalAlign: VerticalAlign.CENTER,
             children: writerParas,
           }),
@@ -868,17 +872,17 @@ async function generateEtiwDocx() {
           var iconKey = phase + '/' + ic;
           var iconData = ETIW_ICONS[iconKey] ? decodeB64(ETIW_ICONS[iconKey]) : null;
           var dims = ETIW_ICON_DIMS[iconKey] || [100, 100];
-          var iconW = Math.round(iconSlotW * 96 / 1440 * 0.55);  // 55% of slot width in px
+          var iconW = Math.round(iconSlotW * 96 / 1440 * 0.7);  // 70% of slot width in px
           var iconH = Math.round(iconW * dims[1] / dims[0]);
           if (isVisible && iconData) {
             iconCells.push(new TableCell({
               width: { size: iconSlotW, type: WidthType.DXA },
               borders: { top: none, bottom: none, left: none, right: none },
-              margins: { top: 10, bottom: 0, left: 0, right: 0 },
+              margins: { top: 20, bottom: 0, left: 0, right: 0 },
               verticalAlign: VerticalAlign.CENTER,
               children: [
-                new Paragraph({ spacing: { before: 0, after: 0, line: 180 }, alignment: AlignmentType.CENTER, children: [new ImageRun({ data: iconData, transformation: { width: iconW, height: iconH }, type: 'png' })] }),
-                new Paragraph({ spacing: { before: 0, after: 0, line: 160 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: ic, size: 11, font: 'Calibri' })] }),
+                new Paragraph({ spacing: { before: 0, after: 0, line: 240 }, alignment: AlignmentType.CENTER, children: [new ImageRun({ data: iconData, transformation: { width: iconW, height: iconH }, type: 'png' })] }),
+                new Paragraph({ spacing: { before: 0, after: 0, line: 200 }, alignment: AlignmentType.CENTER, children: [new TextRun({ text: ic, size: 12, font: 'Calibri' })] }),
               ],
             }));
           } else {
@@ -886,10 +890,10 @@ async function generateEtiwDocx() {
             iconCells.push(new TableCell({
               width: { size: iconSlotW, type: WidthType.DXA },
               borders: { top: none, bottom: none, left: none, right: none },
-              margins: { top: 10, bottom: 0, left: 0, right: 0 },
+              margins: { top: 20, bottom: 0, left: 0, right: 0 },
               shading: { fill: 'FFFFFF' },
               verticalAlign: VerticalAlign.CENTER,
-              children: [new Paragraph({ spacing: { before: 0, after: 0, line: 160 }, children: [] })],
+              children: [new Paragraph({ spacing: { before: 0, after: 0, line: 200 }, children: [] })],
             }));
           }
         });
@@ -903,7 +907,7 @@ async function generateEtiwDocx() {
       return new TableCell({
         width: { size: CONTENT_W, type: WidthType.DXA },
         borders: { top: none, bottom: bottomBorder || none, left: none, right: none },
-        margins: { top: 30, bottom: 20, left: 0, right: 0 },
+        margins: { top: 60, bottom: 40, left: 0, right: 0 },
         verticalAlign: VerticalAlign.TOP,
         children: cellChildren,
       });
