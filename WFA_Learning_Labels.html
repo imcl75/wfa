@@ -709,7 +709,45 @@ async function generateEtiwDocx() {
     const STRIP_PX_W = 718;
     const STRIP_PX_H = 109;  // 718 * 282/1862 = 108.7
 
-    async function buildLabel(bottomBorder) {
+    // Pre-compute masked strip: hide excluded icons with white rectangles
+    const etiwAllLabels = ETIW_ICON_LABELS[phase] || ETIW_ICON_LABELS['LKS2'];
+    const etiwVisibleLabels = getVisibleIcons(phase);
+    const etiwHiddenIndices = [];
+    etiwAllLabels.forEach(function(lbl, idx) {
+      if (etiwVisibleLabels.indexOf(lbl) === -1) etiwHiddenIndices.push(idx);
+    });
+    let finalStripBytes = stripBytes;
+    if (stripBytes && etiwHiddenIndices.length > 0) {
+      finalStripBytes = await new Promise(function(resolve, reject) {
+        const cvs = document.createElement('canvas');
+        cvs.width = 1862; cvs.height = 282;
+        const ctx = cvs.getContext('2d');
+        const img = new Image();
+        img.onerror = function() { reject(new Error('Failed to load strip image')); };
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0);
+          const slotW = 1862 / etiwAllLabels.length;
+          etiwHiddenIndices.forEach(function(idx) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(idx * slotW, 0, slotW, 282);
+          });
+          cvs.toBlob(function(blob) {
+            const r = new FileReader();
+            r.onload = function() {
+              const raw = r.result.replace(/^data:image\/png;base64,/, '');
+              const bin = atob(raw);
+              const arr = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+              resolve(arr);
+            };
+            r.readAsDataURL(blob);
+          }, 'image/png');
+        };
+        img.src = 'data:image/png;base64,' + ETIW_STRIPS[phase];
+      });
+    }
+
+    function buildLabel(bottomBorder) {
       // ── Logo cell: logo with phase pre-baked in, date below ──
       const logoParas = [];
       if (logoBytes) {
@@ -794,46 +832,6 @@ async function generateEtiwDocx() {
 
       // ── Strip ──
       const cellChildren = [topTable];
-      // Mask hidden icons on the strip image
-      var allLabels = ETIW_ICON_LABELS[phase] || ETIW_ICON_LABELS['LKS2'];
-      var visibleLabels = getVisibleIcons(phase);
-      var hiddenIndices = [];
-      allLabels.forEach(function(lbl, idx) {
-        if (visibleLabels.indexOf(lbl) === -1) hiddenIndices.push(idx);
-      });
-
-      var finalStripBytes = stripBytes;
-      if (stripBytes && hiddenIndices.length > 0) {
-        // Load strip image, paint white over hidden icons, re-export
-        finalStripBytes = await new Promise(function(resolve) {
-          var cvs = document.createElement('canvas');
-          cvs.width = 1862; cvs.height = 282;
-          var ctx = cvs.getContext('2d');
-          var img = new Image();
-          img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-            // Each icon slot: evenly distributed across 1862px width
-            var slotW = 1862 / allLabels.length;
-            hiddenIndices.forEach(function(idx) {
-              ctx.fillStyle = '#FFFFFF';
-              ctx.fillRect(idx * slotW, 0, slotW, 282);
-            });
-            cvs.toBlob(function(blob) {
-              var r = new FileReader();
-              r.onload = function() {
-                var raw = r.result.replace(/^data:image\/png;base64,/, '');
-                var bin = atob(raw);
-                var arr = new Uint8Array(bin.length);
-                for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-                resolve(arr);
-              };
-              r.readAsDataURL(blob);
-            }, 'image/png');
-          };
-          img.src = 'data:image/png;base64,' + ETIW_STRIPS[phase];
-        });
-      }
-
       if (finalStripBytes) {
         cellChildren.push(new Paragraph({
           spacing: { before: 60, after: 0, line: 240 },
@@ -854,7 +852,7 @@ async function generateEtiwDocx() {
     const rows = [];
     for (let r = 0; r < 6; r++) {
       const isLast = r === 5;
-      const cell = await buildLabel(isLast ? none : dashed);
+      const cell = buildLabel(isLast ? none : dashed);
       rows.push(new TableRow({
         height: { value: LABEL_H, rule: HeightRule.ATLEAST },
         children: [cell],
