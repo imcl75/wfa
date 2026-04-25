@@ -709,7 +709,7 @@ async function generateEtiwDocx() {
     const STRIP_PX_W = 718;
     const STRIP_PX_H = 109;  // 718 * 282/1862 = 108.7
 
-    function buildLabel(bottomBorder) {
+    async function buildLabel(bottomBorder) {
       // ── Logo cell: logo with phase pre-baked in, date below ──
       const logoParas = [];
       if (logoBytes) {
@@ -854,7 +854,7 @@ async function generateEtiwDocx() {
     const rows = [];
     for (let r = 0; r < 6; r++) {
       const isLast = r === 5;
-      const cell = buildLabel(isLast ? none : dashed);
+      const cell = await buildLabel(isLast ? none : dashed);
       rows.push(new TableRow({
         height: { value: LABEL_H, rule: HeightRule.ATLEAST },
         children: [cell],
