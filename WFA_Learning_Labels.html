@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Learning Labels · Wallscourt Farm Academy</title>
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
   :root {
     --blue:    #2a7fc1;
@@ -294,6 +295,46 @@ function getVisibleIcons(phase) {
   var hidden = etiwIconVisible[phase] || {};
   return labels.filter(function(l) { return hidden[l] !== false; });
 }
+function maskStrip(phase) {
+  var allLabels = ETIW_ICON_LABELS[phase] || ETIW_ICON_LABELS['LKS2'];
+  var visibleLabels = getVisibleIcons(phase);
+  var hiddenIndices = [];
+  allLabels.forEach(function(lbl, idx) {
+    if (visibleLabels.indexOf(lbl) === -1) hiddenIndices.push(idx);
+  });
+  var stripDataUri = ETIW_STRIPS[phase];
+  if (!stripDataUri || hiddenIndices.length === 0) {
+    var fmt = stripDataUri && stripDataUri.indexOf('data:image/jpeg') === 0 ? 'JPEG' : 'PNG';
+    return Promise.resolve({ dataUri: stripDataUri, format: fmt });
+  }
+  var STRIP_DIMS = {"EYFS":[2174,332],"Y1":[2174,328],"Y2":[2158,314],"LKS2":[1862,282],"UKS2":[1902,292]};
+  var dims = STRIP_DIMS[phase] || [1862, 282];
+  var SRC_W = dims[0], SRC_H = dims[1];
+  return new Promise(function(resolve) {
+    var resolved = false;
+    var timeout = setTimeout(function() { if (!resolved) { resolved = true; resolve({ dataUri: stripDataUri, format: 'JPEG' }); } }, 5000);
+    var cvs = document.createElement('canvas');
+    cvs.width = SRC_W; cvs.height = SRC_H;
+    var ctx = cvs.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, SRC_W, SRC_H);
+    var img = new Image();
+    img.onerror = function() { if (!resolved) { resolved = true; clearTimeout(timeout); resolve({ dataUri: stripDataUri, format: 'JPEG' }); } };
+    img.onload = function() {
+      try {
+        ctx.drawImage(img, 0, 0, SRC_W, SRC_H);
+        var slotW = SRC_W / allLabels.length;
+        hiddenIndices.forEach(function(idx) {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(idx * slotW, 0, slotW, SRC_H);
+        });
+        var result = cvs.toDataURL('image/png');
+        if (!resolved) { resolved = true; clearTimeout(timeout); resolve({ dataUri: result, format: 'PNG' }); }
+      } catch(e) { if (!resolved) { resolved = true; clearTimeout(timeout); resolve({ dataUri: stripDataUri, format: 'JPEG' }); } }
+    };
+    img.src = stripDataUri;
+  });
+}
 function buildIconToggles() {
   var phase = g('etiwPhase');
   var container = document.getElementById('etiwIconToggles');
@@ -417,6 +458,10 @@ function update() {
   const dlBtn = document.getElementById('dlBtn');
   const note = document.getElementById('previewNote');
 
+  dlBtn.innerHTML = currentMode === 'etiw'
+    ? '↓&nbsp; Download Label Sheet (PDF)'
+    : '↓&nbsp; Download Label Sheet (DOCX)';
+
   if (currentMode === 'etiw') {
     buildIconToggles();
     const phase = g('etiwPhase');
@@ -504,9 +549,134 @@ function update() {
 
 async function generateDocx() {
   if (currentMode === 'etiw') {
-    await generateEtiwDocx();
+    await generateEtiwPdf();
   } else {
     await generateEnquiryDocx();
+  }
+}
+
+async function generateEtiwPdf() {
+  const { jsPDF } = window.jspdf;
+  const status = document.getElementById('status');
+  const btn    = document.getElementById('dlBtn');
+  status.className = 'status';
+  status.textContent = 'Building…';
+  btn.disabled = true;
+
+  try {
+    const phase = g('etiwPhase');
+    const date  = fmtDate(g('etiwDate'));
+    const kq    = g('etiwQuestion');
+    const lf    = g('etiwLf');
+
+    const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+    // A4: 210mm x 297mm
+    const PAGE_W   = 210;
+    const PAGE_H   = 297;
+    const LABEL_H  = PAGE_H / 6;  // 49.5mm each
+    const PAD_L    = 5;
+    const PAD_R    = 5;
+    const CONTENT_W = PAGE_W - PAD_L - PAD_R;  // 200mm
+
+    const LOGO_SZ   = 14;
+    const WRITER_SZ = 14;
+
+    const logoDataUri   = PHASE_LOGOS[phase] || null;
+    const writerDataUri = ICONS['writer'] || null;
+    const stripResult   = await maskStrip(phase);
+
+    for (let i = 0; i < 6; i++) {
+      const y = i * LABEL_H;
+
+      // ── Phase logo (circular clip) ──
+      if (logoDataUri) {
+        const lx = PAD_L, ly = y + 4;
+        doc.saveGraphicsState();
+        doc.circle(lx + LOGO_SZ / 2, ly + LOGO_SZ / 2, LOGO_SZ / 2, null);
+        doc.clip();
+        doc.discardPath();
+        doc.addImage(logoDataUri, 'PNG', lx, ly, LOGO_SZ, LOGO_SZ, undefined, 'FAST');
+        doc.restoreGraphicsState();
+      }
+
+      // ── Date below logo ──
+      if (date) {
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'normal');
+        doc.text(date, PAD_L + LOGO_SZ / 2, y + LOGO_SZ + 7.5, { align: 'center' });
+      }
+
+      // ── Key Question ──
+      const textL = PAD_L + LOGO_SZ + 3;  // 22mm
+      const kqY = y + 10;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      const kqLabel = 'Key Question:  ';
+      const kqText = kqLabel + (kq || '');
+      const kqLines = doc.splitTextToSize(kqText, CONTENT_W - LOGO_SZ - WRITER_SZ - 10);
+      doc.text(kqLines, textL, kqY);
+      // Underline below KQ
+      var kqFullW = doc.getTextWidth(kqLines[0] || '');
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.3);
+      doc.line(textL, kqY + 0.5, textL + Math.min(kqFullW, CONTENT_W - LOGO_SZ - WRITER_SZ - 10), kqY + 0.5);
+
+      // ── Learning Focus ──
+      const lfY = kqY + (kqLines.length * 4.5);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      const lfLabel = 'Learning Focus:  ';
+      const lfText = lfLabel + (lf || '');
+      const lfLines = doc.splitTextToSize(lfText, CONTENT_W - LOGO_SZ - WRITER_SZ - 10);
+      doc.text(lfLines, textL, lfY);
+      // Underline below LF
+      var lfFullW = doc.getTextWidth(lfLines[0] || '');
+      doc.line(textL, lfY + 0.5, textL + Math.min(lfFullW, CONTENT_W - LOGO_SZ - WRITER_SZ - 10), lfY + 0.5);
+
+      // ── Writer icon (circular clip) ──
+      if (writerDataUri) {
+        const wx = PAGE_W - PAD_R - WRITER_SZ;
+        const wy = y + 4;
+        doc.saveGraphicsState();
+        doc.circle(wx + WRITER_SZ / 2, wy + WRITER_SZ / 2, WRITER_SZ / 2, null);
+        doc.clip();
+        doc.discardPath();
+        doc.addImage(writerDataUri, 'PNG', wx, wy, WRITER_SZ, WRITER_SZ, undefined, 'FAST');
+        doc.restoreGraphicsState();
+
+        doc.setFontSize(6);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Writer', wx + WRITER_SZ / 2, wy + WRITER_SZ + 3, { align: 'center' });
+      }
+
+      // ── ETIW icon strip ──
+      if (stripResult.dataUri) {
+        const stripY = y + 28;
+        const stripH = 12;
+        doc.addImage(stripResult.dataUri, stripResult.format, PAD_L, stripY, CONTENT_W, stripH, undefined, 'FAST');
+      }
+
+      // ── Dashed cut line between labels ──
+      if (i < 5) {
+        const cutY = (i + 1) * LABEL_H;
+        doc.setDrawColor(170, 170, 170);
+        doc.setLineWidth(0.2);
+        doc.setLineDash([3, 2], 0);
+        doc.line(0, cutY, PAGE_W, cutY);
+        doc.setLineDash([], 0);
+      }
+    }
+
+    const filename = 'WFA_ETIW_' + phase + '_' + (date ? date.replace(/\//g, '-') : 'undated') + '.pdf';
+    doc.save(filename);
+    status.textContent = '✓ Downloaded';
+    setTimeout(function() { status.textContent = ''; btn.disabled = false; }, 3000);
+  } catch(e) {
+    console.error(e);
+    status.className = 'status error';
+    status.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
   }
 }
 
