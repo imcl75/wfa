@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Learning Labels · Wallscourt Farm Academy</title>
 <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   :root {
     --blue:    #2a7fc1;
@@ -593,7 +593,7 @@ async function generateEtiwPdf() {
       if (logoDataUri) {
         const lx = PAD_L, ly = y + 4;
         doc.saveGraphicsState();
-        doc.circle(lx + LOGO_SZ / 2, ly + LOGO_SZ / 2, LOGO_SZ / 2, null);
+        doc.circle(lx + LOGO_SZ / 2, ly + LOGO_SZ / 2, LOGO_SZ / 2);
         doc.clip();
         doc.discardPath();
         doc.addImage(logoDataUri, 'PNG', lx, ly, LOGO_SZ, LOGO_SZ, undefined, 'FAST');
@@ -639,7 +639,7 @@ async function generateEtiwPdf() {
         const wx = PAGE_W - PAD_R - WRITER_SZ;
         const wy = y + 4;
         doc.saveGraphicsState();
-        doc.circle(wx + WRITER_SZ / 2, wy + WRITER_SZ / 2, WRITER_SZ / 2, null);
+        doc.circle(wx + WRITER_SZ / 2, wy + WRITER_SZ / 2, WRITER_SZ / 2);
         doc.clip();
         doc.discardPath();
         doc.addImage(writerDataUri, 'PNG', wx, wy, WRITER_SZ, WRITER_SZ, undefined, 'FAST');
@@ -664,7 +664,7 @@ async function generateEtiwPdf() {
         doc.setLineWidth(0.2);
         doc.setLineDash([3, 2], 0);
         doc.line(0, cutY, PAGE_W, cutY);
-        doc.setLineDash([], 0);
+        doc.setLineDash([]);
       }
     }
 
@@ -690,8 +690,8 @@ async function generateEnquiryDocx() {
   status.textContent = 'Building\u2026';
   btn.disabled = true;
   try {
-    const subject  = maths ? 'mathematician' : g('subject');
     const maths    = currentMode === 'maths';
+    const subject  = maths ? 'mathematician' : g('subject');
     const date     = fmtDate(g(maths ? 'mathsDate' : 'date'));
     const lf       = g('lf');
     const ican1    = g('ican1');
