@@ -723,7 +723,7 @@ async function generateEnquiryDocx() {
       const paras = [];
       if (maths) {
         const icon = mkIcon();
-        if (icon) paras.push(new Paragraph({ spacing: sp(20), children: [icon] }));
+        if (icon) paras.push(new Paragraph({ spacing: { after: 20, before: 0, line: 480, lineRule: 'atLeast' }, children: [icon] }));
         paras.push(new Paragraph({
           spacing: sp(60),
           tabStops: [{ type: TabStopType.RIGHT, position: 5386 }],
