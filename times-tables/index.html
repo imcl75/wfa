@@ -6,7 +6,9 @@
     <title>Times Tables Practice - Wallscourt Farm Academy</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+
+        /* ========== PRACTICE MODE STYLES ========== */
+        body.practice-mode {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
@@ -15,45 +17,36 @@
             align-items: center;
             padding: 20px;
         }
-        .container {
+        .practice-mode .container {
             background: #f8f9fa;
             border-radius: 20px;
             padding: 32px;
             max-width: 580px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        .school-header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        .school-logo {
-            max-width: 120px;
-            height: auto;
-        }
-        h1 {
+        .practice-mode .school-header { text-align: center; margin-bottom: 10px; }
+        .practice-mode .school-logo { max-width: 120px; height: auto; }
+        .practice-mode h1 {
             text-align: center;
             color: #1e3c72;
             font-size: 2.2em;
             font-weight: 700;
             margin-bottom: 4px;
-            letter-spacing: -0.5px;
         }
-        .subtitle {
+        .practice-mode .subtitle {
             text-align: center;
             color: #6b7280;
             margin-bottom: 24px;
             font-size: 1.05em;
         }
-
-        /* Setup screen */
-        .table-grid {
+        .practice-mode .table-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin: 20px 0;
         }
-        .table-btn {
+        .practice-mode .table-btn {
             padding: 18px 12px;
             font-size: 1.25em;
             font-weight: 600;
@@ -64,32 +57,28 @@
             transition: all 0.15s ease;
             color: #374151;
         }
-        .table-btn:hover { border-color: #3b82f6; background: #eff6ff; transform: translateY(-1px); }
-        .table-btn.selected {
+        .practice-mode .table-btn:hover { border-color: #3b82f6; background: #eff6ff; }
+        .practice-mode .table-btn.selected {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             border-color: #2563eb;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
         }
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            margin: 16px 0;
-        }
-        .action-btn {
+        .practice-mode .btn-row { display: flex; gap: 12px; margin: 16px 0; }
+        .practice-mode .action-btn {
             flex: 1;
             padding: 10px 16px;
             font-size: 0.95em;
             font-weight: 600;
             border: 2px solid #e5e7eb;
             border-radius: 25px;
-            cursor: pointer;
-            transition: all 0.15s ease;
             background: white;
             color: #374151;
+            cursor: pointer;
+            transition: all 0.15s;
         }
-        .action-btn:hover { border-color: #3b82f6; background: #eff6ff; }
-        .btn-start {
+        .practice-mode .action-btn:hover { border-color: #3b82f6; background: #eff6ff; }
+        .practice-mode .btn-start {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             color: white;
             padding: 16px 30px;
@@ -100,20 +89,12 @@
             cursor: pointer;
             width: 100%;
             margin-top: 12px;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
             box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
         }
-        .btn-start:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
-        .btn-start:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: #9ca3af;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Settings selectors */
-        .settings-row {
+        .practice-mode .btn-start:hover { transform: translateY(-2px); }
+        .practice-mode .btn-start:disabled { opacity: 0.5; cursor: not-allowed; background: #9ca3af; transform: none; box-shadow: none; }
+        .practice-mode .settings-row {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -122,98 +103,44 @@
             font-size: 1em;
             color: #4b5563;
         }
-        .settings-row select {
+        .practice-mode .settings-row select {
             padding: 10px 16px;
             font-size: 1em;
             border-radius: 8px;
             border: 2px solid #e5e7eb;
             background: white;
             cursor: pointer;
-            transition: border-color 0.15s;
         }
-        .settings-row select:focus { border-color: #3b82f6; outline: none; }
-        .settings-row label { font-weight: 500; }
-
-        /* Quiz screen */
-        .screen { display: none; }
-        .screen.active { display: block; }
-
-        .progress-bar {
-            background: #e5e7eb;
-            border-radius: 10px;
-            height: 14px;
-            margin-bottom: 12px;
-            overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
-            border-radius: 10px;
-            transition: width 0.4s ease;
-        }
-        .progress-text {
-            text-align: center;
-            color: #6b7280;
-            margin-bottom: 6px;
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-
-        /* Countdown timer bar */
-        .countdown-bar {
-            background: #e5e7eb;
-            border-radius: 8px;
-            height: 10px;
-            margin-bottom: 24px;
-            overflow: hidden;
-        }
-        .countdown-fill {
-            height: 100%;
-            border-radius: 8px;
-            width: 100%;
-            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
-            transition: none;
-        }
-        .countdown-fill.warning { background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%); }
-        .countdown-fill.danger { background: linear-gradient(90deg, #ef4444 0%, #f87171 100%); }
-
-        .question-display {
+        .practice-mode .progress-bar { background: #e5e7eb; border-radius: 10px; height: 14px; margin-bottom: 12px; overflow: hidden; }
+        .practice-mode .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%); border-radius: 10px; transition: width 0.4s; }
+        .practice-mode .progress-text { text-align: center; color: #6b7280; margin-bottom: 6px; font-size: 0.9em; font-weight: 500; }
+        .practice-mode .countdown-bar { background: #e5e7eb; border-radius: 8px; height: 10px; margin-bottom: 24px; overflow: hidden; }
+        .practice-mode .countdown-fill { height: 100%; border-radius: 8px; width: 100%; background: linear-gradient(90deg, #10b981 0%, #34d399 100%); transition: none; }
+        .practice-mode .countdown-fill.warning { background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%); }
+        .practice-mode .countdown-fill.danger { background: linear-gradient(90deg, #ef4444 0%, #f87171 100%); }
+        .practice-mode .question-display {
             text-align: center;
             font-size: 3.2em;
             font-weight: 700;
             color: #1e3c72;
             margin: 24px 0;
-            letter-spacing: -1px;
         }
-        .answer-section {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin: 16px 0;
-        }
-        .answer-input {
+        .practice-mode .answer-section { display: flex; gap: 12px; justify-content: center; margin: 16px 0; }
+        .practice-mode .answer-input {
             width: 140px;
             padding: 14px;
             font-size: 2em;
             text-align: center;
             border: 3px solid #e5e7eb;
             border-radius: 12px;
-            outline: none;
-            transition: all 0.2s;
-            -moz-appearance: textfield;
             background: white;
+            outline: none;
         }
-        .answer-input::-webkit-outer-spin-button,
-        .answer-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        .answer-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
-        .answer-input.correct { border-color: #10b981; background: #ecfdf5; }
-        .answer-input.wrong { border-color: #ef4444; background: #fef2f2; }
-        .answer-input.timeout { border-color: #f59e0b; background: #fffbeb; }
-
-        .btn-submit {
+        .practice-mode .answer-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .practice-mode .answer-input.correct { border-color: #10b981; background: #ecfdf5; }
+        .practice-mode .answer-input.wrong { border-color: #ef4444; background: #fef2f2; }
+        .practice-mode .answer-input.timeout { border-color: #f59e0b; background: #fffbeb; }
+        .practice-mode .btn-submit {
             padding: 14px 28px;
             font-size: 1.2em;
             font-weight: 700;
@@ -222,32 +149,15 @@
             border: none;
             border-radius: 12px;
             cursor: pointer;
-            transition: all 0.2s;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
         }
-        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45); }
-
-        .feedback {
-            text-align: center;
-            font-size: 1.3em;
-            font-weight: 700;
-            margin: 12px 0;
-            min-height: 36px;
-        }
-        .feedback.correct-feedback { color: #10b981; }
-        .feedback.wrong-feedback { color: #ef4444; }
-        .feedback.timeout-feedback { color: #f59e0b; }
-
-        .score-display {
-            text-align: center;
-            font-size: 1em;
-            color: #6b7280;
-            margin-top: 4px;
-            font-weight: 500;
-        }
-
-        /* Next question button */
-        .btn-next {
+        .practice-mode .btn-submit:hover { transform: translateY(-1px); }
+        .practice-mode .feedback { text-align: center; font-size: 1.3em; font-weight: 700; margin: 12px 0; min-height: 36px; }
+        .practice-mode .feedback.correct-feedback { color: #10b981; }
+        .practice-mode .feedback.wrong-feedback { color: #ef4444; }
+        .practice-mode .feedback.timeout-feedback { color: #f59e0b; }
+        .practice-mode .score-display { text-align: center; font-size: 1em; color: #6b7280; margin-top: 4px; font-weight: 500; }
+        .practice-mode .btn-next {
             display: none;
             padding: 14px 30px;
             font-size: 1.15em;
@@ -259,20 +169,10 @@
             cursor: pointer;
             width: 100%;
             margin: 12px 0;
-            transition: all 0.2s;
         }
-        .btn-next:hover { background: #2a5298; }
-        .btn-next.visible { display: block; }
-
-        /* Keypad */
-        .keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            max-width: 300px;
-            margin: 20px auto 0;
-        }
-        .key-btn {
+        .practice-mode .btn-next.visible { display: block; }
+        .practice-mode .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 300px; margin: 20px auto 0; }
+        .practice-mode .key-btn {
             padding: 18px;
             font-size: 1.5em;
             font-weight: 600;
@@ -280,92 +180,32 @@
             border-radius: 12px;
             background: white;
             cursor: pointer;
-            transition: all 0.12s;
             color: #374151;
             user-select: none;
-            -webkit-user-select: none;
             touch-action: manipulation;
+            transition: all 0.12s;
         }
-        .key-btn:hover { background: #eff6ff; border-color: #3b82f6; }
-        .key-btn:active { background: #3b82f6; color: white; transform: scale(0.95); }
-        .key-btn.key-clear {
-            background: #fef2f2;
-            border-color: #fecaca;
-            color: #dc2626;
-            font-size: 1.1em;
-        }
-        .key-btn.key-clear:active { background: #ef4444; color: white; border-color: #ef4444; }
-        .key-btn.key-go {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            border-color: #2563eb;
-        }
-        .key-btn.key-go:hover { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); }
-        .key-btn.key-go:active { transform: scale(0.95); }
-
-        /* Results screen */
-        .results-header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-        .results-header .emoji {
-            font-size: 4.5em;
-            display: block;
-            margin-bottom: 12px;
-        }
-        .results-header .score-big {
-            font-size: 2.8em;
-            font-weight: 700;
-            color: #1e3c72;
-        }
-        .results-header .score-label {
-            font-size: 1.2em;
-            color: #6b7280;
-            font-weight: 500;
-        }
-        .results-message {
-            text-align: center;
-            font-size: 1.25em;
-            color: #4b5563;
-            margin: 16px 0;
-            font-weight: 500;
-        }
-        .all-answers {
-            margin: 24px 0;
-        }
-        .all-answers h3 {
-            color: #374151;
-            margin-bottom: 12px;
-            font-size: 1.1em;
-            font-weight: 600;
-        }
-        .summary-item {
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin: 5px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 1.05em;
-        }
-        .summary-item.correct-item {
-            background: #ecfdf5;
-            border-left: 4px solid #10b981;
-        }
-        .summary-item.wrong-item {
-            background: #fef2f2;
-            border-left: 4px solid #ef4444;
-        }
-        .summary-item .question-text { color: #374151; }
-        .summary-item .answer-detail { font-weight: 600; }
-        .summary-item.correct-item .answer-detail { color: #10b981; }
-        .summary-item.wrong-item .answer-detail { color: #ef4444; }
-        .summary-item .correct-answer-small {
-            color: #10b981;
-            font-weight: 600;
-            margin-left: 8px;
-        }
-        .btn-again {
+        .practice-mode .key-btn:hover { background: #eff6ff; border-color: #3b82f6; }
+        .practice-mode .key-btn:active { background: #3b82f6; color: white; }
+        .practice-mode .key-btn.key-clear { background: #fef2f2; border-color: #fecaca; color: #dc2626; font-size: 1.1em; }
+        .practice-mode .key-btn.key-clear:active { background: #ef4444; color: white; }
+        .practice-mode .key-btn.key-go { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border-color: #2563eb; }
+        .practice-mode .results-header { text-align: center; margin-bottom: 28px; }
+        .practice-mode .results-header .emoji { font-size: 4.5em; display: block; margin-bottom: 12px; }
+        .practice-mode .results-header .score-big { font-size: 2.8em; font-weight: 700; color: #1e3c72; }
+        .practice-mode .results-header .score-label { font-size: 1.2em; color: #6b7280; font-weight: 500; }
+        .practice-mode .results-message { text-align: center; font-size: 1.25em; color: #4b5563; margin: 16px 0; font-weight: 500; }
+        .practice-mode .all-answers { margin: 24px 0; }
+        .practice-mode .all-answers h3 { color: #374151; margin-bottom: 12px; font-size: 1.1em; font-weight: 600; }
+        .practice-mode .summary-item { padding: 10px 14px; border-radius: 8px; margin: 5px 0; display: flex; justify-content: space-between; align-items: center; font-size: 1.05em; }
+        .practice-mode .summary-item.correct-item { background: #ecfdf5; border-left: 4px solid #10b981; }
+        .practice-mode .summary-item.wrong-item { background: #fef2f2; border-left: 4px solid #ef4444; }
+        .practice-mode .summary-item .question-text { color: #374151; }
+        .practice-mode .summary-item .answer-detail { font-weight: 600; }
+        .practice-mode .summary-item.correct-item .answer-detail { color: #10b981; }
+        .practice-mode .summary-item.wrong-item .answer-detail { color: #ef4444; }
+        .practice-mode .summary-item .correct-answer-small { color: #10b981; font-weight: 600; margin-left: 8px; }
+        .practice-mode .btn-again {
             padding: 16px 30px;
             font-size: 1.2em;
             font-weight: 700;
@@ -376,11 +216,9 @@
             cursor: pointer;
             width: 100%;
             margin-top: 16px;
-            transition: all 0.2s;
             box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
         }
-        .btn-again:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45); }
-        .btn-home {
+        .practice-mode .btn-home {
             padding: 14px 30px;
             font-size: 1em;
             font-weight: 600;
@@ -391,65 +229,294 @@
             cursor: pointer;
             width: 100%;
             margin-top: 10px;
-            transition: all 0.2s;
         }
-        .btn-home:hover { background: #2a5298; }
+        .practice-mode .timer { text-align: center; color: #6b7280; font-size: 1.1em; font-weight: 600; margin-top: 8px; font-variant-numeric: tabular-nums; }
 
-        /* Responsive - tablets (iPad) */
-        @media (max-width: 768px) {
-            body { padding: 12px; }
-            .container { padding: 24px; border-radius: 16px; }
-            h1 { font-size: 1.8em; }
-            .question-display { font-size: 2.8em; margin: 20px 0; }
-            .answer-input { width: 120px; padding: 12px; font-size: 1.8em; }
-            .btn-submit { padding: 12px 24px; font-size: 1.1em; }
-            .table-grid { gap: 10px; }
-            .table-btn { padding: 14px 10px; font-size: 1.15em; }
-            .keypad { max-width: 280px; gap: 8px; }
-            .key-btn { padding: 16px; font-size: 1.4em; }
-            .settings-row { flex-direction: column; gap: 6px; }
+        /* ========== MTC MODE STYLES ========== */
+        body.mtc-mode {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
         }
-
-        /* Responsive - phones (iPhone) */
-        @media (max-width: 480px) {
-            body { padding: 8px; align-items: flex-start; }
-            .container { padding: 18px; border-radius: 14px; }
-            h1 { font-size: 1.5em; }
-            .subtitle { font-size: 0.95em; margin-bottom: 16px; }
-            .school-logo { max-width: 80px; }
-            .question-display { font-size: 2.2em; margin: 16px 0; }
-            .answer-input { width: 100px; padding: 10px; font-size: 1.6em; }
-            .btn-submit { padding: 10px 18px; font-size: 1em; }
-            .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-            .table-btn { padding: 12px 8px; font-size: 1em; }
-            .keypad { max-width: 260px; gap: 8px; }
-            .key-btn { padding: 14px; font-size: 1.3em; }
-            .feedback { font-size: 1.1em; }
-            .btn-start { font-size: 1.1em; padding: 14px 20px; }
-            .btn-next { font-size: 1em; padding: 12px 20px; }
-            .btn-again { font-size: 1em; padding: 14px 20px; }
-            .summary-item { font-size: 0.95em; padding: 8px 12px; }
-            .results-header .score-big { font-size: 2.2em; }
-            .results-header .emoji { font-size: 3.5em; }
+        .mtc-mode .container {
+            width: 100%;
+            max-width: 100%;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-
-        /* Prevent zoom on input focus on iOS */
-        @media (max-width: 768px) {
-            .answer-input { font-size: 16px; }
-            .settings-row select { font-size: 16px; }
+        .mtc-header {
+            background: #000;
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
-
-        .timer {
+        .mtc-header .gov-logo {
+            font-size: 1.5em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .mtc-header .school-name {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .mtc-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .mtc-mode .school-header { display: none; }
+        .mtc-mode .school-logo { display: none; }
+        .mtc-mode h1 { display: none; }
+        .mtc-mode .subtitle { display: none; }
+        .mtc-timer-bar {
+            width: 100%;
+            max-width: 400px;
+            height: 8px;
+            background: #bfc1c3;
+            border-radius: 4px;
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+        .mtc-timer-fill {
+            height: 100%;
+            background: #005ea5;
+            border-radius: 4px;
+            width: 100%;
+            transition: width 0.05s linear;
+        }
+        .mtc-timer-fill.warning { background: #ff9800; }
+        .mtc-timer-fill.danger { background: #d4351c; }
+        .mtc-question {
+            font-size: 4em;
+            font-weight: 300;
+            color: #0b0c0c;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+        .mtc-answer-box {
+            width: 120px;
+            height: 60px;
+            font-size: 2em;
             text-align: center;
-            color: #6b7280;
-            font-size: 1.1em;
+            border: 2px solid #0b0c0c;
+            background: white;
+            margin-bottom: 30px;
+            outline: none;
+        }
+        .mtc-answer-box:focus { border-color: #005ea5; box-shadow: 0 0 0 3px rgba(0, 94, 165, 0.3); }
+        .mtc-numpad {
+            display: grid;
+            grid-template-columns: repeat(3, 70px);
+            gap: 10px;
+            justify-content: center;
+        }
+        .mtc-key {
+            width: 70px;
+            height: 70px;
+            font-size: 1.8em;
+            font-weight: 400;
+            background: #f3f2f1;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            color: #0b0c0c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .mtc-key:hover { background: #dbdad9; }
+        .mtc-key:active { background: #bfc1c3; }
+        .mtc-key.mtc-zero { grid-column: 2; }
+        .mtc-key.mtc-back {
+            background: #bfc1c3;
+            font-size: 1.2em;
+        }
+        .mtc-key.mtc-back:hover { background: #8f8f8f; }
+        .mtc-progress { display: none; }
+        .mtc-mode .feedback { display: none; }
+        .mtc-mode .score-display { display: none; }
+        .mtc-mode .timer { display: none; }
+        .mtc-mode .btn-next { display: none; }
+        .mtc-mode .btn-submit { display: none; }
+        .mtc-mode .progress-bar { display: none; }
+        .mtc-mode .progress-text { display: none; }
+        .mtc-mode .countdown-bar { display: none; }
+        .mtc-mode .question-display { display: none; }
+        .mtc-mode .answer-section { display: none; }
+        .mtc-mode .keypad { display: none; }
+        .mtc-mode .results-header { text-align: center; margin: 40px 0; }
+        .mtc-mode .results-header .emoji { font-size: 4em; margin-bottom: 20px; }
+        .mtc-mode .results-header .score-big { font-size: 3em; font-weight: 700; color: #0b0c0c; }
+        .mtc-mode .results-header .score-label { font-size: 1.5em; color: #505a5f; margin-top: 10px; }
+        .mtc-mode .results-message { font-size: 1.3em; color: #0b0c0c; margin: 20px 0; }
+        .mtc-mode .all-answers {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .mtc-mode .all-answers h3 { font-size: 1.2em; color: #0b0c0c; margin-bottom: 15px; }
+        .mtc-mode .summary-item {
+            padding: 12px 16px;
+            margin: 8px 0;
+            background: #f3f2f1;
+            border-left: 4px solid #0b0c0c;
+            display: flex;
+            justify-content: space-between;
+        }
+        .mtc-mode .summary-item.correct-item { background: #e7f4e4; border-left-color: #00703c; }
+        .mtc-mode .summary-item.wrong-item { background: #f9d6d6; border-left-color: #d4351c; }
+        .mtc-mode .btn-again {
+            background: #005ea5;
+            color: white;
+            font-size: 1.2em;
             font-weight: 600;
-            margin-top: 8px;
-            font-variant-numeric: tabular-nums;
+            padding: 16px 40px;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .mtc-mode .btn-again:hover { background: #003d69; }
+        .mtc-mode .btn-home {
+            background: #f3f2f1;
+            color: #0b0c0c;
+            font-size: 1em;
+            font-weight: 600;
+            padding: 14px 30px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .mtc-mode .btn-home:hover { background: #dbdad9; }
+
+        /* MTC Setup Screen */
+        .mtc-setup { padding: 40px 20px; max-width: 600px; margin: 0 auto; }
+        .mtc-setup h2 { font-size: 2em; color: #0b0c0c; margin-bottom: 10px; font-weight: 700; }
+        .mtc-setup p { color: #505a5f; margin-bottom: 30px; font-size: 1.1em; }
+        .mtc-setup .start-btn {
+            background: #006435;
+            color: white;
+            font-size: 1.3em;
+            font-weight: 600;
+            padding: 16px 40px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .mtc-setup .start-btn:hover { background: #004e2a; }
+        .mtc-setup-info {
+            background: #f3f2f1;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .mtc-setup-info h3 { font-size: 1.1em; color: #0b0c0c; margin-bottom: 10px; }
+        .mtc-setup-info ul { margin-left: 20px; color: #505a5f; }
+        .mtc-setup-info li { margin: 8px 0; }
+
+        /* MTC Welcome Screen */
+        .mtc-welcome {
+            text-align: center;
+            padding: 60px 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .mtc-welcome h2 { font-size: 2em; color: #0b0c0c; margin-bottom: 20px; }
+        .mtc-welcome p { color: #505a5f; margin: 15px 0; font-size: 1.1em; }
+        .mtc-welcome .start-btn {
+            background: #006435;
+            color: white;
+            font-size: 1.2em;
+            font-weight: 600;
+            padding: 14px 30px;
+            border: none;
+            cursor: pointer;
+            margin-top: 30px;
+        }
+        .mtc-welcome .start-btn:hover { background: #004e2a; }
+
+        /* MTC Practice Screen */
+        .mtc-practice-notice {
+            background: #fff9c4;
+            border-left: 4px solid #f9a825;
+            padding: 12px 16px;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+            color: #0b0c0c;
+        }
+
+        /* MTC Thank You Screen */
+        .mtc-thankyou {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .mtc-thankyou h2 { font-size: 2em; color: #0b0c0c; margin-bottom: 20px; }
+        .mtc-thankyou p { color: #505a5f; font-size: 1.1em; }
+
+        /* Screen visibility */
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        /* Mode selector */
+        .mode-selector {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 0.9em;
+        }
+        .mode-selector label { margin-right: 8px; font-weight: 500; }
+        .mode-selector select { padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .practice-mode .container { padding: 20px; border-radius: 12px; }
+            .practice-mode h1 { font-size: 1.8em; }
+            .practice-mode .question-display { font-size: 2.5em; }
+            .practice-mode .keypad { max-width: 260px; }
+            .practice-mode .key-btn { padding: 14px; font-size: 1.3em; }
+
+            .mtc-question { font-size: 3em; }
+            .mtc-numpad { grid-template-columns: repeat(3, 60px); gap: 8px; }
+            .mtc-key { width: 60px; height: 60px; font-size: 1.5em; }
+            .mtc-answer-box { width: 100px; height: 50px; font-size: 1.8em; }
+        }
+        @media (max-width: 480px) {
+            .practice-mode .container { padding: 15px; }
+            .practice-mode h1 { font-size: 1.5em; }
+            .practice-mode .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+            .practice-mode .table-btn { padding: 12px 8px; font-size: 1em; }
+
+            .mtc-question { font-size: 2.5em; }
+            .mtc-numpad { grid-template-columns: repeat(3, 55px); gap: 6px; }
+            .mtc-key { width: 55px; height: 55px; font-size: 1.4em; }
         }
     </style>
 </head>
-<body>
+<body class="practice-mode">
+    <div class="mode-selector">
+        <label>Mode:</label>
+        <select id="mode-select" onchange="switchMode(this.value)">
+            <option value="practice">Practice Mode</option>
+            <option value="mtc">MTC Mode</option>
+        </select>
+    </div>
+
     <div class="container">
         <!-- Setup Screen -->
         <div id="setup-screen" class="screen active">
@@ -460,8 +527,8 @@
             <p class="subtitle">Select which times tables to practise</p>
 
             <div class="btn-row">
-                <button class="action-btn btn-select-all" onclick="selectAll()">Select All</button>
-                <button class="action-btn btn-select-all" onclick="selectNone()">Clear All</button>
+                <button class="action-btn" onclick="selectAll()">Select All</button>
+                <button class="action-btn" onclick="selectNone()">Clear All</button>
             </div>
 
             <div class="table-grid" id="table-grid"></div>
@@ -472,8 +539,8 @@
                     <option value="10">10</option>
                     <option value="15">15</option>
                     <option value="20" selected>20</option>
+                    <option value="25">25 (MTC)</option>
                     <option value="30">30</option>
-                    <option value="50">50</option>
                 </select>
             </div>
 
@@ -482,8 +549,8 @@
                 <select id="time-limit">
                     <option value="0">No limit</option>
                     <option value="3">3 seconds</option>
-                    <option value="4.5" selected>4.5 seconds</option>
-                    <option value="6">6 seconds</option>
+                    <option value="4.5">4.5 seconds</option>
+                    <option value="6" selected>6 seconds (MTC)</option>
                     <option value="8">8 seconds</option>
                     <option value="10">10 seconds</option>
                 </select>
@@ -492,8 +559,9 @@
             <div class="settings-row">
                 <label for="wait-between">Between questions:</label>
                 <select id="wait-between">
-                    <option value="auto" selected>Auto (2 second delay)</option>
-                    <option value="wait">Wait for "Next Question"</option>
+                    <option value="auto" selected>Auto (2 sec delay)</option>
+                    <option value="mtc">MTC (3 sec pause)</option>
+                    <option value="wait">Wait for button</option>
                 </select>
             </div>
 
@@ -502,7 +570,7 @@
             </button>
         </div>
 
-        <!-- Quiz Screen -->
+        <!-- Quiz Screen (Practice Mode) -->
         <div id="quiz-screen" class="screen">
             <div class="school-header">
                 <img src="https://wallscourtfarmacademy.clf.uk/wp-content/uploads/Wallscourt%20Farm%20logo%20cmyk%20big.jpg" alt="Wallscourt Farm Academy" class="school-logo">
@@ -517,16 +585,13 @@
             </div>
             <div class="question-display" id="question-display"></div>
             <div class="answer-section">
-                <input type="number" class="answer-input" id="answer-input"
-                       autocomplete="off" inputmode="none">
-                <button class="btn-submit" id="btn-submit" onclick="submitAnswer()">Go!</button>
+                <input type="number" class="answer-input" id="answer-input" autocomplete="off" inputmode="none">
+                <button class="btn-submit" onclick="submitAnswer()">Go!</button>
             </div>
             <div class="feedback" id="feedback"></div>
             <div class="score-display" id="score-display"></div>
             <div class="timer" id="timer"></div>
-
             <button class="btn-next" id="btn-next" onclick="nextQuestion()">Next Question</button>
-
             <div class="keypad" id="keypad">
                 <button class="key-btn" onclick="keyPress('1')">1</button>
                 <button class="key-btn" onclick="keyPress('2')">2</button>
@@ -543,6 +608,53 @@
             </div>
         </div>
 
+        <!-- MTC Welcome Screen -->
+        <div id="mtc-welcome-screen" class="screen">
+            <div class="mtc-header">
+                <span class="gov-logo">GOV.UK</span>
+                <span class="school-name">Wallscourt Farm Academy</span>
+            </div>
+            <div class="mtc-welcome">
+                <h2>Multiplication Tables Check</h2>
+                <p>This is a practice version of the official Year 4 Multiplication Tables Check (MTC).</p>
+                <p>You will have 3 practice questions, then 25 test questions.</p>
+                <p>Each question has a 6-second time limit.</p>
+                <button class="start-btn" onclick="startMTC()">Start now</button>
+            </div>
+        </div>
+
+        <!-- MTC Quiz Screen -->
+        <div id="mtc-quiz-screen" class="screen">
+            <div class="mtc-header">
+                <span class="gov-logo">GOV.UK</span>
+                <span class="school-name" id="mtc-progress-label"></span>
+            </div>
+            <div class="mtc-content">
+                <div id="mtc-practice-notice" class="mtc-practice-notice" style="display:none;">
+                    <strong>Practice question</strong> — Try this one before the real check begins.
+                </div>
+                <div class="mtc-timer-bar">
+                    <div class="mtc-timer-fill" id="mtc-timer-fill"></div>
+                </div>
+                <div class="mtc-question" id="mtc-question"></div>
+                <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
+                <div class="mtc-numpad">
+                    <button class="mtc-key" onclick="mtcKeyPress('1')">1</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('2')">2</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('3')">3</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('4')">4</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('5')">5</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('6')">6</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('7')">7</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('8')">8</button>
+                    <button class="mtc-key" onclick="mtcKeyPress('9')">9</button>
+                    <button class="mtc-key mtc-back" onclick="mtcBack()">⌫</button>
+                    <button class="mtc-key mtc-zero" onclick="mtcKeyPress('0')">0</button>
+                    <button class="mtc-key" onclick="mtcSubmit()">↵</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Results Screen -->
         <div id="results-screen" class="screen">
             <div class="results-header">
@@ -553,31 +665,35 @@
             <div class="results-message" id="results-message"></div>
             <div class="timer" id="results-time"></div>
             <div class="all-answers" id="all-answers"></div>
-            <button class="btn-again" onclick="startQuiz()">Try Again</button>
-            <button class="btn-home" onclick="showScreen('setup-screen')">Change Tables</button>
+            <button class="btn-again" onclick="restartQuiz()">Try Again</button>
+            <button class="btn-home" onclick="showScreen('setup-screen')">Change Settings</button>
         </div>
     </div>
 
     <script>
+        // State
+        let currentMode = 'practice';
         let selectedTables = new Set();
         let questions = [];
         let currentQuestion = 0;
         let score = 0;
         let allAnswers = [];
         let startTime = null;
-        let questionTimeLimit = 4.5;
+        let questionTimeLimit = 6;
         let questionStartTime = null;
         let countdownInterval = null;
         let questionTimeout = null;
         let answering = false;
-        let waitBetween = false;
+        let isMTCMode = false;
+        let mtcPhase = 'setup'; // setup, practice, test, done
+        let mtcPracticeCount = 0;
 
         // Build table selection grid
         const grid = document.getElementById('table-grid');
         for (let i = 1; i <= 12; i++) {
             const btn = document.createElement('button');
             btn.className = 'table-btn';
-            btn.textContent = i + '\u00d7';
+            btn.textContent = i + '×';
             btn.dataset.table = i;
             btn.onclick = () => toggleTable(i, btn);
             grid.appendChild(btn);
@@ -615,30 +731,51 @@
             const btn = document.getElementById('btn-start');
             if (selectedTables.size > 0) {
                 btn.disabled = false;
-                btn.textContent = 'Start! (' + selectedTables.size + ' table' +
-                    (selectedTables.size > 1 ? 's' : '') + ')';
+                btn.textContent = 'Start! (' + selectedTables.size + ' table' + (selectedTables.size > 1 ? 's' : '') + ')';
             } else {
                 btn.disabled = true;
                 btn.textContent = 'Choose at least one table';
             }
         }
 
+        function switchMode(mode) {
+            currentMode = mode;
+            document.body.className = mode + '-mode';
+            if (mode === 'mtc') {
+                // Select all tables for MTC
+                selectAll();
+                document.getElementById('num-questions').value = '25';
+                document.getElementById('time-limit').value = '6';
+                document.getElementById('wait-between').value = 'mtc';
+                showScreen('mtc-welcome-screen');
+            } else {
+                showScreen('setup-screen');
+            }
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const screen = document.getElementById(id);
+            if (screen) screen.classList.add('active');
+        }
+
+        // Generate questions for practice mode
         function generateQuestions() {
             const numQuestions = parseInt(document.getElementById('num-questions').value);
             const pool = [];
             selectedTables.forEach(table => {
-                for (let i = 1; i <= 12; i++) {
+                for (let i = 2; i <= 12; i++) {
                     pool.push({ a: table, b: i });
                 }
             });
 
+            // Shuffle
             for (let i = pool.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [pool[i], pool[j]] = [pool[j], pool[i]];
             }
 
             questions = pool.slice(0, numQuestions);
-
             while (questions.length < numQuestions) {
                 for (let i = pool.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -647,42 +784,60 @@
                 questions = questions.concat(pool.slice(0, numQuestions - questions.length));
             }
 
+            // Randomise order of factors
             questions = questions.map(q => {
                 if (Math.random() > 0.5) return { a: q.b, b: q.a };
                 return q;
             });
         }
 
+        // Generate MTC questions (follows official format)
+        function generateMTCQuestions() {
+            // MTC focuses on tables 2-12, with more weight on harder tables
+            // The first number is always the table (2-12), second is 2-12
+            const pool = [];
+            for (let table = 2; table <= 12; table++) {
+                for (let i = 2; i <= 12; i++) {
+                    pool.push({ a: table, b: i });
+                }
+            }
+
+            // Shuffle
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            // 25 questions
+            questions = pool.slice(0, 25);
+        }
+
+        // Practice mode quiz
         function startQuiz() {
+            isMTCMode = false;
             generateQuestions();
             currentQuestion = 0;
             score = 0;
             allAnswers = [];
             startTime = Date.now();
             questionTimeLimit = parseFloat(document.getElementById('time-limit').value);
-            waitBetween = document.getElementById('wait-between').value === 'wait';
+            const waitMode = document.getElementById('wait-between').value;
 
-            const countdownBar = document.getElementById('countdown-bar');
-            countdownBar.style.display = questionTimeLimit > 0 ? 'block' : 'none';
-
-            document.getElementById('btn-next').classList.remove('visible');
+            document.getElementById('countdown-bar').style.display = questionTimeLimit > 0 ? 'block' : 'none';
             showScreen('quiz-screen');
             showQuestion();
         }
 
         function showQuestion() {
             answering = true;
-            document.getElementById('btn-next').classList.remove('visible');
             const q = questions[currentQuestion];
-            document.getElementById('question-display').textContent = q.a + ' \u00d7 ' + q.b + ' = ?';
-            document.getElementById('progress-text').textContent =
-                'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
-            document.getElementById('progress-fill').style.width =
-                ((currentQuestion) / questions.length * 100) + '%';
-            document.getElementById('score-display').textContent =
-                'Score: ' + score + ' / ' + currentQuestion;
+            document.getElementById('question-display').textContent = q.a + ' × ' + q.b + ' = ?';
+            document.getElementById('progress-text').textContent = 'Question ' + (currentQuestion + 1) + ' of ' + questions.length;
+            document.getElementById('progress-fill').style.width = ((currentQuestion) / questions.length * 100) + '%';
+            document.getElementById('score-display').textContent = 'Score: ' + score + ' / ' + currentQuestion;
             document.getElementById('feedback').textContent = '';
             document.getElementById('feedback').className = 'feedback';
+            document.getElementById('btn-next').classList.remove('visible');
 
             const input = document.getElementById('answer-input');
             input.value = '';
@@ -696,7 +851,6 @@
         function startCountdown() {
             if (countdownInterval) clearInterval(countdownInterval);
             if (questionTimeout) clearTimeout(questionTimeout);
-
             if (questionTimeLimit <= 0) return;
 
             questionStartTime = Date.now();
@@ -735,38 +889,31 @@
             const feedback = document.getElementById('feedback');
 
             input.className = 'answer-input timeout';
-            feedback.textContent = 'Time\u2019s up! ' + q.a + ' \u00d7 ' + q.b + ' = ' + correct;
+            feedback.textContent = "Time's up! " + q.a + ' × ' + q.b + ' = ' + correct;
             feedback.className = 'feedback timeout-feedback';
 
             const given = parseInt(input.value);
             allAnswers.push({
                 a: q.a, b: q.b, correct: correct,
-                given: isNaN(given) ? '\u2014' : given,
+                given: isNaN(given) ? '—' : given,
                 timedOut: true, isCorrect: false
             });
 
-            document.getElementById('score-display').textContent =
-                'Score: ' + score + ' / ' + (currentQuestion + 1);
-
+            document.getElementById('score-display').textContent = 'Score: ' + score + ' / ' + (currentQuestion + 1);
             currentQuestion++;
             advanceQuestion();
         }
 
         function advanceQuestion() {
-            if (waitBetween) {
-                if (currentQuestion >= questions.length) {
-                    document.getElementById('btn-next').classList.remove('visible');
-                    setTimeout(showResults, 1000);
-                } else {
-                    document.getElementById('btn-next').classList.add('visible');
-                }
+            const waitMode = document.getElementById('wait-between').value;
+            const delay = waitMode === 'mtc' ? 3000 : 2000;
+
+            if (currentQuestion >= questions.length) {
+                setTimeout(showResults, delay);
+            } else if (waitMode === 'wait') {
+                document.getElementById('btn-next').classList.add('visible');
             } else {
-                const delay = 2000;
-                if (currentQuestion >= questions.length) {
-                    setTimeout(showResults, delay);
-                } else {
-                    setTimeout(showQuestion, delay);
-                }
+                setTimeout(showQuestion, delay);
             }
         }
 
@@ -775,26 +922,6 @@
                 showResults();
             } else {
                 showQuestion();
-            }
-        }
-
-        function updateTimer() {
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            const mins = Math.floor(elapsed / 60);
-            const secs = elapsed % 60;
-            document.getElementById('timer').textContent =
-                mins + ':' + (secs < 10 ? '0' : '') + secs;
-        }
-
-        let timerInterval = null;
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-
-            if (timerInterval) clearInterval(timerInterval);
-            if (id === 'quiz-screen') {
-                timerInterval = setInterval(updateTimer, 1000);
             }
         }
 
@@ -824,30 +951,20 @@
                 allAnswers.push({ a: q.a, b: q.b, correct: correct, given: answer, isCorrect: true });
             } else {
                 input.className = 'answer-input wrong';
-                feedback.textContent = q.a + ' \u00d7 ' + q.b + ' = ' + correct;
+                feedback.textContent = q.a + ' × ' + q.b + ' = ' + correct;
                 feedback.className = 'feedback wrong-feedback';
                 allAnswers.push({ a: q.a, b: q.b, correct: correct, given: answer, isCorrect: false });
             }
 
-            document.getElementById('score-display').textContent =
-                'Score: ' + score + ' / ' + (currentQuestion + 1);
-
+            document.getElementById('score-display').textContent = 'Score: ' + score + ' / ' + (currentQuestion + 1);
             currentQuestion++;
             advanceQuestion();
         }
 
-        // Keyboard support
-        document.getElementById('answer-input').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') submitAnswer();
-        });
-
-        // Keypad functions
         function keyPress(digit) {
             if (!answering) return;
             const input = document.getElementById('answer-input');
-            if (input.value.length < 3) {
-                input.value += digit;
-            }
+            if (input.value.length < 3) input.value += digit;
         }
 
         function keyClear() {
@@ -856,44 +973,201 @@
             input.focus();
         }
 
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const mins = Math.floor(elapsed / 60);
+            const secs = elapsed % 60;
+            document.getElementById('timer').textContent = mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+
+        // MTC Mode functions
+        function startMTC() {
+            isMTCMode = true;
+            mtcPhase = 'practice';
+            mtcPracticeCount = 0;
+            generateMTCQuestions();
+            currentQuestion = 0;
+            score = 0;
+            allAnswers = [];
+            startTime = Date.now();
+            questionTimeLimit = 6;
+
+            showScreen('mtc-quiz-screen');
+            showMTCQuestion();
+        }
+
+        function showMTCQuestion() {
+            answering = true;
+            const input = document.getElementById('mtc-answer');
+            input.value = '';
+            input.focus();
+
+            // Show practice notice for first 3 questions
+            const practiceNotice = document.getElementById('mtc-practice-notice');
+            const progressLabel = document.getElementById('mtc-progress-label');
+
+            if (mtcPhase === 'practice') {
+                practiceNotice.style.display = 'block';
+                progressLabel.textContent = 'Practice ' + (mtcPracticeCount + 1) + ' of 3';
+            } else {
+                practiceNotice.style.display = 'none';
+                progressLabel.textContent = 'Question ' + (currentQuestion + 1) + ' of 25';
+            }
+
+            const q = questions[currentQuestion];
+            document.getElementById('mtc-question').textContent = q.a + ' × ' + q.b + ' = ';
+
+            startMTCTimer();
+        }
+
+        function startMTCTimer() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (questionTimeout) clearTimeout(questionTimeout);
+
+            questionStartTime = Date.now();
+            const fill = document.getElementById('mtc-timer-fill');
+            fill.style.width = '100%';
+            fill.className = 'mtc-timer-fill';
+
+            countdownInterval = setInterval(() => {
+                const elapsed = (Date.now() - questionStartTime) / 1000;
+                const remaining = Math.max(0, questionTimeLimit - elapsed);
+                const pct = (remaining / questionTimeLimit) * 100;
+                fill.style.width = pct + '%';
+
+                if (pct <= 20) fill.className = 'mtc-timer-fill danger';
+                else if (pct <= 33) fill.className = 'mtc-timer-fill warning';
+                else fill.className = 'mtc-timer-fill';
+            }, 50);
+
+            questionTimeout = setTimeout(() => {
+                if (answering) handleMTCTimeout();
+            }, questionTimeLimit * 1000);
+        }
+
+        function handleMTCTimeout() {
+            answering = false;
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (questionTimeout) clearTimeout(questionTimeout);
+
+            const fill = document.getElementById('mtc-timer-fill');
+            fill.style.width = '0%';
+            fill.className = 'mtc-timer-fill danger';
+
+            const input = document.getElementById('mtc-answer');
+            const q = questions[currentQuestion];
+            const correct = q.a * q.b;
+            const given = parseInt(input.value);
+
+            allAnswers.push({
+                a: q.a, b: q.b, correct: correct,
+                given: isNaN(given) ? '—' : given,
+                timedOut: true, isCorrect: false
+            });
+
+            advanceMTC();
+        }
+
+        function mtcKeyPress(digit) {
+            if (!answering) return;
+            const input = document.getElementById('mtc-answer');
+            if (input.value.length < 3) input.value += digit;
+        }
+
+        function mtcBack() {
+            const input = document.getElementById('mtc-answer');
+            input.value = input.value.slice(0, -1);
+        }
+
+        function mtcSubmit() {
+            if (!answering) return;
+
+            const input = document.getElementById('mtc-answer');
+            const answer = parseInt(input.value);
+
+            if (isNaN(answer)) return;
+
+            answering = false;
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (questionTimeout) clearTimeout(questionTimeout);
+
+            const q = questions[currentQuestion];
+            const correct = q.a * q.b;
+            const isCorrect = answer === correct;
+
+            if (isCorrect) score++;
+
+            allAnswers.push({
+                a: q.a, b: q.b, correct: correct,
+                given: answer, isCorrect: isCorrect
+            });
+
+            advanceMTC();
+        }
+
+        function advanceMTC() {
+            currentQuestion++;
+            mtcPracticeCount++;
+
+            // Check if we need to move from practice to test
+            if (mtcPhase === 'practice' && mtcPracticeCount >= 3) {
+                mtcPhase = 'test';
+                currentQuestion = 0; // Reset for real questions
+                score = 0; // Reset score for real test
+                allAnswers = []; // Reset answers
+                generateMTCQuestions(); // New questions for real test
+            }
+
+            // 3 second pause between questions
+            setTimeout(() => {
+                if (mtcPhase === 'test' && currentQuestion >= 25) {
+                    showResults();
+                } else {
+                    showMTCQuestion();
+                }
+            }, 3000);
+        }
+
         function showResults() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (questionTimeout) clearTimeout(questionTimeout);
+
             const elapsed = Math.floor((Date.now() - startTime) / 1000);
             const mins = Math.floor(elapsed / 60);
             const secs = elapsed % 60;
             const pct = Math.round((score / questions.length) * 100);
 
             let emoji, message;
-            if (pct === 100) { emoji = '\ud83c\udf1f'; message = 'Perfect score! Amazing work!'; }
-            else if (pct >= 90) { emoji = '\ud83c\udf89'; message = 'Brilliant! Nearly perfect!'; }
-            else if (pct >= 70) { emoji = '\ud83d\udc4f'; message = 'Great effort! Keep practising!'; }
-            else if (pct >= 50) { emoji = '\ud83d\udcaa'; message = 'Good try! You\'re getting there!'; }
-            else { emoji = '\ud83d\udcda'; message = 'Keep practising, you\'ll get better!'; }
+            if (pct === 100) { emoji = '🌟'; message = 'Perfect score! Amazing work!'; }
+            else if (pct >= 90) { emoji = '🎉'; message = 'Brilliant! Nearly perfect!'; }
+            else if (pct >= 70) { emoji = '👏'; message = 'Great effort! Keep practising!'; }
+            else if (pct >= 50) { emoji = '💪'; message = "Good try! You're getting there!"; }
+            else { emoji = '📚'; message = "Keep practising, you'll get better!"; }
 
             document.getElementById('results-emoji').textContent = emoji;
             document.getElementById('results-score').textContent = score + ' / ' + questions.length;
             document.getElementById('results-label').textContent = pct + '% correct';
             document.getElementById('results-message').textContent = message;
-            document.getElementById('results-time').textContent =
-                'Time: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            document.getElementById('results-time').textContent = 'Time: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
 
             const summaryDiv = document.getElementById('all-answers');
             let html = '<h3>Question Summary</h3>';
             allAnswers.forEach((a, i) => {
                 const cls = a.isCorrect ? 'correct-item' : 'wrong-item';
                 const num = i + 1;
-                const question = a.a + ' \u00d7 ' + a.b + ' = ' + a.correct;
+                const question = a.a + ' × ' + a.b + ' = ' + a.correct;
                 if (a.isCorrect) {
                     html += '<div class="summary-item ' + cls + '">' +
                         '<span class="question-text">' + num + '. ' + question + '</span>' +
-                        '<span class="answer-detail">\u2713</span>' +
+                        '<span class="answer-detail">✓</span>' +
                         '</div>';
                 } else {
                     const label = a.timedOut ? 'Timed out' : 'Answered ' + a.given;
                     html += '<div class="summary-item ' + cls + '">' +
-                        '<span class="question-text">' + num + '. ' + a.a + ' \u00d7 ' + a.b + '</span>' +
+                        '<span class="question-text">' + num + '. ' + a.a + ' × ' + a.b + '</span>' +
                         '<span>' +
                         '<span class="answer-detail">' + label + '</span>' +
-                        '<span class="correct-answer-small">\u2192 ' + a.correct + '</span>' +
+                        '<span class="correct-answer-small">→ ' + a.correct + '</span>' +
                         '</span>' +
                         '</div>';
                 }
@@ -902,6 +1176,35 @@
 
             showScreen('results-screen');
         }
+
+        function restartQuiz() {
+            if (isMTCMode) {
+                startMTC();
+            } else {
+                startQuiz();
+            }
+        }
+
+        // Keyboard support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (isMTCMode) {
+                    mtcSubmit();
+                } else {
+                    submitAnswer();
+                }
+            }
+        });
+
+        document.getElementById('answer-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') submitAnswer();
+        });
+
+        document.getElementById('mtc-answer').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') mtcSubmit();
+        });
+
+        let timerInterval = null;
     </script>
 </body>
 </html>
