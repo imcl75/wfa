@@ -311,18 +311,24 @@
         }
         .mtc-question {
             font-size: 3em;
-            font-weight: 300;
+            font-weight: 700;
             color: #0b0c0c;
             letter-spacing: 1px;
         }
         .mtc-answer-box {
-            width: 100px;
+            width: calc(3 * 2.6cm + 2 * 8px);
             height: 50px;
             font-size: 2em;
             text-align: center;
             border: 2px solid #0b0c0c;
             background: white;
             outline: none;
+            -moz-appearance: textfield;
+        }
+        .mtc-answer-box::-webkit-outer-spin-button,
+        .mtc-answer-box::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
         .mtc-answer-box:focus { border-color: #005ea5; box-shadow: 0 0 0 3px rgba(0, 94, 165, 0.3); }
         .mtc-numpad {
@@ -489,6 +495,7 @@
         }
         .mode-selector label { margin-right: 8px; font-weight: 500; }
         .mode-selector select { padding: 6px 10px; border-radius: 4px; border: 1px solid #ccc; }
+        .mtc-mode .mode-selector { display: none; }
 
         /* Responsive */
         @media (max-width: 768px) {
@@ -498,13 +505,14 @@
             .practice-mode .keypad { max-width: 260px; }
             .practice-mode .key-btn { padding: 14px; font-size: 1.3em; }
 
-            .mtc-question { font-size: 2.5em; }
-            .mtc-answer-box { width: 80px; height: 44px; font-size: 1.6em; }
+            .mtc-question { font-size: 2.5em; font-weight: 700; }
+            .mtc-answer-box { width: calc(3 * 2.2cm + 2 * 6px); height: 44px; font-size: 1.6em; }
             .mtc-numpad { grid-template-columns: repeat(3, 2.2cm); gap: 6px; }
             .mtc-key { height: 1.5cm; width: 2.2cm; font-size: 1.4em; }
             .mtc-header .gov-logo { font-size: 1.2em; }
             .mtc-header .school-name { display: none; }
             .mtc-transition-msg { font-size: 1.5em; }
+            .mtc-key.mtc-enter { font-size: 1.1em; }
         }
         @media (max-width: 480px) {
             .practice-mode .container { padding: 15px; }
@@ -512,13 +520,14 @@
             .practice-mode .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .practice-mode .table-btn { padding: 12px 8px; font-size: 1em; }
 
-            .mtc-question { font-size: 2em; }
-            .mtc-answer-box { width: 70px; height: 40px; font-size: 1.4em; }
+            .mtc-question { font-size: 2em; font-weight: 700; }
+            .mtc-answer-box { width: calc(3 * 2cm + 2 * 5px); height: 40px; font-size: 1.4em; }
             .mtc-numpad { grid-template-columns: repeat(3, 2cm); gap: 5px; }
             .mtc-key { height: 1.4cm; width: 2cm; font-size: 1.2em; }
             .mtc-header .gov-logo { font-size: 1em; }
             .mtc-timer-text { font-size: 0.85em; padding: 4px 8px; }
             .mtc-transition-msg { font-size: 1.2em; }
+            .mtc-key.mtc-enter { font-size: 0.95em; }
         }
     </style>
 </head>
@@ -668,7 +677,7 @@
                         <button class="mtc-key" onclick="mtcKeyPress('9')">9</button>
                         <button class="mtc-key mtc-back" onclick="mtcBack()">⌫</button>
                         <button class="mtc-key mtc-zero" onclick="mtcKeyPress('0')">0</button>
-                        <button class="mtc-key mtc-enter" onclick="mtcSubmit()">↵</button>
+                        <button class="mtc-key mtc-enter" onclick="mtcSubmit()">Enter</button>
                     </div>
                 </div>
             </div>
