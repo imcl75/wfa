@@ -276,12 +276,7 @@
             font-size: 1em;
             font-weight: 600;
             color: white;
-            background: #70777c;
-            padding: 6px 12px;
-            border-radius: 4px;
         }
-        .mtc-timer-text.warning { background: #f59e0b; color: #0b0c0c; }
-        .mtc-timer-text.danger { background: #d4351c; }
         .mtc-content {
             flex: 1;
             display: flex;
@@ -378,12 +373,8 @@
         .mtc-quiz-area.hidden { display: none; }
         .mtc-question-wrapper {
             display: flex;
-            flex-direction: column;
             align-items: center;
-        }
-        .mtc-question-row {
-            display: flex;
-            align-items: center;
+            justify-content: center;
             margin-bottom: 20px;
         }
         .mtc-question {
@@ -409,6 +400,10 @@
             margin: 0;
         }
         .mtc-answer-box:focus { border-color: #005ea5; box-shadow: 0 0 0 3px rgba(0, 94, 165, 0.3); }
+        .mtc-numpad-wrapper {
+            display: flex;
+            justify-content: center;
+        }
         .mtc-mode .results-header .emoji { font-size: 4em; margin-bottom: 20px; }
         .mtc-mode .results-header .score-big { font-size: 3em; font-weight: 700; color: #0b0c0c; }
         .mtc-mode .results-header .score-label { font-size: 1.5em; color: #505a5f; margin-top: 10px; }
@@ -545,7 +540,7 @@
             .mtc-header .school-name { display: none; }
             .mtc-transition-msg { font-size: 1.5em; }
             .mtc-key.mtc-enter { font-size: 1.1em; }
-            .mtc-question-row { margin-bottom: 16px; }
+            .mtc-question-wrapper { margin-bottom: 16px; }
         }
         @media (max-width: 480px) {
             .practice-mode .container { padding: 15px; }
@@ -553,16 +548,15 @@
             .practice-mode .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .practice-mode .table-btn { padding: 12px 8px; font-size: 1em; }
 
-            .mtc-question { font-size: 2em; }
+            .mtc-question { font-size: 2em; margin-right: 8px; }
             .mtc-answer-box { width: calc(3 * 2cm + 2 * 5px); height: 40px; font-size: 1.4em; }
             .mtc-numpad { grid-template-columns: repeat(3, 2cm); gap: 5px; }
             .mtc-key { height: 1.4cm; width: 2cm; font-size: 1.2em; }
             .mtc-header .gov-logo { font-size: 1em; }
-            .mtc-timer-text { font-size: 0.85em; padding: 4px 8px; }
+            .mtc-timer-text { font-size: 0.85em; }
             .mtc-transition-msg { font-size: 1.2em; }
             .mtc-key.mtc-enter { font-size: 0.95em; }
-            .mtc-question-row { margin-bottom: 12px; }
-            .mtc-question { margin-right: 8px; }
+            .mtc-question-wrapper { margin-bottom: 12px; }
         }
     </style>
 </head>
@@ -697,10 +691,10 @@
                 <div class="mtc-transition-msg" id="mtc-transition-msg"></div>
                 <div class="mtc-quiz-area" id="mtc-quiz-area">
                     <div class="mtc-question-wrapper">
-                        <div class="mtc-question-row">
-                            <span class="mtc-question" id="mtc-question"></span>
-                            <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
-                        </div>
+                        <span class="mtc-question" id="mtc-question"></span>
+                        <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
+                    </div>
+                    <div class="mtc-numpad-wrapper">
                         <div class="mtc-numpad">
                             <button class="mtc-key" onclick="mtcKeyPress('1')">1</button>
                             <button class="mtc-key" onclick="mtcKeyPress('2')">2</button>
@@ -1096,7 +1090,7 @@
 
             questionStartTime = Date.now();
             const timerText = document.getElementById('mtc-timer-text');
-            timerText.className = 'mtc-timer-text';
+            timerText.textContent = 'Time left: 6';
 
             countdownInterval = setInterval(() => {
                 const elapsed = (Date.now() - questionStartTime) / 1000;
@@ -1104,15 +1098,6 @@
                 const remainingInt = Math.ceil(remaining);
 
                 timerText.textContent = 'Time left: ' + remainingInt;
-
-                // Change colour based on time remaining
-                if (remaining <= 2) {
-                    timerText.className = 'mtc-timer-text danger';
-                } else if (remaining <= 4) {
-                    timerText.className = 'mtc-timer-text warning';
-                } else {
-                    timerText.className = 'mtc-timer-text';
-                }
             }, 100);
 
             questionTimeout = setTimeout(() => {
@@ -1127,7 +1112,6 @@
 
             const timerText = document.getElementById('mtc-timer-text');
             timerText.textContent = 'Time left: 0';
-            timerText.className = 'mtc-timer-text danger';
 
             const input = document.getElementById('mtc-answer');
             const q = questions[currentQuestion];
@@ -1220,7 +1204,6 @@
             transitionMsg.textContent = msg;
             transitionMsg.classList.add('visible');
             timerText.textContent = 'Time left: 6';
-            timerText.className = 'mtc-timer-text';
 
             // After 2 seconds, show the next question
             setTimeout(() => {
