@@ -275,7 +275,10 @@
         .mtc-timer-text {
             font-size: 1em;
             font-weight: 600;
-            color: white;
+            color: #0b0c0c;
+            position: absolute;
+            top: -28px;
+            left: calc(50% + calc(3 * 2.6cm + 2 * 8px) / 2 - 60px);
         }
         .mtc-content {
             flex: 1;
@@ -376,6 +379,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 20px;
+            margin-top: 40px;
             position: relative;
         }
         .mtc-question {
@@ -688,7 +692,6 @@
                 <span class="gov-logo">GOV.UK</span>
                 <div class="header-right">
                     <span class="school-name" id="mtc-progress-label"></span>
-                    <span class="mtc-timer-text" id="mtc-timer-text">Time left: 6</span>
                 </div>
             </div>
             <div class="mtc-content">
@@ -698,6 +701,7 @@
                 <div class="mtc-transition-msg" id="mtc-transition-msg"></div>
                 <div class="mtc-quiz-area" id="mtc-quiz-area">
                     <div class="mtc-question-container">
+                        <span class="mtc-timer-text" id="mtc-timer-text">Time left: 6</span>
                         <span class="mtc-question" id="mtc-question"></span>
                         <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
                     </div>
