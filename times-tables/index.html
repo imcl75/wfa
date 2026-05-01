@@ -376,7 +376,39 @@
         .mtc-mode .answer-section { display: none; }
         .mtc-mode .keypad { display: none; }
         .mtc-quiz-area.hidden { display: none; }
-        .mtc-mode .results-header { text-align: center; margin: 40px 0; }
+        .mtc-question-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .mtc-question-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .mtc-question {
+            font-size: 3em;
+            font-weight: 700;
+            color: #0b0c0c;
+            letter-spacing: 1px;
+            margin-right: 12px;
+        }
+        .mtc-answer-box {
+            width: calc(3 * 2.6cm + 2 * 8px);
+            height: 50px;
+            font-size: 2em;
+            text-align: center;
+            border: 2px solid #0b0c0c;
+            background: white;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+        .mtc-answer-box::-webkit-outer-spin-button,
+        .mtc-answer-box::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .mtc-answer-box:focus { border-color: #005ea5; box-shadow: 0 0 0 3px rgba(0, 94, 165, 0.3); }
         .mtc-mode .results-header .emoji { font-size: 4em; margin-bottom: 20px; }
         .mtc-mode .results-header .score-big { font-size: 3em; font-weight: 700; color: #0b0c0c; }
         .mtc-mode .results-header .score-label { font-size: 1.5em; color: #505a5f; margin-top: 10px; }
@@ -505,7 +537,7 @@
             .practice-mode .keypad { max-width: 260px; }
             .practice-mode .key-btn { padding: 14px; font-size: 1.3em; }
 
-            .mtc-question { font-size: 2.5em; font-weight: 700; }
+            .mtc-question { font-size: 2.5em; }
             .mtc-answer-box { width: calc(3 * 2.2cm + 2 * 6px); height: 44px; font-size: 1.6em; }
             .mtc-numpad { grid-template-columns: repeat(3, 2.2cm); gap: 6px; }
             .mtc-key { height: 1.5cm; width: 2.2cm; font-size: 1.4em; }
@@ -513,6 +545,7 @@
             .mtc-header .school-name { display: none; }
             .mtc-transition-msg { font-size: 1.5em; }
             .mtc-key.mtc-enter { font-size: 1.1em; }
+            .mtc-question-row { margin-bottom: 16px; }
         }
         @media (max-width: 480px) {
             .practice-mode .container { padding: 15px; }
@@ -520,7 +553,7 @@
             .practice-mode .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .practice-mode .table-btn { padding: 12px 8px; font-size: 1em; }
 
-            .mtc-question { font-size: 2em; font-weight: 700; }
+            .mtc-question { font-size: 2em; }
             .mtc-answer-box { width: calc(3 * 2cm + 2 * 5px); height: 40px; font-size: 1.4em; }
             .mtc-numpad { grid-template-columns: repeat(3, 2cm); gap: 5px; }
             .mtc-key { height: 1.4cm; width: 2cm; font-size: 1.2em; }
@@ -528,6 +561,8 @@
             .mtc-timer-text { font-size: 0.85em; padding: 4px 8px; }
             .mtc-transition-msg { font-size: 1.2em; }
             .mtc-key.mtc-enter { font-size: 0.95em; }
+            .mtc-question-row { margin-bottom: 12px; }
+            .mtc-question { margin-right: 8px; }
         }
     </style>
 </head>
@@ -661,23 +696,25 @@
                 </div>
                 <div class="mtc-transition-msg" id="mtc-transition-msg"></div>
                 <div class="mtc-quiz-area" id="mtc-quiz-area">
-                    <div class="mtc-question-row">
-                        <span class="mtc-question" id="mtc-question"></span>
-                        <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
-                    </div>
-                    <div class="mtc-numpad">
-                        <button class="mtc-key" onclick="mtcKeyPress('1')">1</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('2')">2</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('3')">3</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('4')">4</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('5')">5</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('6')">6</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('7')">7</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('8')">8</button>
-                        <button class="mtc-key" onclick="mtcKeyPress('9')">9</button>
-                        <button class="mtc-key mtc-back" onclick="mtcBack()">⌫</button>
-                        <button class="mtc-key mtc-zero" onclick="mtcKeyPress('0')">0</button>
-                        <button class="mtc-key mtc-enter" onclick="mtcSubmit()">Enter</button>
+                    <div class="mtc-question-wrapper">
+                        <div class="mtc-question-row">
+                            <span class="mtc-question" id="mtc-question"></span>
+                            <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
+                        </div>
+                        <div class="mtc-numpad">
+                            <button class="mtc-key" onclick="mtcKeyPress('1')">1</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('2')">2</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('3')">3</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('4')">4</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('5')">5</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('6')">6</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('7')">7</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('8')">8</button>
+                            <button class="mtc-key" onclick="mtcKeyPress('9')">9</button>
+                            <button class="mtc-key mtc-back" onclick="mtcBack()">⌫</button>
+                            <button class="mtc-key mtc-zero" onclick="mtcKeyPress('0')">0</button>
+                            <button class="mtc-key mtc-enter" onclick="mtcSubmit()">Enter</button>
+                        </div>
                     </div>
                 </div>
             </div>
