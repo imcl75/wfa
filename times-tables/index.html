@@ -263,10 +263,25 @@
             font-weight: 700;
             letter-spacing: 0.5px;
         }
+        .mtc-header .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
         .mtc-header .school-name {
             font-size: 0.9em;
             opacity: 0.8;
         }
+        .mtc-timer-text {
+            font-size: 1em;
+            font-weight: 600;
+            color: white;
+            background: #70777c;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+        .mtc-timer-text.warning { background: #f59e0b; color: #0b0c0c; }
+        .mtc-timer-text.danger { background: #d4351c; }
         .mtc-content {
             flex: 1;
             display: flex;
@@ -279,72 +294,69 @@
         .mtc-mode .school-logo { display: none; }
         .mtc-mode h1 { display: none; }
         .mtc-mode .subtitle { display: none; }
-        .mtc-timer-bar {
-            width: 100%;
-            max-width: 400px;
-            height: 8px;
-            background: #bfc1c3;
-            border-radius: 4px;
-            margin-bottom: 40px;
-            overflow: hidden;
+        .mtc-transition-msg {
+            font-size: 2em;
+            color: #0b0c0c;
+            font-weight: 500;
+            text-align: center;
+            display: none;
         }
-        .mtc-timer-fill {
-            height: 100%;
-            background: #005ea5;
-            border-radius: 4px;
-            width: 100%;
-            transition: width 0.05s linear;
+        .mtc-transition-msg.visible { display: block; }
+        .mtc-question-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
         }
-        .mtc-timer-fill.warning { background: #ff9800; }
-        .mtc-timer-fill.danger { background: #d4351c; }
         .mtc-question {
-            font-size: 4em;
+            font-size: 3em;
             font-weight: 300;
             color: #0b0c0c;
-            margin-bottom: 30px;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
         .mtc-answer-box {
-            width: 120px;
-            height: 60px;
+            width: 100px;
+            height: 50px;
             font-size: 2em;
             text-align: center;
             border: 2px solid #0b0c0c;
             background: white;
-            margin-bottom: 30px;
             outline: none;
         }
         .mtc-answer-box:focus { border-color: #005ea5; box-shadow: 0 0 0 3px rgba(0, 94, 165, 0.3); }
         .mtc-numpad {
             display: grid;
-            grid-template-columns: repeat(3, 70px);
-            gap: 10px;
+            grid-template-columns: repeat(3, 2.6cm);
+            gap: 8px;
             justify-content: center;
         }
         .mtc-key {
-            width: 70px;
-            height: 70px;
-            font-size: 1.8em;
-            font-weight: 400;
-            background: #f3f2f1;
+            height: 1.8cm;
+            width: 2.6cm;
+            font-size: 1.6em;
+            font-weight: 500;
+            background: #70777c;
             border: none;
-            border-radius: 0;
+            border-radius: 4px;
             cursor: pointer;
-            color: #0b0c0c;
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
             touch-action: manipulation;
         }
-        .mtc-key:hover { background: #dbdad9; }
-        .mtc-key:active { background: #bfc1c3; }
+        .mtc-key:hover { background: #5c6266; }
+        .mtc-key:active { background: #4a4e51; }
         .mtc-key.mtc-zero { grid-column: 2; }
         .mtc-key.mtc-back {
-            background: #bfc1c3;
-            font-size: 1.2em;
+            font-size: 1.3em;
         }
-        .mtc-key.mtc-back:hover { background: #8f8f8f; }
+        .mtc-key.mtc-enter {
+            background: #005ea5;
+        }
+        .mtc-key.mtc-enter:hover { background: #003d69; }
         .mtc-progress { display: none; }
         .mtc-mode .feedback { display: none; }
         .mtc-mode .score-display { display: none; }
@@ -357,6 +369,7 @@
         .mtc-mode .question-display { display: none; }
         .mtc-mode .answer-section { display: none; }
         .mtc-mode .keypad { display: none; }
+        .mtc-quiz-area.hidden { display: none; }
         .mtc-mode .results-header { text-align: center; margin: 40px 0; }
         .mtc-mode .results-header .emoji { font-size: 4em; margin-bottom: 20px; }
         .mtc-mode .results-header .score-big { font-size: 3em; font-weight: 700; color: #0b0c0c; }
@@ -454,15 +467,9 @@
             margin-bottom: 30px;
             font-size: 0.95em;
             color: #0b0c0c;
+            max-width: 320px;
+            text-align: left;
         }
-
-        /* MTC Thank You Screen */
-        .mtc-thankyou {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .mtc-thankyou h2 { font-size: 2em; color: #0b0c0c; margin-bottom: 20px; }
-        .mtc-thankyou p { color: #505a5f; font-size: 1.1em; }
 
         /* Screen visibility */
         .screen { display: none; }
@@ -491,10 +498,13 @@
             .practice-mode .keypad { max-width: 260px; }
             .practice-mode .key-btn { padding: 14px; font-size: 1.3em; }
 
-            .mtc-question { font-size: 3em; }
-            .mtc-numpad { grid-template-columns: repeat(3, 60px); gap: 8px; }
-            .mtc-key { width: 60px; height: 60px; font-size: 1.5em; }
-            .mtc-answer-box { width: 100px; height: 50px; font-size: 1.8em; }
+            .mtc-question { font-size: 2.5em; }
+            .mtc-answer-box { width: 80px; height: 44px; font-size: 1.6em; }
+            .mtc-numpad { grid-template-columns: repeat(3, 2.2cm); gap: 6px; }
+            .mtc-key { height: 1.5cm; width: 2.2cm; font-size: 1.4em; }
+            .mtc-header .gov-logo { font-size: 1.2em; }
+            .mtc-header .school-name { display: none; }
+            .mtc-transition-msg { font-size: 1.5em; }
         }
         @media (max-width: 480px) {
             .practice-mode .container { padding: 15px; }
@@ -502,9 +512,13 @@
             .practice-mode .table-grid { grid-template-columns: repeat(4, 1fr); gap: 8px; }
             .practice-mode .table-btn { padding: 12px 8px; font-size: 1em; }
 
-            .mtc-question { font-size: 2.5em; }
-            .mtc-numpad { grid-template-columns: repeat(3, 55px); gap: 6px; }
-            .mtc-key { width: 55px; height: 55px; font-size: 1.4em; }
+            .mtc-question { font-size: 2em; }
+            .mtc-answer-box { width: 70px; height: 40px; font-size: 1.4em; }
+            .mtc-numpad { grid-template-columns: repeat(3, 2cm); gap: 5px; }
+            .mtc-key { height: 1.4cm; width: 2cm; font-size: 1.2em; }
+            .mtc-header .gov-logo { font-size: 1em; }
+            .mtc-timer-text { font-size: 0.85em; padding: 4px 8px; }
+            .mtc-transition-msg { font-size: 1.2em; }
         }
     </style>
 </head>
@@ -627,30 +641,35 @@
         <div id="mtc-quiz-screen" class="screen">
             <div class="mtc-header">
                 <span class="gov-logo">GOV.UK</span>
-                <span class="school-name" id="mtc-progress-label"></span>
+                <div class="header-right">
+                    <span class="school-name" id="mtc-progress-label"></span>
+                    <span class="mtc-timer-text" id="mtc-timer-text">Time left: 6</span>
+                </div>
             </div>
             <div class="mtc-content">
                 <div id="mtc-practice-notice" class="mtc-practice-notice" style="display:none;">
                     <strong>Practice question</strong> — Try this one before the real check begins.
                 </div>
-                <div class="mtc-timer-bar">
-                    <div class="mtc-timer-fill" id="mtc-timer-fill"></div>
-                </div>
-                <div class="mtc-question" id="mtc-question"></div>
-                <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
-                <div class="mtc-numpad">
-                    <button class="mtc-key" onclick="mtcKeyPress('1')">1</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('2')">2</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('3')">3</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('4')">4</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('5')">5</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('6')">6</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('7')">7</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('8')">8</button>
-                    <button class="mtc-key" onclick="mtcKeyPress('9')">9</button>
-                    <button class="mtc-key mtc-back" onclick="mtcBack()">⌫</button>
-                    <button class="mtc-key mtc-zero" onclick="mtcKeyPress('0')">0</button>
-                    <button class="mtc-key" onclick="mtcSubmit()">↵</button>
+                <div class="mtc-transition-msg" id="mtc-transition-msg"></div>
+                <div class="mtc-quiz-area" id="mtc-quiz-area">
+                    <div class="mtc-question-row">
+                        <span class="mtc-question" id="mtc-question"></span>
+                        <input type="number" class="mtc-answer-box" id="mtc-answer" autocomplete="off" inputmode="none">
+                    </div>
+                    <div class="mtc-numpad">
+                        <button class="mtc-key" onclick="mtcKeyPress('1')">1</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('2')">2</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('3')">3</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('4')">4</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('5')">5</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('6')">6</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('7')">7</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('8')">8</button>
+                        <button class="mtc-key" onclick="mtcKeyPress('9')">9</button>
+                        <button class="mtc-key mtc-back" onclick="mtcBack()">⌫</button>
+                        <button class="mtc-key mtc-zero" onclick="mtcKeyPress('0')">0</button>
+                        <button class="mtc-key mtc-enter" onclick="mtcSubmit()">↵</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -998,6 +1017,11 @@
 
         function showMTCQuestion() {
             answering = true;
+
+            // Hide transition message, show quiz area
+            document.getElementById('mtc-transition-msg').classList.remove('visible');
+            document.getElementById('mtc-quiz-area').classList.remove('hidden');
+
             const input = document.getElementById('mtc-answer');
             input.value = '';
             input.focus();
@@ -1025,20 +1049,25 @@
             if (questionTimeout) clearTimeout(questionTimeout);
 
             questionStartTime = Date.now();
-            const fill = document.getElementById('mtc-timer-fill');
-            fill.style.width = '100%';
-            fill.className = 'mtc-timer-fill';
+            const timerText = document.getElementById('mtc-timer-text');
+            timerText.className = 'mtc-timer-text';
 
             countdownInterval = setInterval(() => {
                 const elapsed = (Date.now() - questionStartTime) / 1000;
                 const remaining = Math.max(0, questionTimeLimit - elapsed);
-                const pct = (remaining / questionTimeLimit) * 100;
-                fill.style.width = pct + '%';
+                const remainingInt = Math.ceil(remaining);
 
-                if (pct <= 20) fill.className = 'mtc-timer-fill danger';
-                else if (pct <= 33) fill.className = 'mtc-timer-fill warning';
-                else fill.className = 'mtc-timer-fill';
-            }, 50);
+                timerText.textContent = 'Time left: ' + remainingInt;
+
+                // Change colour based on time remaining
+                if (remaining <= 2) {
+                    timerText.className = 'mtc-timer-text danger';
+                } else if (remaining <= 4) {
+                    timerText.className = 'mtc-timer-text warning';
+                } else {
+                    timerText.className = 'mtc-timer-text';
+                }
+            }, 100);
 
             questionTimeout = setTimeout(() => {
                 if (answering) handleMTCTimeout();
@@ -1050,9 +1079,9 @@
             if (countdownInterval) clearInterval(countdownInterval);
             if (questionTimeout) clearTimeout(questionTimeout);
 
-            const fill = document.getElementById('mtc-timer-fill');
-            fill.style.width = '0%';
-            fill.className = 'mtc-timer-fill danger';
+            const timerText = document.getElementById('mtc-timer-text');
+            timerText.textContent = 'Time left: 0';
+            timerText.className = 'mtc-timer-text danger';
 
             const input = document.getElementById('mtc-answer');
             const q = questions[currentQuestion];
@@ -1109,23 +1138,52 @@
             currentQuestion++;
             mtcPracticeCount++;
 
+            // Hide quiz area, show transition message
+            document.getElementById('mtc-quiz-area').classList.add('hidden');
+
             // Check if we need to move from practice to test
             if (mtcPhase === 'practice' && mtcPracticeCount >= 3) {
                 mtcPhase = 'test';
-                currentQuestion = 0; // Reset for real questions
-                score = 0; // Reset score for real test
-                allAnswers = []; // Reset answers
-                generateMTCQuestions(); // New questions for real test
+                currentQuestion = 0;
+                score = 0;
+                allAnswers = [];
+                generateMTCQuestions();
+
+                // Show "Question 1..." transition
+                showTransitionMsg('Question 1...');
+                return;
             }
 
-            // 3 second pause between questions
+            // Check if test is complete
+            if (mtcPhase === 'test' && currentQuestion >= 25) {
+                setTimeout(showResults, 2000);
+                return;
+            }
+
+            // Show transition message for 2 seconds, then next question
+            const nextNum = currentQuestion + 1;
+            showTransitionMsg('Question ' + nextNum + '...');
+        }
+
+        function showTransitionMsg(msg) {
+            const transitionMsg = document.getElementById('mtc-transition-msg');
+            const quizArea = document.getElementById('mtc-quiz-area');
+            const timerText = document.getElementById('mtc-timer-text');
+
+            quizArea.classList.add('hidden');
+            transitionMsg.textContent = msg;
+            transitionMsg.classList.add('visible');
+            timerText.textContent = 'Time left: 6';
+            timerText.className = 'mtc-timer-text';
+
+            // After 2 seconds, show the next question
             setTimeout(() => {
                 if (mtcPhase === 'test' && currentQuestion >= 25) {
                     showResults();
                 } else {
                     showMTCQuestion();
                 }
-            }, 3000);
+            }, 2000);
         }
 
         function showResults() {
